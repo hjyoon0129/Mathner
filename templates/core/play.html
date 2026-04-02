@@ -1,0 +1,354 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Play | Mathner{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/core/play.css' %}">
+
+<link rel="preload" as="image" href="{% static 'avatar/img/base/male/body.webp' %}">
+<link rel="preload" as="image" href="{% static 'avatar/img/base/male/head.webp' %}">
+<link rel="preload" as="image" href="{% static 'avatar/img/base/male/rear_hair.webp' %}">
+<link rel="preload" as="image" href="{% static 'avatar/img/base/male/front_hair.webp' %}">
+<link rel="preload" as="image" href="{% static 'avatar/img/base/male/eyes.webp' %}">
+<link rel="preload" as="image" href="{% static 'avatar/img/base/male/eyebrow.webp' %}">
+<link rel="preload" as="image" href="{% static 'avatar/img/base/male/mouth.webp' %}">
+
+<link rel="preload" as="image" href="{% static 'avatar/img/base/female/body.webp' %}">
+<link rel="preload" as="image" href="{% static 'avatar/img/base/female/head.webp' %}">
+<link rel="preload" as="image" href="{% static 'avatar/img/base/female/rear_hair.webp' %}">
+<link rel="preload" as="image" href="{% static 'avatar/img/base/female/front_hair.webp' %}">
+<link rel="preload" as="image" href="{% static 'avatar/img/base/female/eyes.webp' %}">
+<link rel="preload" as="image" href="{% static 'avatar/img/base/female/eyebrow.webp' %}">
+<link rel="preload" as="image" href="{% static 'avatar/img/base/female/mouth.webp' %}">
+<link rel="preload" as="image" href="{% static 'img/effects/wind_aura_base.png' %}">
+{% endblock %}
+
+{% block content %}
+<div
+    class="play-page"
+    id="playPageRoot"
+
+    data-play-avatar-json='{{ play_avatar_data_json|safe }}'
+
+    data-base-body-male="{% static 'avatar/img/base/male/body.webp' %}"
+    data-base-head-male="{% static 'avatar/img/base/male/head.webp' %}"
+    data-base-hair-back-male="{% static 'avatar/img/base/male/rear_hair.webp' %}"
+    data-base-hair-front-male="{% static 'avatar/img/base/male/front_hair.webp' %}"
+    data-base-eyes-male="{% static 'avatar/img/base/male/eyes.webp' %}"
+    data-base-eyebrow-male="{% static 'avatar/img/base/male/eyebrow.webp' %}"
+    data-base-mouth-male="{% static 'avatar/img/base/male/mouth.webp' %}"
+
+    data-base-body-female="{% static 'avatar/img/base/female/body.webp' %}"
+    data-base-head-female="{% static 'avatar/img/base/female/head.webp' %}"
+    data-base-hair-back-female="{% static 'avatar/img/base/female/rear_hair.webp' %}"
+    data-base-hair-front-female="{% static 'avatar/img/base/female/front_hair.webp' %}"
+    data-base-eyes-female="{% static 'avatar/img/base/female/eyes.webp' %}"
+    data-base-eyebrow-female="{% static 'avatar/img/base/female/eyebrow.webp' %}"
+    data-base-mouth-female="{% static 'avatar/img/base/female/mouth.webp' %}"
+    data-wind-aura-url="{% static 'img/effects/wind_aura_base.png' %}"
+>
+    <div id="playRunBanner" class="play-run-banner">
+        <span class="play-run-dot"></span>
+        <span>Run in progress · Finish with Submit / Reset / Timeout</span>
+    </div>
+
+    <div class="wrap wrap-compact">
+        <div class="play-quickbar">
+            <div class="play-quickbar-left">
+                <div class="play-page-title">
+                    <h1>Math Battle</h1>
+                    <p>Practice · Classic · Challenge · Combo · Fever · Avatar Aura</p>
+                </div>
+            </div>
+
+            <div class="play-quickbar-right">
+                <a href="{% url 'core:play' %}" class="btn quick-btn">Game</a>
+
+                {% if user.is_authenticated %}
+                    <a href="{% url 'avatar:my_room' %}" class="btn">Avatar</a>
+                {% else %}
+                    <a href="{% url 'account_login' %}?next={% url 'avatar:my_room' %}" class="btn">Avatar</a>
+                {% endif %}
+
+                <a href="{% url 'core:landing' %}#rank" class="btn secondary quick-btn">Ranking</a>
+            </div>
+        </div>
+
+        <div class="grid grid-tight play-layout">
+            <section class="card play-main-card">
+                <div class="card-h">
+                    <h2 id="leftTitle">Choose Mode</h2>
+                    <div class="sub" id="leftSub">Pick Practice, Classic, or Challenge.</div>
+                </div>
+
+                <div class="card-b play-main-body">
+                    <div class="screen on" id="screenSelect">
+                        <div class="tiles mode-tiles-3" id="gameModeTiles"></div>
+                        <div class="spacer-12"></div>
+                        <div class="modeBand" id="modeBandSummary"></div>
+                    </div>
+
+                    <div class="screen" id="screenSetup">
+                        <div class="modeBand" id="modeBandNow"></div>
+
+                        <div class="spacer-12"></div>
+
+                        <div id="practiceOperationWrap">
+                            <div class="sectionLabel">Practice Operation</div>
+                            <div class="seg" id="practiceOpSeg"></div>
+                        </div>
+
+                        <div class="spacer-12"></div>
+
+                        <div class="setup-grid">
+                            <div class="setup-card">
+                                <div class="setup-k">Star Reward</div>
+                                <div class="setup-v" id="setupRewardText">1 star / correct</div>
+                            </div>
+                            <div class="setup-card">
+                                <div class="setup-k">Question Rule</div>
+                                <div class="setup-v" id="setupRuleText">Manual operation</div>
+                            </div>
+                            <div class="setup-card">
+                                <div class="setup-k">Difficulty</div>
+                                <div class="setup-v" id="setupDifficultyText">Easy</div>
+                            </div>
+                            <div class="setup-card">
+                                <div class="setup-k">Range</div>
+                                <div class="setup-v" id="setupRangeText">1 ~ 9</div>
+                            </div>
+                        </div>
+
+                        <div class="spacer-12"></div>
+                        <div class="seg">
+                            <button class="btn secondary" id="btnBackToModes" type="button">← Back</button>
+                            <button class="btn" id="btnGoPlay" type="button">Start Game</button>
+                        </div>
+
+                        <div class="spacer-10"></div>
+                        <div class="sub" id="setupHint"></div>
+                    </div>
+
+                    <div class="screen" id="screenPlay">
+                        <div class="gameTop">
+                            <div class="timerBox" id="timerBox">
+                                <div class="timerRing" id="timerRing" aria-hidden="true"></div>
+                                <div class="timerInfo">
+                                    <div class="timerText">⏱ <span id="timeLeft">60</span>s</div>
+                                    <div class="sub" id="playDesc">—</div>
+                                </div>
+                            </div>
+
+                            <div class="seg seg-right top-actions">
+                                <button class="btn secondary" id="btnReset" type="button">Reset</button>
+                                <button class="btn" id="btnStart" type="button">Start</button>
+                            </div>
+                        </div>
+
+                        <div class="bar"><i id="progressFill"></i></div>
+
+                        <div class="question" id="questionBox">
+                            <div class="question-stage-glow" id="questionStageGlow"></div>
+                            <div class="live-effects" id="liveEffects"></div>
+
+                            <div class="bigMath" id="mathText">Press start!</div>
+
+                            <div class="answerRow">
+                                <input
+                                    id="answerInput"
+                                    class="answerInput"
+                                    type="number"
+                                    inputmode="numeric"
+                                    pattern="[0-9-]*"
+                                    placeholder="Type your answer"
+                                    autocomplete="off"
+                                    disabled
+                                >
+                                <button class="btn submitBtn" id="btnSubmit" type="button" disabled>Submit</button>
+                            </div>
+
+                            <div class="hudRow">
+                                <div class="badge">Mode <b id="hudMode">Practice</b></div>
+                                <div class="badge">Operation <b id="hudOperation">Add</b></div>
+                                <div class="badge">Score <b id="score">0</b></div>
+                                <div class="badge">Correct <b id="correct">0</b></div>
+                                <div class="badge">Run Stars <b id="earnedStars">0</b></div>
+                                <div class="badge combo-badge">Combo <b id="comboCount">0</b></div>
+                            </div>
+
+                            <div class="feverDock" id="feverDock">
+                                <div class="feverPill" id="feverPill">
+                                    <span class="feverDot"></span>
+                                    <span class="feverText" id="feverText">Fever Ready</span>
+                                </div>
+                            </div>
+
+                            <div class="msg" id="msg">Press start 🙂</div>
+                        </div>
+
+                        <div class="spacer-10"></div>
+
+                        <div class="seg">
+                            <button class="btn secondary" id="btnBackToSetup" type="button">← Settings</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="card side-panel status-card">
+                <div class="card-h">
+                    <h2>Status</h2>
+                    <div class="sub">Battle HUD</div>
+                </div>
+
+                <div class="card-b status-body">
+                    <div class="status-avatar-stage">
+                        <div class="status-avatar-wrap">
+                            <div class="status-avatar-canvas is-idle is-breathing" id="statusAvatarCanvas">
+                                <div class="status-avatar-burst" id="statusAvatarBurst" aria-hidden="true"></div>
+
+                                <div class="status-avatar-ground-aura" id="statusAvatarGroundAura" aria-hidden="true">
+                                    <img
+                                        class="status-avatar-ground-aura-img"
+                                        id="statusAvatarGroundAuraImg"
+                                        src="{% static 'img/effects/wind_aura_base.png' %}"
+                                        alt=""
+                                    >
+                                </div>
+
+                                <div class="status-avatar-ground"></div>
+                            </div>
+                        </div>
+                        <div class="status-avatar-name">{{ my_nickname|default:"Player" }}</div>
+                    </div>
+
+                    <div class="status-stats-wrap">
+                        <div class="statGrid">
+                            <div class="stat">
+                                <div class="k">Selected Mode</div>
+                                <div class="v" id="statGameMode">Practice</div>
+                            </div>
+                            <div class="stat">
+                                <div class="k">Operation</div>
+                                <div class="v" id="statMode">Add</div>
+                            </div>
+                            <div class="stat">
+                                <div class="k">Difficulty Tier</div>
+                                <div class="v" id="statDifficulty">Easy</div>
+                            </div>
+                            <div class="stat">
+                                <div class="k">Total Stars</div>
+                                <div class="v" id="statStars">{{ total_stars|default:0 }}</div>
+                            </div>
+                            <div class="stat">
+                                <div class="k">Remaining Keys</div>
+                                <div class="v" id="statKeys">{{ remaining_keys|default:3 }}</div>
+                            </div>
+                            <div class="stat">
+                                <div class="k">Aura State</div>
+                                <div class="v" id="statAura">Idle</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <div class="rewardOverlay" id="rewardOverlay" aria-hidden="true">
+        <div class="rewardVideoGlow"></div>
+        <div class="rewardConfetti" id="rewardConfetti"></div>
+        <div class="rewardCard">
+            <div class="rewardStar">★</div>
+            <div class="rewardTitle" id="rewardTitle">Stars Earned</div>
+            <div class="rewardAmount" id="rewardAmount">+0</div>
+            <div class="rewardSub" id="rewardSub">Great job!</div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modalBox" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <div class="modalHead">
+                <h3 id="modalTitle">Run Result</h3>
+                <button class="btn secondary" id="btnClose" type="button">Close</button>
+            </div>
+
+            <div class="modalBody">
+                <div class="resultPanel">
+                    <div class="resultItem">
+                        <div class="k">Correct</div>
+                        <div class="v" id="rCorrect">0</div>
+                    </div>
+                    <div class="resultItem">
+                        <div class="k">Wrong</div>
+                        <div class="v" id="rWrong">0</div>
+                    </div>
+                    <div class="resultItem">
+                        <div class="k">Accuracy</div>
+                        <div class="v" id="rAcc">0%</div>
+                    </div>
+                    <div class="resultItem">
+                        <div class="k">Stars Earned</div>
+                        <div class="v" id="rStars">0</div>
+                    </div>
+                    <div class="resultItem">
+                        <div class="k">Best Combo</div>
+                        <div class="v" id="rCombo">0</div>
+                    </div>
+                    <div class="resultItem">
+                        <div class="k">Mode</div>
+                        <div class="v" id="rMode">Practice</div>
+                    </div>
+                </div>
+
+                <div class="resultText" id="rText">Good job!</div>
+            </div>
+
+            <div class="modalActions">
+                <button class="btn secondary" id="btnAgain" type="button">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="keyExhaustedModal">
+        <div class="modalBox keyModalBox" role="dialog" aria-modal="true" aria-labelledby="keyModalTitle">
+            <div class="modalHead">
+                <h3 id="keyModalTitle">No Keys Left Today</h3>
+                <button class="btn secondary" id="btnKeyModalClose" type="button">Close</button>
+            </div>
+
+            <div class="modalBody">
+                <div class="keyModalHero">
+                    <div class="keyModalIcon">🔑</div>
+                    <div>
+                        <div class="keyModalMain">You used all free keys for today.</div>
+                        <div class="keyModalSub">
+                            Come back later or unlock more daily turns from pricing.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modalActions">
+                <button class="btn secondary" id="btnLater" type="button">Maybe Later</button>
+                <a href="{% url 'core:landing' %}#pricing" class="btn" id="btnGoPricing">Go to Pricing</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.PLAY_PAGE_CONFIG = {
+    initialStars: Number("{{ total_stars|default_if_none:0 }}"),
+    initialKeys: Number("{{ remaining_keys|default_if_none:0 }}"),
+    startRunUrl: "{% url 'core:start_game_run' %}",
+    finalizeRunUrl: "{% url 'core:save_game_result' %}",
+    isAuthenticated: {{ user.is_authenticated|yesno:"true,false" }},
+    avatarLoginUrl: "{% url 'account_login' %}?next={% url 'avatar:my_room' %}"
+  };
+</script>
+<script src="{% static 'js/play.js' %}?v=20260402_wind_aura_rebalance_2"></script>
+{% endblock %}

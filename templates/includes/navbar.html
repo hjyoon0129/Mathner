@@ -1,0 +1,20 @@
+<header class="landing-header">
+    <div class="container nav-inner">
+        <a href="{% url 'core:landing' %}" class="logo">Mathner</a>
+
+        <nav class="nav-menu">
+            <a href="{% url 'core:landing' %}#hero">Home</a>
+            <a href="{% url 'core:landing' %}#features">Features</a>
+            <a href="{% url 'core:landing' %}#play-preview">Game</a>
+            <a href="{% url 'core:landing' %}#how-it-works">How It Works</a>
+            <a href="{% url 'core:landing' %}#room-preview">Room</a>
+            <a href="{% url 'core:landing' %}#ranking-preview">Ranking</a>
+            <a href="{% url 'core:landing' %}#pricing-preview">Pricing</a>
+        </nav>
+
+        <div class="nav-actions">
+            <a href="{% url 'core:landing' %}#play-preview" class="btn btn-outline">Preview</a>
+            <a href="{% url 'core:play' %}" class="btn btn-primary">Start Now</a>
+        </div>
+    </div>
+</header>

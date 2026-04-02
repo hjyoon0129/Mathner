@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load static %}
+{% load socialaccount %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/core/auth.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="auth-page">
+  <div class="auth-shell">
+    <div class="auth-card">
+      <div class="auth-head">
+        <p class="auth-eyebrow">Create account</p>
+        <h1>Sign up</h1>
+        <p class="auth-sub">
+          Start your Mathner account and continue with stars, avatar, and room growth.
+        </p>
+      </div>
+
+      <a href="{% provider_login_url 'google' process='login' next=request.GET.next|default:'/' %}" class="auth-google-btn">
+        Continue with Google
+      </a>
+
+      <div class="auth-divider">
+        <span>or</span>
+      </div>
+
+      <form method="post" action="{% url 'account_signup' %}" class="auth-form">
+        {% csrf_token %}
+        {% if redirect_field_value %}
+          <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+        {% endif %}
+
+        {% if form.non_field_errors %}
+          <div class="auth-alert">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+
+        <div class="auth-field">
+          <label for="{{ form.email.id_for_label }}">Email</label>
+          {{ form.email }}
+          {% if form.email.errors %}
+            <div class="auth-error">{{ form.email.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="auth-field">
+          <label for="{{ form.password1.id_for_label }}">Password</label>
+          {{ form.password1 }}
+          {% if form.password1.errors %}
+            <div class="auth-error">{{ form.password1.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="auth-field">
+          <label for="{{ form.password2.id_for_label }}">Confirm password</label>
+          {{ form.password2 }}
+          {% if form.password2.errors %}
+            <div class="auth-error">{{ form.password2.errors }}</div>
+          {% endif %}
+        </div>
+
+        <button type="submit" class="auth-submit-btn">Create account</button>
+      </form>
+
+      <div class="auth-foot">
+        Already have an account?
+        <a href="{% url 'account_login' %}?next={{ request.GET.next|default:'/' }}">Sign in</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

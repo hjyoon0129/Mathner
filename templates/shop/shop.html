@@ -1,0 +1,172 @@
+﻿{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Avatar Shop - mathner{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'shop/css/shop.css' %}">
+{% endblock %}
+
+{% block content %}
+<section
+  class="shop-page"
+  id="shopPage"
+  data-owned-map='{{ owned_map_json|escapejs }}'
+  data-current-stars="{{ shop_star_count }}"
+  data-buy-url="/shop/buy/"
+>
+  <div class="shop-wrap">
+    <div class="shop-header">
+      <div>
+        <div class="shop-header-top-row">
+          <h1 class="shop-title">Avatar Shop</h1>
+          <a href="/avatar/my-room/" class="shop-back-btn">Back to My Avatar</a>
+        </div>
+        <p class="shop-sub">Buy layered avatar parts and future set pieces with your Stars.</p>
+      </div>
+
+      <div class="shop-balance-card">
+        <div class="shop-balance-k">Current Stars</div>
+        <div class="shop-balance-v" id="shopCurrentStars">{{ shop_star_count }}</div>
+      </div>
+    </div>
+
+    <div class="shop-layout">
+      <div class="shop-main">
+        <div class="shop-filter-panel">
+          <div class="shop-filter-group">
+            <div class="shop-filter-label">Gender</div>
+            <div class="shop-filter-bar" id="shopGenderFilterBar">
+              <button type="button" class="shop-filter-btn is-active" data-filter-group="gender" data-filter="all">All</button>
+              <button type="button" class="shop-filter-btn" data-filter-group="gender" data-filter="male">Male</button>
+              <button type="button" class="shop-filter-btn" data-filter-group="gender" data-filter="female">Female</button>
+              <button type="button" class="shop-filter-btn" data-filter-group="gender" data-filter="common">Common</button>
+            </div>
+          </div>
+
+          <div class="shop-filter-group">
+            <div class="shop-filter-label">Type</div>
+            <div class="shop-filter-bar" id="shopTypeFilterBar">
+              <button type="button" class="shop-filter-btn is-active" data-filter-group="type" data-filter="all">All</button>
+              <button type="button" class="shop-filter-btn" data-filter-group="type" data-filter="face">Face</button>
+              <button type="button" class="shop-filter-btn" data-filter-group="type" data-filter="hair">Hair</button>
+              <button type="button" class="shop-filter-btn" data-filter-group="type" data-filter="body">Body</button>
+              <button type="button" class="shop-filter-btn" data-filter-group="type" data-filter="top">Top</button>
+              <button type="button" class="shop-filter-btn" data-filter-group="type" data-filter="cloth">Cloth</button>
+              <button type="button" class="shop-filter-btn" data-filter-group="type" data-filter="pants">Pants</button>
+              <button type="button" class="shop-filter-btn" data-filter-group="type" data-filter="shoes">Shoes</button>
+              <button type="button" class="shop-filter-btn" data-filter-group="type" data-filter="hat">Hat</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="shop-section">
+          <div class="shop-section-head">
+            <h2>Items</h2>
+          </div>
+
+          <div class="shop-gender-section" id="shopMaleSection">
+            <div class="shop-gender-head">
+              <span class="shop-gender-badge shop-gender-badge-male">Male</span>
+              <h3>Male Items</h3>
+            </div>
+            <div class="shop-grid" id="shopMaleGrid">
+              {% for category, items in grouped_items.items %}
+                {% for item in items %}
+                <div
+                  class="shop-card"
+                  data-item-id="{{ item.id }}"
+                  data-item-name="{{ item.name }}"
+                  data-item-price="{{ item.price_stars }}"
+                  data-item-category="{{ category|lower }}"
+                  data-item-slot="{{ item.slot|default:''|lower }}"
+                  data-item-gender="{{ item.gender|default:''|lower }}"
+                  data-item-image="{% if item.image_path %}{% static item.image_path %}{% endif %}"
+                >
+                  <div class="shop-thumb">
+                    {% if item.image_path %}
+                      <img src="{% static item.image_path %}" alt="{{ item.name }}">
+                    {% else %}
+                      <div class="shop-thumb-fallback">IMG</div>
+                    {% endif %}
+                  </div>
+
+                  <div class="shop-item-name">{{ item.name }}</div>
+                  <div class="shop-item-desc">{{ item.description|default:"No description yet." }}</div>
+
+                  <div class="shop-meta-row">
+                    <span class="shop-price">★ {{ item.price_stars }}</span>
+                    <span class="shop-owned" data-owned-for="{{ item.id }}">Owned 0</span>
+                  </div>
+
+                  <button type="button" class="shop-select-btn">Select</button>
+                </div>
+                {% endfor %}
+              {% endfor %}
+            </div>
+            <div class="shop-empty-state" id="shopMaleEmptyState" style="display:none;">
+              No male items match this filter.
+            </div>
+          </div>
+
+          <div class="shop-gender-section" id="shopFemaleSection">
+            <div class="shop-gender-head">
+              <span class="shop-gender-badge shop-gender-badge-female">Female</span>
+              <h3>Female Items</h3>
+            </div>
+            <div class="shop-grid" id="shopFemaleGrid"></div>
+            <div class="shop-empty-state" id="shopFemaleEmptyState" style="display:none;">
+              No female items match this filter.
+            </div>
+          </div>
+
+          <div class="shop-gender-section" id="shopCommonSection">
+            <div class="shop-gender-head">
+              <span class="shop-gender-badge shop-gender-badge-common">Common</span>
+              <h3>Common Items</h3>
+            </div>
+            <div class="shop-grid" id="shopCommonGrid"></div>
+            <div class="shop-empty-state" id="shopCommonEmptyState" style="display:none;">
+              No common items match this filter.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="shop-side">
+        <div class="shop-summary-card">
+          <h2>Purchase Summary</h2>
+
+          <div class="summary-line">
+            <span>Selected Items</span>
+            <strong id="summaryCount">0</strong>
+          </div>
+
+          <div class="summary-line">
+            <span>Total Cost</span>
+            <strong id="summaryCost">0</strong>
+          </div>
+
+          <div class="summary-line">
+            <span>Remaining Stars</span>
+            <strong id="summaryRemain">{{ shop_star_count }}</strong>
+          </div>
+
+          <div class="summary-list" id="summaryList">
+            <div class="summary-empty">No items selected.</div>
+          </div>
+
+          <button type="button" class="shop-buy-btn" id="shopBuyBtn">Buy Selected</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+<script src="{% static 'shop/js/shop.js' %}?v=20260401_shop_common_gender_1"></script>
+{% endblock %}

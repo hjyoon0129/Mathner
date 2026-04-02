@@ -1,0 +1,121 @@
+.nickname-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 9999;
+  background: rgba(2, 6, 18, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.nickname-modal.on {
+  display: flex;
+}
+
+.nickname-modal-dialog {
+  width: min(92vw, 520px);
+}
+
+.nickname-modal-card {
+  width: 100%;
+  padding: 30px 28px 24px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #0f1830, #091224);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+  color: #ffffff;
+}
+
+.nickname-modal-card h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #ffffff;
+}
+
+.nickname-modal-card p {
+  margin: 0 0 18px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #b7c3d9;
+}
+
+.nickname-row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.nickname-row input {
+  flex: 1;
+  min-width: 0;
+  height: 50px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: #0b1730;
+  color: #ffffff;
+  padding: 0 16px;
+  font-size: 16px;
+  outline: none;
+}
+
+.nickname-row input::placeholder {
+  color: rgba(255,255,255,0.42);
+}
+
+.nickname-row input:focus {
+  border-color: rgba(111,127,255,0.65);
+  box-shadow: 0 0 0 3px rgba(111,127,255,0.16);
+}
+
+.nickname-row button {
+  flex: 0 0 110px;
+  height: 50px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #6f7fff, #53deb0);
+  color: #09111d;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.nickname-row button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+#nicknameMessage {
+  margin-top: 12px;
+  min-height: 22px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #b7c3d9;
+}
+
+@media (max-width: 640px) {
+  .nickname-modal {
+    padding: 16px;
+  }
+
+  .nickname-modal-card {
+    padding: 24px 20px 20px;
+    border-radius: 20px;
+  }
+
+  .nickname-modal-card h2 {
+    font-size: 18px;
+  }
+
+  .nickname-row {
+    flex-direction: column;
+  }
+
+  .nickname-row button {
+    flex: none;
+    width: 100%;
+  }
+}

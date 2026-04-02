@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/core/landing.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<section class="hero" id="hero">
+    <div class="container hero-shell">
+        <div class="hero-inner">
+            <div class="hero-text">
+                <p class="eyebrow">Elementary Math Web App</p>
+                <h1>Play Math.<br>Earn Stars.</h1>
+                <p class="hero-desc">
+                    A fun elementary math web app for grades 1 to 4.
+                    Choose your grade, select an operation, clear levels,
+                    build streaks, trigger fever mode, and earn stars you can later use
+                    for avatar and room customization.
+                </p>
+
+                <div class="hero-buttons">
+                    <a href="{% url 'core:play' %}" class="btn btn-primary btn-lg">Start Game</a>
+                    <a href="#play-preview" class="btn btn-outline btn-lg">See Game</a>
+                </div>
+
+                <div class="hero-stats">
+                    <div class="stat-card">
+                        <strong>Grades 1–4</strong>
+                        <span>Elementary-friendly learning path</span>
+                    </div>
+                    <div class="stat-card">
+                        <strong>4 Operations</strong>
+                        <span>Add, Subtract, Multiply, Divide</span>
+                    </div>
+                    <div class="stat-card">
+                        <strong>Stars</strong>
+                        <span>Rewards for play and customization</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-visual">
+                <div class="visual-card visual-main">
+                    <div class="visual-badge">Math Game</div>
+                    <h3>Short rounds, quick thinking, fun rewards</h3>
+                    <p>
+                        Solve as many problems as you can within the time limit,
+                        build your streak, and earn stars through smart and fast play.
+                    </p>
+                </div>
+
+                <div class="visual-stack">
+                    <div class="visual-card">
+                        <div class="visual-badge">Fever Mode</div>
+                        <p>Consecutive correct answers unlock faster, more exciting play.</p>
+                    </div>
+                    <div class="visual-card">
+                        <div class="visual-badge">Customization</div>
+                        <p>Collected stars will connect to avatar items and room decoration.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section" id="features">
+    <div class="container narrow-shell">
+        <div class="section-heading">
+            <p class="section-label">Features</p>
+            <h2>A math game with progression and expression</h2>
+            <p>
+                mathner combines elementary math practice, time-based gameplay,
+                star rewards, and later social customization in one flow.
+            </p>
+        </div>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🎓</div>
+                <h3>Grade-Based Learning</h3>
+                <p>Play by grade level from Grade 1 to Grade 4 with a more suitable difficulty path.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">➕</div>
+                <h3>4 Operation Modes</h3>
+                <p>Train addition, subtraction, multiplication, and division separately.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">⏱️</div>
+                <h3>Time Challenge</h3>
+                <p>Solve as many problems as possible within the timer to improve speed and focus.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🔥</div>
+                <h3>Fever & Combo</h3>
+                <p>Consecutive correct answers create streaks, effects, and more exciting play.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">⭐</div>
+                <h3>Star Rewards</h3>
+                <p>Earn stars from successful play and keep building your collection.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🛋️</div>
+                <h3>Avatar & Room Link</h3>
+                <p>Stars will later be used to decorate your avatar and personal room.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section alt-section" id="play-preview">
+    <div class="container narrow-shell">
+        <div class="section-heading">
+            <p class="section-label">Game Preview</p>
+            <h2>Choose your grade, operation, and level</h2>
+            <p>
+                The game is designed as a simple web app flow:
+                pick a grade, choose the operation, enter level 1 to 4, and solve under time pressure.
+            </p>
+        </div>
+
+        <div class="play-preview-card">
+            <div class="game-flow-grid">
+                <div class="flow-card">
+                    <strong>Step 1</strong>
+                    <span>Choose Grade</span>
+                    <p>Grade 1, Grade 2, Grade 3, Grade 4</p>
+                </div>
+
+                <div class="flow-card">
+                    <strong>Step 2</strong>
+                    <span>Choose Operation</span>
+                    <p>Addition, Subtraction, Multiplication, Division</p>
+                </div>
+
+                <div class="flow-card">
+                    <strong>Step 3</strong>
+                    <span>Choose Level</span>
+                    <p>Level 1 to Level 4 based on difficulty</p>
+                </div>
+            </div>
+
+            <div class="grade-path-box">
+                <h3>Recommended learning path</h3>
+                <div class="grade-path-grid">
+                    <div class="grade-card">
+                        <strong>Grade 1</strong>
+                        <p>Addition · Subtraction basics</p>
+                    </div>
+                    <div class="grade-card">
+                        <strong>Grade 2</strong>
+                        <p>Faster addition · subtraction practice</p>
+                    </div>
+                    <div class="grade-card">
+                        <strong>Grade 3</strong>
+                        <p>Multiplication begins</p>
+                    </div>
+                    <div class="grade-card">
+                        <strong>Grade 4</strong>
+                        <p>Division + mixed operation challenge</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="play-preview-board">
+                <div class="play-preview-top">
+                    <div class="preview-chip">Grade 3</div>
+                    <div class="preview-chip">Multiplication</div>
+                    <div class="preview-chip">Level 2</div>
+                    <div class="preview-chip fever-chip">Fever Mode</div>
+                </div>
+
+                <div class="preview-question">6 × 7 = ?</div>
+
+                <div class="preview-answers">
+                    <div class="preview-answer">40</div>
+                    <div class="preview-answer active">42</div>
+                    <div class="preview-answer">45</div>
+                    <div class="preview-answer">48</div>
+                </div>
+
+                <div class="play-preview-bottom">
+                    <div class="preview-metric">
+                        <strong>Correct Answers</strong>
+                        <span>18</span>
+                    </div>
+                    <div class="preview-metric">
+                        <strong>Combo</strong>
+                        <span>x5</span>
+                    </div>
+                    <div class="preview-metric">
+                        <strong>Stars Earned</strong>
+                        <span>+24</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="play-preview-actions">
+                {% if request.user.is_authenticated %}
+                    <a href="{% url 'core:play' %}" class="btn btn-primary btn-lg">Enter Full Game</a>
+                {% else %}
+                    <a href="/accounts/login/?next=/play/" class="btn btn-primary btn-lg">Enter Full Game</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section" id="how-it-works">
+    <div class="container narrow-shell">
+        <div class="section-heading">
+            <p class="section-label">How It Works</p>
+            <h2>Learn, clear, collect, and customize</h2>
+            <p>
+                The loop is simple: solve math quickly, earn stars,
+                and use those stars later to grow your avatar and room.
+            </p>
+        </div>
+
+        <div class="how-grid">
+            <div class="how-card">
+                <span class="how-number">1</span>
+                <h3>Choose</h3>
+                <p>Select your grade, operation, and level before entering the round.</p>
+            </div>
+
+            <div class="how-card">
+                <span class="how-number">2</span>
+                <h3>Solve</h3>
+                <p>Answer as many questions as possible within the time limit.</p>
+            </div>
+
+            <div class="how-card">
+                <span class="how-number">3</span>
+                <h3>Earn Stars</h3>
+                <p>Correct answers, combos, and strong rounds help you earn more stars.</p>
+            </div>
+
+            <div class="how-card">
+                <span class="how-number">4</span>
+                <h3>Customize Later</h3>
+                <p>Use saved stars for avatar style and room decoration as the platform grows.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section alt-section" id="avatar">
+    <div class="container room-grid">
+        <div class="room-copy">
+            <div class="section-heading left">
+                <p class="section-label">Stars → Avatar & Room</p>
+                <h2>Your stars connect play to personalization</h2>
+                <p>
+                    Stars are the main reward currency. Instead of cards or XP,
+                    your progress is stored through stars that can later be spent
+                    on avatar items and room decoration.
+                </p>
+            </div>
+
+            <div class="room-feature-list">
+                <div class="room-feature">Stars from gameplay success</div>
+                <div class="room-feature">Avatar item customization</div>
+                <div class="room-feature">Room decoration and background style</div>
+                <div class="room-feature">Personal profile growth through collected stars</div>
+            </div>
+        </div>
+
+        <div class="mock-room">
+            <div class="mock-room-top">
+                <span>@my_space</span>
+                <span>Stars 1,280</span>
+            </div>
+
+            <div class="mock-room-area">
+                <div class="avatar-dot"></div>
+                <div class="room-item room-item-1"></div>
+                <div class="room-item room-item-2"></div>
+                <div class="room-item room-item-3"></div>
+            </div>
+
+            <div class="mock-room-bottom">
+                <strong>Future Customization</strong>
+                <p>"Use stars for room themes."</p>
+                <p>"Unlock more avatar expression."</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section" id="rank">
+    <div class="container narrow-shell">
+        <div class="section-heading">
+            <p class="section-label">Progress Preview</p>
+            <h2>Built around correct answers and future ranks</h2>
+            <p>
+                Instead of a fixed tier system for now, progress can grow around total correct answers
+                and future milestone-based rank names.
+            </p>
+        </div>
+
+        <div class="milestone-grid">
+            <div class="milestone-card">
+                <strong>100 Correct Answers</strong>
+                <p>First milestone reached</p>
+            </div>
+            <div class="milestone-card">
+                <strong>500 Correct Answers</strong>
+                <p>Bigger progress marker unlocked</p>
+            </div>
+            <div class="milestone-card">
+                <strong>More Ranks Later</strong>
+                <p>Future naming system can expand with player growth</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section" id="pricing">
+    <div class="container narrow-shell">
+        <div class="section-heading">
+            <p class="section-label">Pricing</p>
+            <h2>Start free, then unlock more turns</h2>
+            <p>
+                Everyone can start with free daily access.
+                Players who want more practice can purchase extra daily turns through entry tickets.
+            </p>
+        </div>
+
+        <div class="pricing-grid">
+            <div class="price-card">
+                <h3>Free</h3>
+                <p class="price">$0</p>
+                <ul>
+                    <li>3 free plays per day</li>
+                    <li>Choose grade, operation, and level</li>
+                    <li>Earn stars through gameplay</li>
+                </ul>
+                {% if request.user.is_authenticated %}
+                    <a href="{% url 'core:play' %}" class="btn btn-outline full">Start Free</a>
+                {% else %}
+                    <a href="/accounts/login/?next=/play/" class="btn btn-outline full">Start Free</a>
+                {% endif %}
+            </div>
+
+            <div class="price-card featured">
+                <h3>Entry Ticket 10</h3>
+                <p class="price">$9.99</p>
+                <ul>
+                    <li>10 turns per day</li>
+                    <li>More daily math practice</li>
+                    <li>More chances to earn stars</li>
+                </ul>
+                <a href="#" class="btn btn-primary full">Get 10 Turns</a>
+            </div>
+
+            <div class="price-card">
+                <h3>Entry Ticket 20</h3>
+                <p class="price">$19.99</p>
+                <ul>
+                    <li>20 turns per day</li>
+                    <li>Higher practice volume</li>
+                    <li>Faster star collection</li>
+                </ul>
+                <a href="#" class="btn btn-outline full">Get 20 Turns</a>
+            </div>
+        </div>
+
+        <div class="cta-box cta-inline">
+            <h2>Ready to make math more fun?</h2>
+            <p>Start with 3 free plays a day, build your streak, and collect stars.</p>
+            <div class="hero-buttons center">
+                {% if request.user.is_authenticated %}
+                    <a href="{% url 'core:play' %}" class="btn btn-primary btn-lg">Enter mathner</a>
+                {% else %}
+                    <a href="/accounts/login/?next=/play/" class="btn btn-primary btn-lg">Enter mathner</a>
+                {% endif %}
+                <a href="#avatar" class="btn btn-outline btn-lg btn-white">See Star Rewards</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

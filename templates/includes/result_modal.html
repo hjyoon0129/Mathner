@@ -1,0 +1,38 @@
+<div id="resultModal" class="result-modal" aria-hidden="true">
+  <div class="result-modal__backdrop"></div>
+
+  <div class="result-modal__dialog">
+    <div class="result-modal__header">
+      <h3>Result</h3>
+      <button type="button" id="resultCloseBtn" class="result-close-btn">Close</button>
+    </div>
+
+    <div class="result-modal__body">
+      <div class="result-grid">
+        <div class="result-box">
+          <span>Correct</span>
+          <strong id="resultCorrect">0</strong>
+        </div>
+        <div class="result-box">
+          <span>Wrong</span>
+          <strong id="resultWrong">0</strong>
+        </div>
+        <div class="result-box">
+          <span>Accuracy</span>
+          <strong id="resultAccuracy">0%</strong>
+        </div>
+        <div class="result-box">
+          <span>Stars Earned</span>
+          <strong id="resultStars">0</strong>
+        </div>
+      </div>
+
+      <p id="resultMessage" class="result-message">Nice work. Keep collecting stars.</p>
+    </div>
+
+    <div class="result-modal__footer">
+      <button type="button" id="submitResultBtn" class="result-btn primary">Submit</button>
+      <button type="button" id="playAgainBtn" class="result-btn secondary">Play Again</button>
+    </div>
+  </div>
+</div>

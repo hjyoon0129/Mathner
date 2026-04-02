@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+{% load socialaccount %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/core/auth.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="auth-page">
+  <div class="auth-shell">
+    <div class="auth-card">
+      <div class="auth-head">
+        <p class="auth-eyebrow">Welcome back</p>
+        <h1>Sign in</h1>
+        <p class="auth-sub">
+          Login to continue to Mathner.
+        </p>
+      </div>
+
+      <a href="{% provider_login_url 'google' process='login' next=request.GET.next|default:'/' %}" class="auth-google-btn">
+        Continue with Google
+      </a>
+
+      <div class="auth-divider">
+        <span>or</span>
+      </div>
+
+      <form method="post" action="{% url 'account_login' %}" class="auth-form">
+        {% csrf_token %}
+        {% if redirect_field_value %}
+          <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+        {% endif %}
+
+        {% if form.non_field_errors %}
+          <div class="auth-alert">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+
+        <div class="auth-field">
+          <label for="{{ form.login.id_for_label }}">Email</label>
+          {{ form.login }}
+          {% if form.login.errors %}
+            <div class="auth-error">{{ form.login.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div class="auth-field">
+          <div class="auth-label-row">
+            <label for="{{ form.password.id_for_label }}">Password</label>
+            <a href="{% url 'account_reset_password' %}" class="auth-link">Forgot your password?</a>
+          </div>
+          {{ form.password }}
+          {% if form.password.errors %}
+            <div class="auth-error">{{ form.password.errors }}</div>
+          {% endif %}
+        </div>
+
+        {% if form.remember %}
+        <div class="auth-check">
+          <label>
+            {{ form.remember }}
+            <span>Remember me</span>
+          </label>
+        </div>
+        {% endif %}
+
+        <button type="submit" class="auth-submit-btn">Sign in</button>
+      </form>
+
+      <div class="auth-foot">
+        Don’t have an account?
+        <a href="{% url 'account_signup' %}?next={{ request.GET.next|default:'/' }}">Create account</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,154 @@
+﻿{% load static %}
+{% load socialaccount %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}mathner{% endblock %}</title>
+
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/nickname_modal.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-wrap">
+      <a href="{% url 'core:landing' %}" class="brand">
+        <span class="brand-logo">m</span>
+        <span class="brand-text">mathner</span>
+      </a>
+
+      <nav class="main-nav">
+
+        <a href="{% url 'core:landing' %}#features">Features</a>
+        <a href="{% url 'core:landing' %}#how-it-works">How It Works</a>
+        <a href="{% url 'core:landing' %}#pricing">Pricing</a>
+        <a href="{% url 'core:landing' %}#rank">Rank</a>
+        <a href="{% url 'core:landing' %}#avatar">Avatar</a>
+      </nav>
+
+      <div class="nav-actions">
+        <div class="nav-chip nav-chip-status">
+          <span class="nav-status-item">
+            <span class="nav-chip-icon">★</span>
+            <span class="nav-chip-label">Stars</span>
+            <span id="navStarCount">{{ nav_star_count|default_if_none:0 }}</span>
+          </span>
+
+          <span class="nav-status-divider">·</span>
+
+          <span class="nav-status-item">
+            <span class="nav-chip-icon">🔑</span>
+            <span class="nav-chip-label">Keys</span>
+            <span id="navKeyCount">{{ nav_key_count|default_if_none:0 }}</span>
+          </span>
+        </div>
+
+        <a href="{% url 'core:play' %}" class="btn btn-play">Play</a>
+
+        {% if user.is_authenticated %}
+          <a href="{% url 'avatar:my_room' %}" class="btn btn-outline">Avatar</a>
+
+          <div class="nav-user-menu">
+            <button type="button" class="nav-user-trigger" id="navUserTrigger" aria-expanded="false">
+              <span class="nav-user-name">{{ my_nickname|default:user.username|default:"User" }}</span>
+              <span class="nav-user-caret">▾</span>
+            </button>
+
+            <div class="nav-user-dropdown" id="navUserDropdown">
+              <a href="#" id="openNicknameChange">Change Nickname</a>
+              <a href="{% url 'avatar:my_room' %}">Avatar Room</a>
+              <a href="{% url 'core:landing' %}#rank">Ranking</a>
+
+              <form method="post" action="{% url 'account_logout' %}" class="nav-dropdown-form">
+                {% csrf_token %}
+                <button type="submit" class="nav-dropdown-btn">Logout</button>
+              </form>
+            </div>
+          </div>
+        {% else %}
+          <a href="{% provider_login_url 'google' process='login' next='/' %}" class="btn btn-google">
+            Google Login
+          </a>
+          <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn btn-outline">Sign in</a>
+          <a href="{% url 'account_signup' %}?next={{ request.path }}" class="btn btn-solid">Sign up</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block footer %}
+    {% include "includes/footer.html" %}
+  {% endblock %}
+
+  {% if user.is_authenticated %}
+    {% include "includes/nickname_modal.html" %}
+  {% endif %}
+
+  {% block extra_js %}{% endblock %}
+
+  {% if user.is_authenticated %}
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const trigger = document.getElementById("navUserTrigger");
+      const dropdown = document.getElementById("navUserDropdown");
+      const openNicknameChange = document.getElementById("openNicknameChange");
+      const nicknameTitle = document.getElementById("nicknameModalTitle");
+      const nicknameDesc = document.getElementById("nicknameModalDesc");
+      const nicknameInput = document.getElementById("nicknameInput");
+
+      if (trigger && dropdown) {
+        trigger.addEventListener("click", function (e) {
+          e.stopPropagation();
+          const opened = dropdown.classList.toggle("open");
+          trigger.setAttribute("aria-expanded", opened ? "true" : "false");
+        });
+
+        document.addEventListener("click", function (e) {
+          if (!trigger.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.remove("open");
+            trigger.setAttribute("aria-expanded", "false");
+          }
+        });
+      }
+
+      if (openNicknameChange) {
+        openNicknameChange.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (nicknameTitle) {
+            nicknameTitle.textContent = "Change your nickname";
+          }
+
+          if (nicknameDesc) {
+            nicknameDesc.textContent = "Nicknames can be changed once every 30 days.";
+          }
+
+          if (window.openNicknameModal) {
+            window.openNicknameModal();
+          }
+
+          if (nicknameInput) {
+            nicknameInput.value = "";
+          }
+
+          if (dropdown) {
+            dropdown.classList.remove("open");
+          }
+
+          if (trigger) {
+            trigger.setAttribute("aria-expanded", "false");
+          }
+        });
+      }
+    });
+  </script>
+  {% endif %}
+</body>
+</html>

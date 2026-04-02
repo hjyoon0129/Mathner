@@ -1,0 +1,256 @@
+<div
+  id="nicknameModal"
+  class="nickname-modal {% if needs_nickname %}on{% endif %}"
+  style="
+    position: fixed;
+    inset: 0;
+    {% if needs_nickname %}display: flex;{% else %}display: none;{% endif %}
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 99999;
+    background: rgba(2, 6, 18, 0.72);
+    backdrop-filter: blur(8px);
+  "
+>
+  <div
+    id="nicknameModalDialog"
+    style="
+      width: min(92vw, 520px);
+      display: block;
+    "
+  >
+    <div
+      id="nicknameModalCard"
+      style="
+        position: relative;
+        width: 100%;
+        padding: 30px 28px 24px;
+        border-radius: 24px;
+        background: linear-gradient(180deg, #0f1830, #091224);
+        border: 1px solid rgba(255,255,255,0.10);
+        box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+        color: #ffffff;
+      "
+    >
+      <button
+        type="button"
+        id="nicknameCloseBtn"
+        aria-label="Close nickname modal"
+        style="
+          position: absolute;
+          top: 14px;
+          right: 14px;
+          width: 38px;
+          height: 38px;
+          border: none;
+          border-radius: 999px;
+          background: rgba(255,255,255,0.08);
+          color: #ffffff;
+          font-size: 22px;
+          line-height: 1;
+          cursor: pointer;
+          display: {% if needs_nickname %}none{% else %}flex{% endif %};
+          align-items: center;
+          justify-content: center;
+        "
+      >
+        ×
+      </button>
+
+      <h2
+        id="nicknameModalTitle"
+        style="
+          margin: 0 0 8px;
+          font-size: 28px;
+          font-weight: 800;
+          line-height: 1.2;
+          color: #ffffff;
+        "
+      >
+        {% if needs_nickname %}Create your nickname{% else %}Change your nickname{% endif %}
+      </h2>
+
+      <p
+        id="nicknameModalDesc"
+        style="
+          margin: 0 0 18px;
+          font-size: 14px;
+          line-height: 1.5;
+          color: #b7c3d9;
+        "
+      >
+        {% if needs_nickname %}
+          Please set a unique nickname before continuing.
+        {% else %}
+          Nicknames can be changed once every 30 days.
+        {% endif %}
+      </p>
+
+      <form id="nicknameForm">
+        {% csrf_token %}
+
+        <div
+          class="nickname-row"
+          style="
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
+            flex-wrap: wrap;
+          "
+        >
+          <input
+            type="text"
+            id="nicknameInput"
+            name="nickname"
+            maxlength="20"
+            placeholder="Enter nickname"
+            autocomplete="off"
+            style="
+              flex: 1 1 280px;
+              min-width: 0;
+              height: 50px;
+              border-radius: 14px;
+              border: 1px solid rgba(255,255,255,0.10);
+              background: #0b1730;
+              color: #ffffff;
+              padding: 0 16px;
+              font-size: 16px;
+              outline: none;
+            "
+          >
+
+          <button
+            type="submit"
+            id="nicknameSaveBtn"
+            style="
+              flex: 0 0 110px;
+              height: 50px;
+              border: none;
+              border-radius: 14px;
+              background: linear-gradient(135deg, #6f7fff, #53deb0);
+              color: #09111d;
+              font-size: 16px;
+              font-weight: 800;
+              cursor: pointer;
+            "
+          >
+            Save
+          </button>
+        </div>
+
+        <p
+          id="nicknameMessage"
+          style="
+            margin-top: 12px;
+            min-height: 22px;
+            font-size: 14px;
+            line-height: 1.4;
+            color: #b7c3d9;
+          "
+        ></p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const modal = document.getElementById("nicknameModal");
+    const form = document.getElementById("nicknameForm");
+    const input = document.getElementById("nicknameInput");
+    const message = document.getElementById("nicknameMessage");
+    const saveBtn = document.getElementById("nicknameSaveBtn");
+    const closeBtn = document.getElementById("nicknameCloseBtn");
+    const forceSetup = {{ needs_nickname|yesno:"true,false" }};
+
+    if (!modal || !form || !input || !message || !saveBtn) return;
+
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(";").shift();
+      return "";
+    }
+
+    window.openNicknameModal = function () {
+      modal.classList.add("on");
+      modal.style.display = "flex";
+      if (closeBtn) {
+        closeBtn.style.display = forceSetup ? "none" : "flex";
+      }
+      setTimeout(() => input.focus(), 50);
+    };
+
+    window.closeNicknameModal = function () {
+      if (forceSetup) return;
+      modal.classList.remove("on");
+      modal.style.display = "none";
+    };
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", function () {
+        window.closeNicknameModal();
+      });
+    }
+
+    modal.addEventListener("click", function (e) {
+      if (e.target === modal && !forceSetup) {
+        window.closeNicknameModal();
+      }
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && !forceSetup && modal.style.display !== "none") {
+        window.closeNicknameModal();
+      }
+    });
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const nickname = input.value.trim();
+      if (!nickname) {
+        message.textContent = "Please enter a nickname.";
+        return;
+      }
+
+      saveBtn.disabled = true;
+      message.textContent = "Saving...";
+
+      try {
+        const response = await fetch("/accounts-api/save-nickname/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken"),
+          },
+          body: JSON.stringify({ nickname }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          message.textContent = data.message || "Failed to save nickname.";
+          saveBtn.disabled = false;
+          return;
+        }
+
+        message.textContent = data.message || "Nickname saved successfully.";
+
+        if (!forceSetup) {
+          window.closeNicknameModal();
+        } else {
+          modal.style.display = "none";
+        }
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 250);
+      } catch (error) {
+        message.textContent = "Network error.";
+        saveBtn.disabled = false;
+      }
+    });
+  })();
+</script>
