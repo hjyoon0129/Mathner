@@ -1,20 +1,420 @@
-<header class="landing-header">
-    <div class="container nav-inner">
-        <a href="{% url 'core:landing' %}" class="logo">Mathner</a>
+{% load static %}
 
-        <nav class="nav-menu">
-            <a href="{% url 'core:landing' %}#hero">Home</a>
-            <a href="{% url 'core:landing' %}#features">Features</a>
-            <a href="{% url 'core:landing' %}#play-preview">Game</a>
-            <a href="{% url 'core:landing' %}#how-it-works">How It Works</a>
-            <a href="{% url 'core:landing' %}#room-preview">Room</a>
-            <a href="{% url 'core:landing' %}#ranking-preview">Ranking</a>
-            <a href="{% url 'core:landing' %}#pricing-preview">Pricing</a>
+<header class="site-header">
+    <div class="site-header-inner">
+        <a href="{% url 'core:landing' %}" class="site-logo-wrap">
+            <span class="site-logo-badge">m</span>
+            <span class="site-logo-text">mathner</span>
+        </a>
+
+        <nav class="site-nav-center desktop-only">
+            <a href="javascript:void(0)" class="js-nav-link" data-target="why-mathner">Features</a>
+            <a href="javascript:void(0)" class="js-nav-link" data-target="screen-showcase">How It Works</a>
+            <a href="javascript:void(0)" class="js-nav-link" data-target="pricing">Pricing</a>
+            <a href="javascript:void(0)" class="js-nav-link" data-target="ranking-preview">Rank</a>
+            <a href="javascript:void(0)" class="js-nav-link" data-target="avatar">Avatar</a>
         </nav>
 
-        <div class="nav-actions">
-            <a href="{% url 'core:landing' %}#play-preview" class="btn btn-outline">Preview</a>
-            <a href="{% url 'core:play' %}" class="btn btn-primary">Start Now</a>
+        <div class="site-nav-right desktop-only">
+            <div class="site-currency-pill">
+                <span>★ {{ total_stars|default:0 }}</span>
+                <span class="site-divider">·</span>
+                <span>🔑 {{ remaining_keys|default:0 }}</span>
+            </div>
+
+            <a href="{% url 'core:play' %}" class="site-head-btn {% if request.path == '/play/' %}is-active{% endif %}">Play</a>
+
+            <a href="{% if user.is_authenticated %}{% url 'avatar:my_room' %}{% else %}{% url 'account_login' %}?next={% url 'avatar:my_room' %}{% endif %}"
+               class="site-head-btn site-head-btn-secondary {% if '/avatar/' in request.path %}is-active{% endif %}">
+                Avatar
+            </a>
+
+            {% if user.is_authenticated %}
+                <div class="site-user-chip">{{ user.username|default:"User" }}</div>
+            {% else %}
+                <a href="{% url 'account_login' %}" class="site-user-chip">Login</a>
+            {% endif %}
+        </div>
+
+        <div class="mobile-header-right mobile-only">
+            <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mobileNavDrawer">
+                ☰
+            </button>
+        </div>
+    </div>
+
+    <div class="mobile-nav-drawer mobile-only" id="mobileNavDrawer">
+        <div class="mobile-drawer-card">
+            <div class="mobile-drawer-top">
+                <div class="mobile-drawer-title">Menu</div>
+                <button type="button" class="mobile-drawer-close" id="mobileMenuClose" aria-label="Close menu">✕</button>
+            </div>
+
+            <div class="mobile-drawer-links">
+                <a href="{% url 'core:play' %}" class="mobile-drawer-link {% if request.path == '/play/' %}is-active{% endif %}">Play</a>
+
+                <a href="{% if user.is_authenticated %}{% url 'avatar:my_room' %}{% else %}{% url 'account_login' %}?next={% url 'avatar:my_room' %}{% endif %}"
+                   class="mobile-drawer-link {% if '/avatar/' in request.path %}is-active{% endif %}">
+                    Avatar
+                </a>
+
+                <a href="{% url 'ranking:home' %}" class="mobile-drawer-link {% if '/ranking/' in request.path %}is-active{% endif %}">
+                    Ranking
+                </a>
+
+                <a href="javascript:void(0)" class="mobile-drawer-link js-nav-link" data-target="why-mathner">Features</a>
+                <a href="javascript:void(0)" class="mobile-drawer-link js-nav-link" data-target="screen-showcase">How It Works</a>
+                <a href="javascript:void(0)" class="mobile-drawer-link js-nav-link" data-target="pricing">Pricing</a>
+                <a href="javascript:void(0)" class="mobile-drawer-link js-nav-link" data-target="ranking-preview">Rank</a>
+                <a href="javascript:void(0)" class="mobile-drawer-link js-nav-link" data-target="avatar">Avatar Section</a>
+
+                {% if user.is_authenticated %}
+                    <a href="{% url 'account_logout' %}" class="mobile-drawer-link">Logout</a>
+                {% else %}
+                    <a href="{% url 'account_login' %}" class="mobile-drawer-link">Google Login</a>
+                {% endif %}
+            </div>
         </div>
     </div>
 </header>
+
+<style>
+html{
+  scroll-behavior:smooth;
+}
+
+.site-header{
+  position:sticky;
+  top:0;
+  z-index:13000;
+  background:#ffffff;
+  border-bottom:1px solid rgba(20,30,55,.08);
+}
+
+.site-header-inner{
+  width:min(1180px, calc(100% - 24px));
+  margin:0 auto;
+  min-height:68px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+}
+
+.site-logo-wrap{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  text-decoration:none;
+}
+
+.site-logo-badge{
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg, #7ea8ff 0%, #67e0cb 100%);
+  color:#4b49f5;
+  font-size:28px;
+  font-weight:1000;
+  line-height:1;
+}
+
+.site-logo-text{
+  color:#4b49f5;
+  font-size:22px;
+  font-weight:1000;
+  line-height:1;
+}
+
+.site-nav-center{
+  display:flex;
+  align-items:center;
+  gap:28px;
+}
+
+.site-nav-center a{
+  color:#2a3142;
+  text-decoration:none;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.site-nav-right{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.site-currency-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  min-height:42px;
+  padding:10px 16px;
+  border-radius:999px;
+  border:1px solid rgba(10,20,40,.10);
+  background:#ffffff;
+  color:#222b3d;
+  font-weight:900;
+  white-space:nowrap;
+  box-shadow:0 4px 14px rgba(0,0,0,.04);
+}
+
+.site-divider{
+  opacity:.35;
+}
+
+.site-head-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:44px;
+  padding:10px 18px;
+  border-radius:14px;
+  background:linear-gradient(135deg, #7ea8ff 0%, #67e0cb 100%);
+  color:#07101d;
+  font-weight:1000;
+  text-decoration:none;
+}
+
+.site-head-btn.site-head-btn-secondary{
+  background:#ffffff;
+  border:1px solid rgba(20,30,55,.12);
+  color:#223048;
+}
+
+.site-head-btn.is-active{
+  box-shadow:0 0 0 3px rgba(76,105,255,.12) inset;
+}
+
+.site-user-chip{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:44px;
+  padding:10px 16px;
+  border-radius:14px;
+  background:#eef1f7;
+  color:#283246;
+  text-decoration:none;
+  font-weight:900;
+}
+
+.mobile-only{
+  display:none;
+}
+
+.mobile-nav-drawer{
+  display:none;
+}
+
+.mobile-nav-drawer.is-open{
+  display:block;
+}
+
+@media (max-width: 768px){
+  .desktop-only{
+    display:none !important;
+  }
+
+  .mobile-only{
+    display:block;
+  }
+
+  .site-header-inner{
+    width:calc(100% - 16px);
+    min-height:60px;
+  }
+
+  .site-logo-badge{
+    width:34px;
+    height:34px;
+    font-size:24px;
+    border-radius:11px;
+  }
+
+  .site-logo-text{
+    font-size:20px;
+  }
+
+  .mobile-header-right{
+    margin-left:auto;
+  }
+
+  .mobile-menu-btn{
+    width:42px;
+    height:42px;
+    border:none;
+    border-radius:12px;
+    background:#eef1f7;
+    color:#223048;
+    font-size:22px;
+    font-weight:1000;
+    cursor:pointer;
+  }
+
+  .mobile-nav-drawer{
+    position:fixed;
+    inset:60px 0 0 0;
+    background:rgba(0,0,0,.42);
+    backdrop-filter:blur(3px);
+    padding:10px 8px 18px;
+  }
+
+  .mobile-drawer-card{
+    border-radius:18px;
+    background:#ffffff;
+    padding:12px;
+    box-shadow:0 18px 42px rgba(0,0,0,.18);
+  }
+
+  .mobile-drawer-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    margin-bottom:8px;
+  }
+
+  .mobile-drawer-title{
+    font-size:16px;
+    font-weight:1000;
+    color:#1e2940;
+  }
+
+  .mobile-drawer-close{
+    width:38px;
+    height:38px;
+    border:none;
+    border-radius:12px;
+    background:#eef1f7;
+    color:#223048;
+    font-size:18px;
+    font-weight:1000;
+    cursor:pointer;
+  }
+
+  .mobile-drawer-links{
+    display:grid;
+    gap:8px;
+  }
+
+  .mobile-drawer-link{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:46px;
+    border-radius:14px;
+    text-decoration:none;
+    font-weight:900;
+    color:#223048;
+    background:#f5f7fb;
+    border:1px solid rgba(20,30,55,.08);
+    cursor:pointer;
+  }
+
+  .mobile-drawer-link.is-active{
+    background:linear-gradient(135deg, #7ea8ff 0%, #67e0cb 100%);
+    color:#07101d;
+    border-color:transparent;
+  }
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const btn = document.getElementById("mobileMenuBtn");
+    const closeBtn = document.getElementById("mobileMenuClose");
+    const drawer = document.getElementById("mobileNavDrawer");
+    const landingPath = "{% url 'core:landing' %}";
+
+    function openDrawer() {
+        if (!drawer || !btn) return;
+        drawer.classList.add("is-open");
+        btn.setAttribute("aria-expanded", "true");
+        document.body.style.overflow = "hidden";
+    }
+
+    function closeDrawer() {
+        if (!drawer || !btn) return;
+        drawer.classList.remove("is-open");
+        btn.setAttribute("aria-expanded", "false");
+        document.body.style.overflow = "";
+    }
+
+    function getHeaderOffset() {
+        const header = document.querySelector(".site-header");
+        return header ? header.offsetHeight + 14 : 84;
+    }
+
+    function scrollToSection(sectionId) {
+        const target = document.getElementById(sectionId);
+        if (!target) return false;
+
+        const top = target.getBoundingClientRect().top + window.pageYOffset - getHeaderOffset();
+        window.scrollTo({
+            top: top,
+            behavior: "smooth"
+        });
+        return true;
+    }
+
+    function goToSection(sectionId) {
+        const currentPath = window.location.pathname;
+        const onLanding = currentPath === landingPath;
+
+        if (onLanding) {
+            const ok = scrollToSection(sectionId);
+            if (ok) {
+                history.replaceState(null, "", "#" + sectionId);
+            }
+        } else {
+            window.location.href = landingPath + "#" + sectionId;
+        }
+    }
+
+    if (btn) {
+        btn.addEventListener("click", function () {
+            if (drawer && drawer.classList.contains("is-open")) {
+                closeDrawer();
+            } else {
+                openDrawer();
+            }
+        });
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener("click", closeDrawer);
+    }
+
+    if (drawer) {
+        drawer.addEventListener("click", function (e) {
+            if (e.target === drawer) {
+                closeDrawer();
+            }
+        });
+    }
+
+    document.querySelectorAll(".js-nav-link").forEach(function (link) {
+        link.addEventListener("click", function (e) {
+            e.preventDefault();
+            const sectionId = this.dataset.target;
+            closeDrawer();
+            if (sectionId) {
+                goToSection(sectionId);
+            }
+        });
+    });
+
+    if (window.location.hash) {
+        const initialId = window.location.hash.replace("#", "");
+        setTimeout(function () {
+            scrollToSection(initialId);
+        }, 120);
+    }
+});
+</script>

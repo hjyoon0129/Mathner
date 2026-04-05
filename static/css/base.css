@@ -532,3 +532,30 @@ main {
     width: calc(100% - 20px);
   }
 }
+.footer-copy{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.footer-contact{
+  margin-top:6px;
+  font-size:13px;
+  color:#b8c5da;
+}
+
+.footer-contact a{
+  color:#ffffff;
+  font-weight:700;
+}
+
+.footer-contact a:hover{
+  color:#8fd3ff;
+}
+
+@media (max-width: 768px){
+  .footer-contact{
+    font-size:12px;
+    line-height:1.5;
+  }
+}

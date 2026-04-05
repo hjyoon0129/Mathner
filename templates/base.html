@@ -10,6 +10,466 @@
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
   <link rel="stylesheet" href="{% static 'css/nickname_modal.css' %}">
   {% block extra_css %}{% endblock %}
+
+  <style>
+    html, body{
+      margin:0;
+      padding:0;
+    }
+
+    .site-header{
+      position:sticky;
+      top:0;
+      z-index:14000;
+      background:#fff;
+      border-bottom:1px solid rgba(15,24,44,.08);
+    }
+
+    .nav-wrap{
+      width:min(1180px, calc(100% - 20px));
+      margin:0 auto;
+      min-height:68px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+    }
+
+    .brand{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      text-decoration:none;
+      flex:0 0 auto;
+    }
+
+    .brand-logo{
+      width:40px;
+      height:40px;
+      border-radius:12px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(135deg, #7ea8ff 0%, #67e0cb 100%);
+      color:#4b49f5;
+      font-size:28px;
+      font-weight:1000;
+      line-height:1;
+      box-shadow:0 10px 24px rgba(98, 148, 255, .22);
+    }
+
+    .brand-text{
+      font-size:22px;
+      font-weight:1000;
+      color:#4b49f5;
+      line-height:1;
+    }
+
+    .main-nav{
+      display:flex;
+      align-items:center;
+      gap:26px;
+    }
+
+    .main-nav a{
+      color:#263042;
+      text-decoration:none;
+      font-size:15px;
+      font-weight:700;
+    }
+
+    .nav-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+
+    .nav-chip.nav-chip-status{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      min-height:42px;
+      padding:10px 16px;
+      border-radius:999px;
+      border:1px solid rgba(10,20,40,.10);
+      background:#fff;
+      color:#202a3d;
+      font-weight:900;
+      white-space:nowrap;
+      box-shadow:0 4px 14px rgba(0,0,0,.04);
+      flex:0 1 auto;
+    }
+
+    .nav-status-item{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+    }
+
+    .nav-status-divider{
+      opacity:.35;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:44px;
+      padding:10px 18px;
+      border-radius:14px;
+      text-decoration:none;
+      font-weight:1000;
+      border:none;
+      cursor:pointer;
+      transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .btn:hover{
+      transform:translateY(-1px);
+    }
+
+    .btn-play,
+    .btn-solid{
+      background:linear-gradient(135deg, #7ea8ff 0%, #67e0cb 100%);
+      color:#07101d;
+      box-shadow:0 10px 24px rgba(95, 161, 255, .20);
+    }
+
+    .btn-outline{
+      background:#fff;
+      border:1px solid rgba(20,30,55,.12);
+      color:#223048;
+    }
+
+    .btn-google{
+      background:#f5f7fb;
+      border:1px solid rgba(20,30,55,.10);
+      color:#223048;
+    }
+
+    .nav-user-menu{
+      position:relative;
+    }
+
+    .nav-user-trigger{
+      min-height:44px;
+      padding:10px 14px;
+      border:none;
+      border-radius:14px;
+      background:#eef1f7;
+      color:#283246;
+      font-weight:900;
+      cursor:pointer;
+    }
+
+    .nav-user-dropdown{
+      position:absolute;
+      top:calc(100% + 8px);
+      right:0;
+      min-width:200px;
+      display:none;
+      background:#fff;
+      border:1px solid rgba(20,30,55,.10);
+      border-radius:16px;
+      box-shadow:0 18px 42px rgba(0,0,0,.12);
+      overflow:hidden;
+    }
+
+    .nav-user-dropdown.open{
+      display:block;
+    }
+
+    .nav-user-dropdown a,
+    .nav-dropdown-btn{
+      display:block;
+      width:100%;
+      padding:12px 14px;
+      text-align:left;
+      background:#fff;
+      border:none;
+      color:#223048;
+      text-decoration:none;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .nav-dropdown-form{
+      margin:0;
+    }
+
+    .app-subnav{
+      display:none;
+      background:transparent;
+      border-top:none;
+      border-bottom:none;
+    }
+
+    .app-subnav.show{
+      display:block;
+    }
+
+    .app-subnav-inner{
+      width:min(1180px, calc(100% - 20px));
+      margin:0 auto;
+      padding:10px 0 8px;
+      display:flex;
+      justify-content:center;
+    }
+
+    .app-subnav-card{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      width:auto;
+      padding:8px 10px;
+      border-radius:20px;
+      background:rgba(6, 15, 30, .88);
+      border:1px solid rgba(104, 142, 255, .14);
+      box-shadow:
+        0 10px 24px rgba(0,0,0,.18),
+        inset 0 1px 0 rgba(255,255,255,.04);
+    }
+
+    .app-subnav-link{
+      position:relative;
+      min-width:180px;
+      height:48px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:0 18px;
+      border-radius:16px;
+      text-decoration:none;
+      font-size:15px;
+      font-weight:1000;
+      letter-spacing:.01em;
+      color:#dfe7fb;
+      border:1px solid rgba(118, 152, 255, .18);
+      background:linear-gradient(180deg, rgba(10,20,40,.94), rgba(6,13,27,.98));
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.04),
+        inset 0 -8px 16px rgba(0,0,0,.16);
+      transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        border-color .18s ease,
+        background .18s ease,
+        color .18s ease;
+      overflow:hidden;
+      white-space:nowrap;
+    }
+
+    .app-subnav-link::before,
+    .app-subnav-link::after{
+      display:none !important;
+      content:none !important;
+    }
+
+    .app-subnav-link:hover{
+      transform:translateY(-1px);
+      color:#ffffff;
+      border-color:rgba(126, 175, 255, .28);
+      box-shadow:
+        0 8px 20px rgba(0,0,0,.16),
+        inset 0 1px 0 rgba(255,255,255,.05);
+    }
+
+    .app-subnav-link.is-active{
+      color:#ffffff;
+      border-color:rgba(117, 182, 255, .30);
+      background:linear-gradient(180deg, rgba(18,33,63,.96), rgba(10,21,40,.98));
+      box-shadow:
+        0 8px 20px rgba(0,0,0,.16),
+        inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    .mobile-only{
+      display:none;
+    }
+
+    .mobile-menu-drawer{
+      display:none;
+    }
+
+    .mobile-menu-drawer.is-open{
+      display:block;
+    }
+
+    @media (max-width: 768px){
+      .main-nav,
+      .btn-google,
+      .btn-outline,
+      .btn-solid,
+      .nav-user-menu,
+      .btn-play{
+        display:none !important;
+      }
+
+      .mobile-only{
+        display:block;
+      }
+
+      .nav-wrap{
+        width:calc(100% - 12px);
+        min-height:54px;
+        gap:8px;
+      }
+
+      .brand{
+        gap:8px;
+      }
+
+      .brand-logo{
+        width:34px;
+        height:34px;
+        font-size:24px;
+        border-radius:11px;
+      }
+
+      .brand-text{
+        font-size:18px;
+      }
+
+      .nav-actions{
+        margin-left:auto;
+        gap:8px;
+      }
+
+      .nav-chip.nav-chip-status{
+        min-height:38px;
+        padding:8px 12px;
+        gap:8px;
+        font-size:13px;
+      }
+
+      .nav-status-item{
+        gap:4px;
+      }
+
+      .mobile-menu-trigger{
+        width:38px;
+        height:38px;
+        border:none;
+        border-radius:12px;
+        background:#eef1f7;
+        color:#223048;
+        font-size:21px;
+        font-weight:1000;
+        cursor:pointer;
+        flex:0 0 auto;
+      }
+
+      .mobile-menu-drawer{
+        position:fixed;
+        inset:54px 0 0 0;
+        background:rgba(0,0,0,.42);
+        backdrop-filter:blur(3px);
+        z-index:15000;
+        padding:8px 8px 14px;
+      }
+
+      .mobile-menu-card{
+        border-radius:18px;
+        background:#fff;
+        padding:12px;
+        box-shadow:0 18px 42px rgba(0,0,0,.18);
+      }
+
+      .mobile-menu-head{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        margin-bottom:8px;
+      }
+
+      .mobile-menu-title{
+        font-size:16px;
+        font-weight:1000;
+        color:#1e2940;
+      }
+
+      .mobile-menu-close{
+        width:38px;
+        height:38px;
+        border:none;
+        border-radius:12px;
+        background:#eef1f7;
+        color:#223048;
+        font-size:18px;
+        font-weight:1000;
+        cursor:pointer;
+      }
+
+      .mobile-menu-links{
+        display:grid;
+        gap:8px;
+      }
+
+      .mobile-menu-links a,
+      .mobile-menu-links button{
+        min-height:46px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border-radius:14px;
+        text-decoration:none;
+        font-weight:900;
+        color:#223048;
+        background:#f5f7fb;
+        border:1px solid rgba(20,30,55,.08);
+      }
+
+      .mobile-menu-links form{
+        margin:0;
+      }
+
+      .mobile-menu-links button{
+        width:100%;
+        cursor:pointer;
+      }
+
+      .app-subnav-inner{
+        width:calc(100% - 12px);
+        padding:8px 0 6px;
+      }
+
+      .app-subnav-card{
+        width:100%;
+        gap:8px;
+        padding:6px;
+        border-radius:16px;
+      }
+
+      .app-subnav-link{
+        flex:1 1 0;
+        min-width:0;
+        height:40px;
+        padding:0 8px;
+        border-radius:12px;
+        font-size:13px;
+      }
+    }
+
+    @media (max-width: 480px){
+      .app-subnav-inner{
+        width:calc(100% - 10px);
+      }
+
+      .app-subnav-card{
+        gap:6px;
+        padding:5px;
+        border-radius:14px;
+      }
+
+      .app-subnav-link{
+        height:38px;
+        font-size:12px;
+        border-radius:11px;
+      }
+    }
+  </style>
 </head>
 <body>
   <header class="site-header">
@@ -20,27 +480,24 @@
       </a>
 
       <nav class="main-nav">
-
-        <a href="{% url 'core:landing' %}#features">Features</a>
-        <a href="{% url 'core:landing' %}#how-it-works">How It Works</a>
+        <a href="{% url 'core:landing' %}#why-mathner">Features</a>
+        <a href="{% url 'core:landing' %}#screen-showcase">How It Works</a>
         <a href="{% url 'core:landing' %}#pricing">Pricing</a>
-        <a href="{% url 'core:landing' %}#rank">Rank</a>
+        <a href="{% url 'core:landing' %}#ranking-preview">Rank</a>
         <a href="{% url 'core:landing' %}#avatar">Avatar</a>
       </nav>
 
       <div class="nav-actions">
         <div class="nav-chip nav-chip-status">
           <span class="nav-status-item">
-            <span class="nav-chip-icon">★</span>
-            <span class="nav-chip-label">Stars</span>
+            <span>★</span>
             <span id="navStarCount">{{ nav_star_count|default_if_none:0 }}</span>
           </span>
 
           <span class="nav-status-divider">·</span>
 
           <span class="nav-status-item">
-            <span class="nav-chip-icon">🔑</span>
-            <span class="nav-chip-label">Keys</span>
+            <span>🔑</span>
             <span id="navKeyCount">{{ nav_key_count|default_if_none:0 }}</span>
           </span>
         </div>
@@ -59,7 +516,7 @@
             <div class="nav-user-dropdown" id="navUserDropdown">
               <a href="#" id="openNicknameChange">Change Nickname</a>
               <a href="{% url 'avatar:my_room' %}">Avatar Room</a>
-              <a href="{% url 'core:landing' %}#rank">Ranking</a>
+              <a href="{% url 'ranking:home' %}">Ranking</a>
 
               <form method="post" action="{% url 'account_logout' %}" class="nav-dropdown-form">
                 {% csrf_token %}
@@ -68,15 +525,55 @@
             </div>
           </div>
         {% else %}
-          <a href="{% provider_login_url 'google' process='login' next='/' %}" class="btn btn-google">
-            Google Login
-          </a>
+          <a href="{% provider_login_url 'google' process='login' next=request.path %}" class="btn btn-google">Google Login</a>
           <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn btn-outline">Sign in</a>
           <a href="{% url 'account_signup' %}?next={{ request.path }}" class="btn btn-solid">Sign up</a>
         {% endif %}
+
+        <button type="button" class="mobile-only mobile-menu-trigger" id="mobileMenuTrigger" aria-expanded="false" aria-controls="mobileMenuDrawer">☰</button>
       </div>
     </div>
+
+    {% with p=request.path %}
+      <div class="app-subnav {% if '/play/' in p or '/ranking/' in p or '/avatar/' in p %}show{% endif %}">
+        <div class="app-subnav-inner">
+          <div class="app-subnav-card">
+            <a href="{% url 'core:play' %}" class="app-subnav-link {% if '/play/' in p %}is-active{% endif %}">Game</a>
+
+            {% if user.is_authenticated %}
+              <a href="{% url 'avatar:my_room' %}" class="app-subnav-link {% if '/avatar/' in p %}is-active{% endif %}">Avatar</a>
+            {% else %}
+              <a href="{% url 'account_login' %}?next={% url 'avatar:my_room' %}" class="app-subnav-link {% if '/avatar/' in p %}is-active{% endif %}">Avatar</a>
+            {% endif %}
+
+            <a href="{% url 'ranking:home' %}" class="app-subnav-link {% if '/ranking/' in p %}is-active{% endif %}">Ranking</a>
+          </div>
+        </div>
+      </div>
+    {% endwith %}
   </header>
+
+  <div class="mobile-menu-drawer" id="mobileMenuDrawer">
+    <div class="mobile-menu-card">
+      <div class="mobile-menu-head">
+        <div class="mobile-menu-title">Menu</div>
+        <button type="button" class="mobile-menu-close" id="mobileMenuClose">✕</button>
+      </div>
+
+      <div class="mobile-menu-links">
+        {% if user.is_authenticated %}
+          <form method="post" action="{% url 'account_logout' %}">
+            {% csrf_token %}
+            <button type="submit">Sign out</button>
+          </form>
+        {% else %}
+          <a href="{% provider_login_url 'google' process='login' next=request.path %}">Google Login</a>
+          <a href="{% url 'account_login' %}?next={{ request.path }}">Sign in</a>
+          <a href="{% url 'account_signup' %}?next={{ request.path }}">Sign up</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 
   <main>
     {% block content %}{% endblock %}
@@ -92,7 +589,6 @@
 
   {% block extra_js %}{% endblock %}
 
-  {% if user.is_authenticated %}
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       const trigger = document.getElementById("navUserTrigger");
@@ -101,6 +597,46 @@
       const nicknameTitle = document.getElementById("nicknameModalTitle");
       const nicknameDesc = document.getElementById("nicknameModalDesc");
       const nicknameInput = document.getElementById("nicknameInput");
+
+      const mobileMenuTrigger = document.getElementById("mobileMenuTrigger");
+      const mobileMenuClose = document.getElementById("mobileMenuClose");
+      const mobileMenuDrawer = document.getElementById("mobileMenuDrawer");
+
+      function closeMobileMenu() {
+        if (!mobileMenuDrawer) return;
+        mobileMenuDrawer.classList.remove("is-open");
+        if (mobileMenuTrigger) mobileMenuTrigger.setAttribute("aria-expanded", "false");
+        document.body.style.overflow = "";
+      }
+
+      function openMobileMenu() {
+        if (!mobileMenuDrawer) return;
+        mobileMenuDrawer.classList.add("is-open");
+        if (mobileMenuTrigger) mobileMenuTrigger.setAttribute("aria-expanded", "true");
+        document.body.style.overflow = "hidden";
+      }
+
+      if (mobileMenuTrigger) {
+        mobileMenuTrigger.addEventListener("click", function () {
+          if (mobileMenuDrawer.classList.contains("is-open")) {
+            closeMobileMenu();
+          } else {
+            openMobileMenu();
+          }
+        });
+      }
+
+      if (mobileMenuClose) {
+        mobileMenuClose.addEventListener("click", closeMobileMenu);
+      }
+
+      if (mobileMenuDrawer) {
+        mobileMenuDrawer.addEventListener("click", function (e) {
+          if (e.target === mobileMenuDrawer) {
+            closeMobileMenu();
+          }
+        });
+      }
 
       if (trigger && dropdown) {
         trigger.addEventListener("click", function (e) {
@@ -120,35 +656,20 @@
       if (openNicknameChange) {
         openNicknameChange.addEventListener("click", function (e) {
           e.preventDefault();
-          e.stopPropagation();
 
-          if (nicknameTitle) {
-            nicknameTitle.textContent = "Change your nickname";
-          }
-
-          if (nicknameDesc) {
-            nicknameDesc.textContent = "Nicknames can be changed once every 30 days.";
-          }
+          if (nicknameTitle) nicknameTitle.textContent = "Change your nickname";
+          if (nicknameDesc) nicknameDesc.textContent = "Nicknames can be changed once every 30 days.";
+          if (nicknameInput) nicknameInput.value = "";
 
           if (window.openNicknameModal) {
             window.openNicknameModal();
           }
 
-          if (nicknameInput) {
-            nicknameInput.value = "";
-          }
-
-          if (dropdown) {
-            dropdown.classList.remove("open");
-          }
-
-          if (trigger) {
-            trigger.setAttribute("aria-expanded", "false");
-          }
+          if (dropdown) dropdown.classList.remove("open");
+          if (trigger) trigger.setAttribute("aria-expanded", "false");
         });
       }
     });
   </script>
-  {% endif %}
 </body>
 </html>

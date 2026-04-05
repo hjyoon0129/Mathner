@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST
 
 from apps.avatar.models import UserAvatarProfile, UserRoomProfile, RoomItemPlacement
+from apps.core.models import UserGameProfile
 from apps.shop.models import ShopItem, UserOwnedItem
 from apps.social.models import RoomGuestbookEntry, RoomDiaryEntry, Friendship
 
@@ -31,6 +32,63 @@ def _get_or_create_avatar_profile(user):
 def _get_or_create_room_profile(user):
     profile, _ = UserRoomProfile.objects.get_or_create(user=user)
     return profile
+
+
+def _get_or_create_game_profile(user):
+    profile, _ = UserGameProfile.objects.get_or_create(user=user)
+    return profile
+
+
+def _pick_first_nonempty(*values):
+    for value in values:
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def _get_related_nickname(obj, attr_name):
+    rel = getattr(obj, attr_name, None)
+    if not rel:
+        return ""
+    return (getattr(rel, "nickname", "") or "").strip()
+
+
+def _get_current_display_name(user):
+    """
+    navbar와 완전히 같은 기준으로 닉네임 표시:
+    1) UserGameProfile.nickname
+    2) user.nickname
+    3) user.profile.nickname
+    4) user.userprofile.nickname
+    5) user.social_profile.nickname
+    6) user.member_profile.nickname
+    7) user.first_name
+    8) username
+    """
+    if not user:
+        return ""
+
+    game_profile_nickname = ""
+    try:
+        game_profile = getattr(user, "game_profile", None)
+        if game_profile is None:
+            game_profile = _get_or_create_game_profile(user)
+        game_profile_nickname = (getattr(game_profile, "nickname", "") or "").strip()
+    except Exception:
+        game_profile_nickname = ""
+
+    nickname = _pick_first_nonempty(
+        game_profile_nickname,
+        getattr(user, "nickname", ""),
+        _get_related_nickname(user, "profile"),
+        _get_related_nickname(user, "userprofile"),
+        _get_related_nickname(user, "social_profile"),
+        _get_related_nickname(user, "member_profile"),
+        getattr(user, "first_name", ""),
+    )
+
+    username = (getattr(user, "username", "") or "").strip()
+    return nickname or username or f"user{user.id}"
 
 
 def _extract_set_code(item):
@@ -142,12 +200,28 @@ def _build_avatar_data(profile):
 
 
 def _build_friend_list(user):
-    friends = (
+    sent = (
         Friendship.objects
         .filter(from_user=user, status=Friendship.STATUS_ACCEPTED)
         .select_related("to_user")
     )
-    return [f.to_user for f in friends]
+    received = (
+        Friendship.objects
+        .filter(to_user=user, status=Friendship.STATUS_ACCEPTED)
+        .select_related("from_user")
+    )
+
+    friends = [f.to_user for f in sent] + [f.from_user for f in received]
+    seen = set()
+    ordered = []
+
+    for f in friends:
+        if f.id not in seen:
+            seen.add(f.id)
+            f.display_name = _get_current_display_name(f)
+            ordered.append(f)
+
+    return ordered
 
 
 @login_required
@@ -170,6 +244,9 @@ def avatar_view(request, username=None):
         .order_by("-created_at")[:50]
     )
 
+    for entry in guestbook_entries:
+        entry.author_display_name = _get_current_display_name(entry.author)
+
     if is_owner:
         diary_entries = (
             RoomDiaryEntry.objects
@@ -184,10 +261,13 @@ def avatar_view(request, username=None):
         )
 
     my_friends = _build_friend_list(request.user)
+    owner_display_name = _get_current_display_name(avatar_owner)
 
     context = {
         "avatar_owner": avatar_owner,
-        "display_name": avatar_owner.username,
+        "display_name": owner_display_name,
+        "owner_display_name": owner_display_name,
+        "owner_username": avatar_owner.username,
         "is_owner": is_owner,
         "guestbook_entries": guestbook_entries,
         "diary_entries": diary_entries,

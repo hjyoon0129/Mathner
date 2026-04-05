@@ -10,4 +10,6 @@ urlpatterns = [
     path("shop/", include("apps.shop.urls")),
     path("avatar/", include("apps.avatar.urls")),
     path("social/", include("apps.social.urls")),
+    path("ranking/", include("apps.ranking.urls")),
+    path("support/", include("apps.support.urls")),
 ]

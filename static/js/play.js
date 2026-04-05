@@ -115,6 +115,11 @@ const rCombo = document.getElementById("rCombo");
 const rMode = document.getElementById("rMode");
 const rText = document.getElementById("rText");
 
+const rMyFriendRank = document.getElementById("rMyFriendRank");
+const rMyFriendScore = document.getElementById("rMyFriendScore");
+const rAboveFriend = document.getElementById("rAboveFriend");
+const rBelowFriend = document.getElementById("rBelowFriend");
+
 const keyExhaustedModal = document.getElementById("keyExhaustedModal");
 const btnKeyModalClose = document.getElementById("btnKeyModalClose");
 const btnLater = document.getElementById("btnLater");
@@ -168,6 +173,15 @@ let currentAuraState = "idle";
 let auraLandingTimer = null;
 let sparkleTimer = null;
 
+let rankNeighborsWrap = null;
+let rankAboveValueEl = null;
+let rankMeValueEl = null;
+let rankBelowValueEl = null;
+
+function isMobilePlayUI() {
+  return window.matchMedia("(max-width: 640px)").matches;
+}
+
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
 }
@@ -177,8 +191,10 @@ function randInt(min, max) {
 }
 
 function show(screen) {
-  [screenSelect, screenSetup, screenPlay].forEach((s) => s.classList.remove("on"));
-  screen.classList.add("on");
+  [screenSelect, screenSetup, screenPlay].forEach((s) => {
+    if (s) s.classList.remove("on");
+  });
+  if (screen) screen.classList.add("on");
 }
 
 function setMessage(text, type = null) {
@@ -286,20 +302,20 @@ function applyAuraVisualState(stateKey) {
 function setAuraState(stateKey) {
   let label = AURA_STATE.idle;
 
-  if (stateKey === "combo") {
-    label = AURA_STATE.combo;
-  } else if (stateKey === "fever") {
-    label = AURA_STATE.fever;
-  } else if (stateKey === "super") {
-    label = AURA_STATE.super;
-  }
+  if (stateKey === "combo") label = AURA_STATE.combo;
+  else if (stateKey === "fever") label = AURA_STATE.fever;
+  else if (stateKey === "super") label = AURA_STATE.super;
 
   if (statAura) statAura.textContent = label;
 
   const previousState = currentAuraState;
   currentAuraState = stateKey || "idle";
 
-  if ((previousState === "fever" || previousState === "super") && stateKey !== "fever" && stateKey !== "super") {
+  if (
+    (previousState === "fever" || previousState === "super") &&
+    stateKey !== "fever" &&
+    stateKey !== "super"
+  ) {
     triggerLandingBurst();
   }
 
@@ -327,15 +343,10 @@ function updateAuraByCombo() {
     return;
   }
 
-  if (combo >= 10) {
-    setAuraState("super");
-  } else if (combo >= 5) {
-    setAuraState("fever");
-  } else if (combo >= 2) {
-    setAuraState("combo");
-  } else {
-    setAuraState("idle");
-  }
+  if (combo >= 10) setAuraState("super");
+  else if (combo >= 5) setAuraState("fever");
+  else if (combo >= 2) setAuraState("combo");
+  else setAuraState("idle");
 }
 
 function renderRight() {
@@ -343,6 +354,7 @@ function renderRight() {
 
   if (statGameMode) statGameMode.textContent = modeCfg.label;
   if (statDifficulty) statDifficulty.textContent = modeCfg.difficulty;
+
   if (statMode) {
     statMode.textContent =
       selectedGameMode === "practice"
@@ -351,6 +363,7 @@ function renderRight() {
   }
 
   if (hudMode) hudMode.textContent = modeCfg.label;
+
   if (hudOperation) {
     hudOperation.textContent =
       selectedGameMode === "practice"
@@ -369,8 +382,8 @@ function renderModeTiles() {
     tile.innerHTML = `
       <div class="k">Mode</div>
       <div class="v">${mode.label}</div>
-      <div class="sub" style="margin-top:8px">${mode.desc}</div>
-      <div class="sub" style="margin-top:10px"><b>${mode.reward} star${mode.reward > 1 ? "s" : ""}</b> per correct answer</div>
+      ${isMobilePlayUI() ? "" : `<div class="sub" style="margin-top:8px">${mode.desc}</div>`}
+      ${isMobilePlayUI() ? "" : `<div class="sub" style="margin-top:10px"><b>${mode.reward} star${mode.reward > 1 ? "s" : ""}</b> per correct answer</div>`}
     `;
     tile.addEventListener("click", () => {
       selectedGameMode = mode.key;
@@ -380,13 +393,19 @@ function renderModeTiles() {
   });
 
   if (modeBandSummary) {
-    modeBandSummary.innerHTML = `
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <span class="modeFlag"><span class="modeMark"></span>New Mode Structure</span>
-        <b>Practice / Classic / Challenge</b>
-      </div>
-      <div class="sub">Classic and Challenge adapt to your mistakes automatically.</div>
-    `;
+    if (isMobilePlayUI()) {
+      modeBandSummary.innerHTML = "";
+      modeBandSummary.style.display = "none";
+    } else {
+      modeBandSummary.style.display = "";
+      modeBandSummary.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span class="modeFlag"><span class="modeMark"></span>New Mode Structure</span>
+          <b>Practice / Classic / Challenge</b>
+        </div>
+        <div class="sub">Classic and Challenge adapt to your mistakes automatically.</div>
+      `;
+    }
   }
 }
 
@@ -446,13 +465,19 @@ function renderSetupScreen() {
   const summary = getSetupSummary();
 
   if (modeBandNow) {
-    modeBandNow.innerHTML = `
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <span class="modeFlag"><span class="modeMark"></span>${modeCfg.label}</span>
-        <b>${modeCfg.reward} star${modeCfg.reward > 1 ? "s" : ""} per correct</b>
-      </div>
-      <div class="sub">Key is consumed at game start.</div>
-    `;
+    if (isMobilePlayUI()) {
+      modeBandNow.innerHTML = "";
+      modeBandNow.style.display = "none";
+    } else {
+      modeBandNow.style.display = "";
+      modeBandNow.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span class="modeFlag"><span class="modeMark"></span>${modeCfg.label}</span>
+          <b>${modeCfg.reward} star${modeCfg.reward > 1 ? "s" : ""} per correct</b>
+        </div>
+        <div class="sub">Key is consumed at game start.</div>
+      `;
+    }
   }
 
   if (practiceOperationWrap) {
@@ -465,20 +490,20 @@ function renderSetupScreen() {
   if (setupRuleText) setupRuleText.textContent = summary.rule;
   if (setupDifficultyText) setupDifficultyText.textContent = summary.difficulty;
   if (setupRangeText) setupRangeText.textContent = summary.range;
-  if (setupHint) setupHint.textContent = summary.hint;
+  if (setupHint) setupHint.textContent = isMobilePlayUI() ? "" : summary.hint;
 }
 
 function goSetupScreen() {
-  if (leftTitle) leftTitle.textContent = "Configure Mode";
-  if (leftSub) leftSub.textContent = "Review the rules before starting.";
+  if (leftTitle) leftTitle.textContent = "Choose Mode";
+  if (leftSub) leftSub.textContent = isMobilePlayUI() ? "" : "Review the rules before starting.";
   renderSetupScreen();
   renderRight();
   show(screenSetup);
 }
 
 function goPlayScreen() {
-  if (leftTitle) leftTitle.textContent = "Play";
-  if (leftSub) leftSub.textContent = "Type your answer quickly.";
+  if (leftTitle) leftTitle.textContent = isMobilePlayUI() ? "Game" : "Play";
+  if (leftSub) leftSub.textContent = isMobilePlayUI() ? "" : "Type your answer quickly.";
   show(screenPlay);
 
   timeLeft = 60;
@@ -487,7 +512,10 @@ function goPlayScreen() {
   const modeLabel = getModeConfig().label;
   const opLabel =
     selectedGameMode === "practice" ? OPERATION_META[selectedPracticeOperation].label : "Mixed";
-  if (playDesc) playDesc.textContent = `${modeLabel} · ${opLabel} · 60s`;
+
+  if (playDesc) {
+    playDesc.textContent = isMobilePlayUI() ? `${modeLabel}` : `${modeLabel} · ${opLabel} · 60s`;
+  }
 
   resetGameUI();
   renderRight();
@@ -525,6 +553,69 @@ function updateFeverUI() {
   updateAuraByCombo();
 }
 
+function ensureRankNeighborCards() {
+  if (rankNeighborsWrap && rankAboveValueEl && rankMeValueEl && rankBelowValueEl) return;
+
+  const existingWrap =
+    (rAboveFriend && rAboveFriend.closest(".resultRankNeighbors")) ||
+    (rBelowFriend && rBelowFriend.closest(".resultRankNeighbors"));
+
+  if (!existingWrap) return;
+
+  rankNeighborsWrap = existingWrap;
+  rankNeighborsWrap.innerHTML = `
+    <div class="resultRankNeighborCard">
+      <div class="v" data-rank-role="above">-</div>
+    </div>
+    <div class="resultRankNeighborCard is-me">
+      <div class="v" data-rank-role="me">-</div>
+    </div>
+    <div class="resultRankNeighborCard">
+      <div class="v" data-rank-role="below">-</div>
+    </div>
+  `;
+
+  rankAboveValueEl = rankNeighborsWrap.querySelector('[data-rank-role="above"]');
+  rankMeValueEl = rankNeighborsWrap.querySelector('[data-rank-role="me"]');
+  rankBelowValueEl = rankNeighborsWrap.querySelector('[data-rank-role="below"]');
+}
+
+function setMyScoreDisplay(value) {
+  if (!rMyFriendScore) return;
+
+  if (value === null || value === undefined || value === "-") {
+    rMyFriendScore.textContent = "-";
+    return;
+  }
+
+  rMyFriendScore.innerHTML = `
+    <span class="friend-score-inline">
+      <span class="friend-score-check">✓</span>
+      <span class="friend-score-number">${value}</span>
+    </span>
+  `;
+}
+
+function formatRankNickname(item, emptyText) {
+  if (!item) return emptyText;
+  return `#${item.rank} · ${item.nickname}`;
+}
+
+function formatMyRank(rank, totalCount) {
+  if (!rank || !totalCount) return "Unranked";
+  return `#${rank} / #${totalCount}`;
+}
+
+function resetRankResultUI() {
+  ensureRankNeighborCards();
+
+  if (rMyFriendRank) rMyFriendRank.textContent = "-";
+  setMyScoreDisplay("-");
+  if (rankAboveValueEl) rankAboveValueEl.textContent = "-";
+  if (rankMeValueEl) rankMeValueEl.textContent = "-";
+  if (rankBelowValueEl) rankBelowValueEl.textContent = "-";
+}
+
 function resetGameUI() {
   score = 0;
   correct = 0;
@@ -556,6 +647,7 @@ function resetGameUI() {
   if (answerInput) {
     answerInput.value = "";
     answerInput.disabled = true;
+    answerInput.placeholder = isMobilePlayUI() ? "Answer" : "Type your answer";
   }
 
   if (btnSubmit) btnSubmit.disabled = true;
@@ -727,11 +819,8 @@ function nextQuestion() {
   const level = getAdaptiveDifficultyLevel();
 
   let opKey = "add";
-  if (selectedGameMode === "practice") {
-    opKey = selectedPracticeOperation;
-  } else {
-    opKey = weightedRandomOperation();
-  }
+  if (selectedGameMode === "practice") opKey = selectedPracticeOperation;
+  else opKey = weightedRandomOperation();
 
   let q;
   if (opKey === "add") q = buildAddQuestion(level);
@@ -767,27 +856,64 @@ function getFeverStarBonus(comboCount) {
   return 0;
 }
 
-function createFloatingGain(text) {
+function createFloatingGain(cumulativeStars, latestGain, comboCount) {
   if (!liveEffects) return;
+
   const el = document.createElement("div");
   el.className = "floatingGain";
-  el.textContent = text;
+
+  if (comboCount >= 5) el.classList.add("fever");
+  if (comboCount >= 10) el.classList.add("super");
+
+  el.textContent = `+${cumulativeStars} ★`;
+  el.title = `latest +${latestGain}`;
   liveEffects.appendChild(el);
   setTimeout(() => el.remove(), 1400);
 }
 
-function createSparkBurst() {
+function createSparkBurst(comboCount) {
   if (!liveEffects) return;
-  for (let i = 0; i < 10; i += 1) {
+
+  let burstCount = isMobilePlayUI() ? 6 : 9;
+  if (comboCount >= 4) burstCount += 2;
+  if (comboCount >= 7) burstCount += 2;
+  if (comboCount >= 10) burstCount += 3;
+
+  for (let i = 0; i < burstCount; i += 1) {
     const spark = document.createElement("span");
     spark.className = "spark";
+    if (comboCount >= 5) spark.classList.add("fever");
+    if (comboCount >= 10) spark.classList.add("super");
+
     spark.style.left = `${44 + Math.random() * 12}%`;
     spark.style.top = `${42 + Math.random() * 14}%`;
-    spark.style.setProperty("--dx", `${(Math.random() - 0.5) * 180}px`);
-    spark.style.setProperty("--dy", `${(Math.random() - 0.5) * 140}px`);
+    spark.style.setProperty("--dx", `${(Math.random() - 0.5) * (isMobilePlayUI() ? 120 : 180)}px`);
+    spark.style.setProperty("--dy", `${(Math.random() - 0.5) * (isMobilePlayUI() ? 90 : 140)}px`);
     liveEffects.appendChild(spark);
     setTimeout(() => spark.remove(), 900);
   }
+}
+
+function createRiseStars(cumulativeStars, comboCount) {
+  if (!liveEffects) return;
+
+  const star = document.createElement("span");
+  star.className = "riseStar";
+  if (comboCount >= 5) star.classList.add("fever");
+  if (comboCount >= 10) star.classList.add("super");
+
+  star.textContent = `+${cumulativeStars}★`;
+  star.style.left = "50%";
+  star.style.top = `${60 + Math.random() * 4}%`;
+
+  const spreadX = isMobilePlayUI() ? 18 : 24;
+  const spreadY = isMobilePlayUI() ? 78 : 120;
+
+  star.style.setProperty("--rise-x", `${(Math.random() - 0.5) * spreadX}px`);
+  star.style.setProperty("--rise-y", `${-(52 + Math.random() * spreadY)}px`);
+
+  liveEffects.appendChild(star);
+  setTimeout(() => star.remove(), 1450);
 }
 
 function burstRewardConfetti() {
@@ -841,6 +967,123 @@ function buildFinalizePayload(reason) {
     game_mode: selectedGameMode,
     operation: selectedGameMode === "practice" ? selectedPracticeOperation : "mixed",
   };
+}
+
+async function recordRankingRun() {
+  if (!PAGE_CFG.isAuthenticated || !PAGE_CFG.rankingRecordUrl) return;
+
+  try {
+    await fetch(PAGE_CFG.rankingRecordUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({
+        score,
+        correct_count: correct,
+        wrong_count: wrong,
+        earned_stars: earnedStars,
+        best_combo: bestCombo,
+        game_mode: selectedGameMode,
+        operation: selectedGameMode === "practice" ? selectedPracticeOperation : "mixed",
+      }),
+    });
+  } catch (error) {}
+}
+
+async function loadFriendNearbyRank() {
+  resetRankResultUI();
+
+  if (!PAGE_CFG.isAuthenticated) {
+    if (rMyFriendRank) rMyFriendRank.textContent = "Login required";
+    setMyScoreDisplay("-");
+    if (rankAboveValueEl) rankAboveValueEl.textContent = "Friend ranking is available after login.";
+    if (rankMeValueEl) rankMeValueEl.textContent = "-";
+    if (rankBelowValueEl) rankBelowValueEl.textContent = "Friend ranking is available after login.";
+    return;
+  }
+
+  if (!PAGE_CFG.friendNearbyRankUrl) return;
+
+  try {
+    const response = await fetch(PAGE_CFG.friendNearbyRankUrl, {
+      method: "GET",
+      credentials: "same-origin",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      if (rankAboveValueEl) rankAboveValueEl.textContent = data.message || "Failed to load ranking.";
+      if (rankMeValueEl) rankMeValueEl.textContent = "-";
+      if (rankBelowValueEl) rankBelowValueEl.textContent = data.message || "Failed to load ranking.";
+      return;
+    }
+
+    if (rMyFriendRank) {
+      rMyFriendRank.textContent =
+        data.my_rank && data.total_count
+          ? formatMyRank(data.my_rank, data.total_count)
+          : "Unranked";
+    }
+
+    setMyScoreDisplay(
+      data.my_score !== null && data.my_score !== undefined ? String(data.my_score) : "-"
+    );
+
+    if (rankAboveValueEl) {
+      rankAboveValueEl.textContent = formatRankNickname(data.above, "No friend above you");
+    }
+
+    if (rankMeValueEl) {
+      const domNickname =
+        document.getElementById("statusAvatarName")?.textContent?.trim() ||
+        document.querySelector(".status-avatar-name")?.textContent?.trim() ||
+        document.getElementById("navNickname")?.textContent?.trim() ||
+        document.querySelector("[data-user-nickname]")?.getAttribute("data-user-nickname")?.trim() ||
+        "";
+
+      const myNickname =
+        data.my_nickname ||
+        data.my_name ||
+        data.my_display_name ||
+        data.nickname ||
+        data.display_name ||
+        data.username ||
+        data.me?.nickname ||
+        data.me?.display_name ||
+        data.me?.username ||
+        data.user?.nickname ||
+        data.user?.display_name ||
+        data.user?.username ||
+        PAGE_CFG.nickname ||
+        PAGE_CFG.displayName ||
+        PAGE_CFG.username ||
+        domNickname ||
+        "Me";
+
+      if (data.my_rank) {
+        rankMeValueEl.textContent = `#${data.my_rank} · ${myNickname}`;
+      } else {
+        rankMeValueEl.textContent = "Unranked";
+      }
+    }
+
+    if (rankBelowValueEl) {
+      rankBelowValueEl.textContent = formatRankNickname(data.below, "No friend below you");
+    }
+
+    if (rAboveFriend) rAboveFriend.textContent = "";
+    if (rBelowFriend) rBelowFriend.textContent = "";
+  } catch (error) {
+    if (rankAboveValueEl) rankAboveValueEl.textContent = "Network error";
+    if (rankMeValueEl) rankMeValueEl.textContent = "-";
+    if (rankBelowValueEl) rankBelowValueEl.textContent = "Network error";
+  }
 }
 
 async function startRunOnServer() {
@@ -968,8 +1211,9 @@ function submitAnswer() {
     if (combo >= 2) text += ` · Combo x${combo}`;
 
     setMessage(text, "good");
-    createFloatingGain(`+${totalStarGain} ★`);
-    createSparkBurst();
+    createFloatingGain(earnedStars, totalStarGain, combo);
+    createSparkBurst(combo);
+    createRiseStars(earnedStars, combo);
   } else {
     wrong += 1;
     wrongStats[currentOperation] += 1;
@@ -988,15 +1232,14 @@ function submitAnswer() {
 
   updateFeverUI();
 
-  if (running) {
-    nextQuestion();
-  }
+  if (running) nextQuestion();
 }
 
 async function finalizeRun(reason, options = {}) {
-  const { silent = false, navigateTo = null } = options;
+  const { silent = false, navigateTo = null, onDone = null } = options;
 
   if (finalizing || !runStartedOnServer || runSaved) {
+    if (typeof onDone === "function") onDone();
     if (navigateTo) window.location.href = navigateTo;
     return;
   }
@@ -1041,6 +1284,7 @@ async function finalizeRun(reason, options = {}) {
       if (!silent) setMessage(data.message || data.error || "Failed to save run result.", "bad");
       finalizing = false;
       if (btnReset) btnReset.disabled = false;
+      if (typeof onDone === "function") onDone();
       if (navigateTo) window.location.href = navigateTo;
       return;
     }
@@ -1053,6 +1297,9 @@ async function finalizeRun(reason, options = {}) {
     renderTopStatus();
 
     if (!silent) {
+      await recordRankingRun();
+      await loadFriendNearbyRank();
+
       if (rCorrect) rCorrect.textContent = String(correct);
       if (rWrong) rWrong.textContent = String(wrong);
       if (rAcc) rAcc.textContent = `${acc}%`;
@@ -1061,11 +1308,11 @@ async function finalizeRun(reason, options = {}) {
       if (rMode) rMode.textContent = getModeConfig().label;
 
       if (reason === "reset") {
-        if (rText) rText.textContent = `Run reset. ${earnedStars} stars saved. 1 key already used.`;
+        if (rText) rText.textContent = `Run reset. ${earnedStars} stars saved. 1 key was used.`;
       } else if (reason === "leave") {
         if (rText) rText.textContent = `Run ended because you left the game. ${earnedStars} stars saved.`;
       } else if (reason === "timeout") {
-        if (rText) rText.textContent = `Time up. ${earnedStars} stars saved.`;
+        if (rText) rText.textContent = `Time is up. ${earnedStars} stars saved.`;
       } else {
         if (rText) rText.textContent = `Run ended. ${earnedStars} stars saved.`;
       }
@@ -1082,6 +1329,7 @@ async function finalizeRun(reason, options = {}) {
   } finally {
     finalizing = false;
     if (btnReset) btnReset.disabled = false;
+    if (typeof onDone === "function") onDone();
     if (navigateTo) window.location.href = navigateTo;
   }
 }
@@ -1148,6 +1396,17 @@ function getNavigationTarget(el) {
   if (tag === "a") return el.href;
   if (tag === "button") return el.getAttribute("data-href");
   return null;
+}
+
+async function leaveCurrentRunIfNeeded(callback) {
+  if (runStartedOnServer && !runSaved && !finalizing) {
+    await finalizeRun("leave", {
+      silent: true,
+      onDone: callback,
+    });
+    return;
+  }
+  if (typeof callback === "function") callback();
 }
 
 function bindLeaveProtection() {
@@ -1238,31 +1497,31 @@ function renderStatusAvatar() {
     statusAvatarGroundAuraImg.src = playPageRoot.dataset.windAuraUrl;
   }
 
-  if (!playAvatarData || !playAvatarData.enabled) {
-    stopAuraCompletely();
-    return;
-  }
+  const isGuestFallback = !playAvatarData || !playAvatarData.enabled;
+  const gender = (playAvatarData && playAvatarData.gender) ? playAvatarData.gender : "male";
+  const base = avatarBaseSet(gender);
 
   const stack = document.createElement("div");
   stack.className = "status-avatar-stack";
-
-  const gender = playAvatarData.gender || "male";
-  const base = avatarBaseSet(gender);
+  stack.id = "statusAvatarStack";
 
   const bodyLayer = createAvatarLayer(base.body, "status-avatar-layer-body", "Avatar body");
   const rearHairLayer = createAvatarLayer(base.rear_hair, "status-avatar-layer-hair-rear", "Rear hair");
-  const clothLayer = playAvatarData.cloth_image_url
-    ? createAvatarLayer(playAvatarData.cloth_image_url, "status-avatar-layer-cloth", "Cloth")
-    : null;
   const headLayer = createAvatarLayer(base.head, "status-avatar-layer-head", "Avatar head");
   const eyebrowLayer = createAvatarLayer(base.eyebrow, "status-avatar-layer-eyebrow", "Eyebrow");
   const eyesLayer = createAvatarLayer(base.eyes, "status-avatar-layer-eyes", "Eyes");
   const mouthLayer = createAvatarLayer(base.mouth, "status-avatar-layer-mouth", "Mouth");
   const frontHairLayer = createAvatarLayer(base.front_hair, "status-avatar-layer-hair-front", "Front hair");
-  const shoesLayer = playAvatarData.shoes_image_url
+
+  const clothLayer = !isGuestFallback && playAvatarData.cloth_image_url
+    ? createAvatarLayer(playAvatarData.cloth_image_url, "status-avatar-layer-cloth", "Cloth")
+    : null;
+
+  const shoesLayer = !isGuestFallback && playAvatarData.shoes_image_url
     ? createAvatarLayer(playAvatarData.shoes_image_url, "status-avatar-layer-shoes", "Shoes")
     : null;
-  const hatLayer = playAvatarData.hat_image_url
+
+  const hatLayer = !isGuestFallback && playAvatarData.hat_image_url
     ? createAvatarLayer(playAvatarData.hat_image_url, "status-avatar-layer-hat", "Hat")
     : null;
 
@@ -1272,7 +1531,13 @@ function renderStatusAvatar() {
   const auraLayer = document.createElement("div");
   auraLayer.className = "status-avatar-foot-aura";
   auraLayer.setAttribute("aria-hidden", "true");
-  auraLayer.innerHTML = `<img class="status-avatar-foot-aura-img" src="${playPageRoot?.dataset.windAuraUrl || ""}" alt="">`;
+  auraLayer.innerHTML = `
+    <img
+      class="status-avatar-foot-aura-img"
+      src="${playPageRoot?.dataset.windAuraUrl || ""}"
+      alt=""
+    >
+  `;
   stack.appendChild(auraLayer);
 
   if (rearHairLayer) stack.appendChild(rearHairLayer);
@@ -1305,22 +1570,48 @@ function parsePlayAvatarData() {
   }
 }
 
+function applyMobilePlayTweaks() {
+  if (!playPageRoot) return;
+
+  playPageRoot.classList.toggle("mobile-play-ui", isMobilePlayUI());
+
+  if (isMobilePlayUI()) {
+    if (leftTitle && screenSelect?.classList.contains("on")) leftTitle.textContent = "Choose Mode";
+    if (leftSub) leftSub.textContent = "";
+    if (answerInput) answerInput.placeholder = "Answer";
+  } else {
+    if (answerInput) answerInput.placeholder = "Type your answer";
+    if (screenSelect?.classList.contains("on")) {
+      if (leftTitle) leftTitle.textContent = "Choose Mode";
+      if (leftSub) leftSub.textContent = "Pick Practice, Classic, or Challenge.";
+    }
+  }
+
+  renderModeTiles();
+  renderSetupScreen();
+  renderRight();
+}
+
 if (btnBackToModes) {
-  btnBackToModes.addEventListener("click", () => {
-    if (leftTitle) leftTitle.textContent = "Choose Mode";
-    if (leftSub) leftSub.textContent = "Pick Practice, Classic, or Challenge.";
-    show(screenSelect);
-    renderRight();
+  btnBackToModes.addEventListener("click", async () => {
+    await leaveCurrentRunIfNeeded(() => {
+      if (leftTitle) leftTitle.textContent = "Choose Mode";
+      if (leftSub) leftSub.textContent = isMobilePlayUI() ? "" : "Pick Practice, Classic, or Challenge.";
+      show(screenSelect);
+      renderRight();
+    });
   });
 }
 
 if (btnGoPlay) btnGoPlay.addEventListener("click", goPlayScreen);
 
 if (btnBackToSetup) {
-  btnBackToSetup.addEventListener("click", () => {
-    if (leftTitle) leftTitle.textContent = "Configure Mode";
-    if (leftSub) leftSub.textContent = "Review the rules before starting.";
-    show(screenSetup);
+  btnBackToSetup.addEventListener("click", async () => {
+    await leaveCurrentRunIfNeeded(() => {
+      if (leftTitle) leftTitle.textContent = "Choose Mode";
+      if (leftSub) leftSub.textContent = "";
+      show(screenSetup);
+    });
   });
 }
 
@@ -1328,11 +1619,8 @@ if (btnStart) btnStart.addEventListener("click", startGame);
 
 if (btnReset) {
   btnReset.addEventListener("click", () => {
-    if (runStartedOnServer) {
-      finalizeRun("reset");
-    } else {
-      resetGameUI();
-    }
+    if (runStartedOnServer) finalizeRun("reset");
+    else resetGameUI();
   });
 }
 
@@ -1379,8 +1667,13 @@ function init() {
   renderModeTiles();
   renderSetupScreen();
   stopAuraCompletely();
+  ensureRankNeighborCards();
+  resetRankResultUI();
   show(screenSelect);
   bindLeaveProtection();
+  applyMobilePlayTweaks();
+
+  window.addEventListener("resize", applyMobilePlayTweaks);
 }
 
 init();

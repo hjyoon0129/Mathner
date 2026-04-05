@@ -24,11 +24,14 @@
 {% endblock %}
 
 {% block content %}
-<section
+<div
   class="avatar-page"
   id="avatarPage"
   data-avatar-owner="{{ avatar_owner.username }}"
-  data-display-name="{{ display_name|default:avatar_owner.username }}"
+  data-avatar-owner-username="{{ owner_username|default:avatar_owner.username }}"
+  data-avatar-owner-display-name="{{ owner_display_name|default:display_name|default:avatar_owner.username }}"
+  data-owner-display-name="{{ owner_display_name|default:display_name|default:avatar_owner.username }}"
+  data-display-name="{{ owner_display_name|default:display_name|default:avatar_owner.username }}"
   data-is-owner="{% if is_owner %}true{% else %}false{% endif %}"
   data-avatar-json='{{ avatar_data_json|safe }}'
   data-owned-avatar-item-json='{{ owned_avatar_item_data_json|default:"[]"|safe }}'
@@ -37,7 +40,7 @@
   data-avatar-save-url="{% url 'avatar:save_room_state' %}"
   data-avatar-reset-url="/avatar/api/reset-room/"
   data-friend-avatar-base="/avatar/room/"
-
+  data-my-room-url="/avatar/my-room/"
   data-social-user-search-url="{% url 'social:user_search' %}"
   data-social-friend-request-url-base="/social/api/friends/request/"
   data-social-friend-respond-url-base="/social/api/friends/respond/"
@@ -47,7 +50,6 @@
   data-social-room-stats-url-base="/social/api/rooms/"
   data-social-room-visit-url-base="/social/api/rooms/"
   data-social-room-like-url-base="/social/api/rooms/"
-
   data-base-body-male="{% static 'avatar/img/base/male/body.webp' %}"
   data-base-head-male="{% static 'avatar/img/base/male/head.webp' %}"
   data-base-hair-back-male="{% static 'avatar/img/base/male/rear_hair.webp' %}"
@@ -55,7 +57,6 @@
   data-base-eyes-male="{% static 'avatar/img/base/male/eyes.webp' %}"
   data-base-eyebrow-male="{% static 'avatar/img/base/male/eyebrow.webp' %}"
   data-base-mouth-male="{% static 'avatar/img/base/male/mouth.webp' %}"
-
   data-base-body-female="{% static 'avatar/img/base/female/body.webp' %}"
   data-base-head-female="{% static 'avatar/img/base/female/head.webp' %}"
   data-base-hair-back-female="{% static 'avatar/img/base/female/rear_hair.webp' %}"
@@ -64,359 +65,307 @@
   data-base-eyebrow-female="{% static 'avatar/img/base/female/eyebrow.webp' %}"
   data-base-mouth-female="{% static 'avatar/img/base/female/mouth.webp' %}"
 >
-  <div class="avatar-shell">
-    <header class="avatar-header">
-      <div>
-        <h1 class="avatar-title">
-          {% if is_owner %}
-            My Avatar
-          {% else %}
-            {{ display_name|default:avatar_owner.username }}'s Avatar
-          {% endif %}
-        </h1>
-        <p class="avatar-sub">
-          Visit rooms, add friends, and build your own avatar network.
-        </p>
-      </div>
-    </header>
+  <div class="wrap wrap-compact">
+    <div class="avatar-shell">
+      <div class="avatar-layout avatar-layout-threecol" id="avatarLayout">
 
-    <div class="avatar-layout avatar-layout-threecol" id="avatarLayout">
-
-      <!-- 1열 : OWNER + AVATAR -->
-      <main class="avatar-col avatar-col-main">
-        <div class="avatar-card side-owner-card">
-          <div class="avatar-card-body">
-            <div class="owner-box">
-              <div class="owner-label">Owner</div>
-              <div class="owner-name">{{ display_name|default:avatar_owner.username }}</div>
+        <section class="avatar-col avatar-col-main">
+          <div class="avatar-card avatar-status-card">
+            <div class="avatar-card-head">
+              <h2>Avatar Status</h2>
             </div>
 
-            {% if request.user.is_authenticated %}
-            <div class="owner-stats-line owner-stats-inline">
-              <span class="owner-stat-pill">Today <strong id="roomTodayVisits">0</strong></span>
-              <span class="owner-stat-pill">Total <strong id="roomTotalVisits">0</strong></span>
-              <span class="owner-stat-pill">Like <strong id="roomLikeCount">0</strong></span>
-
-              {% if not is_owner %}
-              <button type="button" class="avatar-btn avatar-btn-secondary social-like-btn" id="toggleRoomLikeBtn">
-                👍 <span id="toggleRoomLikeBtnText">Like</span>
-              </button>
-              <button type="button" class="avatar-btn avatar-btn-primary" id="sendFriendRequestBtn">
-                Add Friend
-              </button>
-              {% endif %}
-            </div>
-            {% endif %}
-          </div>
-        </div>
-
-        <div class="avatar-card avatar-stage-card">
-          <div class="avatar-card-body">
-            <div class="tab-pane active" id="tab-avatar">
-              <div class="avatar-stage-wrap">
-                <div class="avatar-canvas avatar-canvas-main" id="avatarCanvasView"></div>
-              </div>
-            </div>
-
-            <div class="tab-pane" id="tab-guestbook">
-              <div class="panel-block">
-                <h3 class="panel-title">Leave a message</h3>
-                <div class="guestbook-form">
-                  <textarea id="guestbookContent" class="avatar-textarea" placeholder="Write your guestbook message..."></textarea>
-                  <button type="button" class="avatar-btn avatar-btn-primary" id="guestbookSubmitBtn">Leave Message</button>
-                </div>
-              </div>
-
-              <div class="panel-block">
-                <h3 class="panel-title">Messages</h3>
-                <div class="message-list" id="guestbookList">
-                  {% for entry in guestbook_entries %}
-                    <div class="message-card">
-                      <div class="message-top">
-                        <strong>
-                          {% if entry.author.profile.nickname %}
-                            {{ entry.author.profile.nickname }}
-                          {% else %}
-                            {{ entry.author.username }}
-                          {% endif %}
-                        </strong>
-                        <span>{{ entry.created_at|date:"Y-m-d H:i" }}</span>
+            <div class="avatar-card-body avatar-status-body">
+              <div class="avatar-status-panel">
+                <div class="tab-pane active" id="tab-avatar">
+                  <div class="avatar-stage-shell">
+                    <div class="avatar-stage-fixed">
+                      <div class="avatar-stage-wrap">
+                        <div class="avatar-canvas avatar-canvas-main" id="avatarCanvasView"></div>
                       </div>
-                      <div class="message-body">{{ entry.content }}</div>
                     </div>
-                  {% empty %}
-                    <div class="empty-text">No guestbook messages yet.</div>
-                  {% endfor %}
-                </div>
-              </div>
-            </div>
-
-            <div class="tab-pane" id="tab-diary">
-              {% if is_owner %}
-              <div class="panel-block">
-                <h3 class="panel-title">Write diary</h3>
-                <div class="diary-form">
-                  <input type="text" id="diaryTitle" class="avatar-input" placeholder="Diary title">
-                  <textarea id="diaryContent" class="avatar-textarea" placeholder="Write your diary..."></textarea>
-                  <div class="diary-action-row">
-                    <select id="diaryVisibility" class="avatar-select avatar-select-small">
-                      <option value="private">Private</option>
-                      <option value="friends" selected>Friends</option>
-                      <option value="public">Public</option>
-                    </select>
-                    <button type="button" class="avatar-btn avatar-btn-primary" id="diarySubmitBtn">Save Diary</button>
                   </div>
                 </div>
-              </div>
-              {% endif %}
 
-              <div class="panel-block">
-                <h3 class="panel-title">Diary list</h3>
-                <div class="message-list" id="diaryList">
-                  {% for entry in diary_entries %}
-                    <div class="message-card">
-                      <div class="message-top">
-                        <strong>{{ entry.title }}</strong>
-                        <span>{{ entry.created_at|date:"Y-m-d H:i" }}</span>
-                      </div>
-                      <div class="message-meta">{{ entry.visibility|title }}</div>
-                      <div class="message-body">{{ entry.content }}</div>
-                    </div>
-                  {% empty %}
-                    <div class="empty-text">No diary entries yet.</div>
-                  {% endfor %}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
+                <div class="avatar-status-name-wrap">
+                  <div class="owner-name avatar-status-name" id="roomOwnerName">
+                    {{ owner_display_name|default:display_name|default:avatar_owner.username }}
+                  </div>
+                  <div class="room-row-sub" id="roomOwnerUsername" style="display:none;">
+                    @{{ owner_username|default:avatar_owner.username }}
+                  </div>
 
-      <!-- 2열 : 탭 버튼 -->
-      <aside class="avatar-col avatar-col-tabs">
-        <div class="avatar-card avatar-tab-card">
-          <div class="avatar-card-body">
-            <div class="side-tab-grid">
-              <button type="button" class="side-tab-btn active" data-tab-target="avatar">Avatar</button>
-              <button type="button" class="side-tab-btn" data-tab-target="guestbook">Guestbook</button>
-              <button type="button" class="side-tab-btn" data-tab-target="diary">Diary</button>
-              {% if is_owner %}
-              <a href="/shop/" class="side-tab-btn side-tab-link-btn">Shop</a>
-              <button type="button" class="side-tab-btn" data-tab-target="edit">Avatar Edit</button>
-              {% endif %}
-            </div>
-          </div>
-        </div>
+                  {% if request.user.is_authenticated %}
+                  <div class="owner-stats-line owner-stats-inline avatar-status-stats">
+                    <span class="owner-stat-pill">Today <strong id="roomTodayVisits">0</strong></span>
+                    <span class="owner-stat-pill">Total <strong id="roomTotalVisits">0</strong></span>
+                    <span class="owner-stat-pill">Like <strong id="roomLikeCount">0</strong></span>
 
-        {% if request.user.is_authenticated %}
-        <div class="avatar-card">
-          <div class="avatar-card-head">
-            <h2>Friend Requests</h2>
-          </div>
-          <div class="avatar-card-body">
-            <div class="message-list" id="friendRequestList">
-              <div class="empty-text">No pending requests.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="avatar-card">
-          <div class="avatar-card-head">
-            <h2>Visit Friend</h2>
-          </div>
-          <div class="avatar-card-body">
-            <div class="visit-friend-box">
-              <select id="friendSelect" class="avatar-select">
-                <option value="">Choose friend</option>
-                {% for friend in my_friends %}
-                  <option value="{{ friend.username }}">
-                    {% if friend.profile.nickname %}
-                      {{ friend.profile.nickname }} (@{{ friend.username }})
-                    {% else %}
-                      {{ friend.username }}
+                    {% if not is_owner %}
+                    <button type="button" class="avatar-btn avatar-btn-secondary social-like-btn" id="toggleRoomLikeBtn">
+                      👍 <span id="toggleRoomLikeBtnText">Like</span>
+                    </button>
+                    <button type="button" class="avatar-btn avatar-btn-primary" id="sendFriendRequestBtn">
+                      Add Friend
+                    </button>
                     {% endif %}
-                  </option>
-                {% endfor %}
-              </select>
-              <button type="button" class="avatar-btn avatar-btn-primary visit-btn-full" id="visitFriendBtn">Visit</button>
-            </div>
-          </div>
-        </div>
-        {% endif %}
-      </aside>
-
-      <!-- 3열 : PEOPLE -->
-      <aside class="avatar-col avatar-col-people">
-        {% if request.user.is_authenticated %}
-        <div class="avatar-card people-roomlist-card">
-          <div class="avatar-card-head">
-            <h2>People</h2>
-          </div>
-          <div class="avatar-card-body">
-            <div class="people-search-row">
-              <input type="text" id="userSearchInput" class="avatar-input people-search-input" placeholder="Search nickname / username">
-              <button type="button" class="avatar-btn avatar-btn-primary people-search-btn" id="userSearchBtn">Search</button>
-            </div>
-
-            <div class="people-list-wrap">
-              <div class="people-list" id="roomDirectoryList">
-                <div class="empty-text">Loading list...</div>
+                  </div>
+                  {% endif %}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        {% endif %}
-      </aside>
 
-      {% if is_owner %}
-      <aside class="avatar-side-edit" id="avatarSideEdit" aria-hidden="true">
-        <div class="avatar-card avatar-edit-card">
-          <div class="avatar-card-head avatar-edit-head">
-            <div>
-              <h2>Avatar Edit</h2>
-              <p class="avatar-edit-head-sub">Edit beside the avatar with wide inventory filters and legacy outfit support.</p>
-            </div>
-            <button type="button" class="avatar-btn avatar-btn-secondary avatar-edit-close-btn" id="closeEditDrawerBtn">
-              Close
-            </button>
-          </div>
-
-          <div class="avatar-card-body">
-            <div class="avatar-edit-layout">
-              <div class="avatar-edit-left">
-                <div class="edit-card">
-                  <div class="edit-card-title">Base</div>
-                  <div class="switch-row">
-                    <button type="button" class="avatar-btn avatar-btn-secondary gender-btn" data-gender="male">Male</button>
-                    <button type="button" class="avatar-btn avatar-btn-secondary gender-btn" data-gender="female">Female</button>
+          <div class="avatar-card avatar-stage-content-card" id="avatarStageContentCard">
+            <div class="avatar-card-body" id="avatarStageCardBody">
+              <div class="tab-pane" id="tab-guestbook">
+                <div class="panel-block">
+                  <h3 class="panel-title">Leave a message</h3>
+                  <div class="guestbook-form">
+                    <textarea id="guestbookContent" class="avatar-textarea" placeholder="Write your guestbook message..."></textarea>
+                    <button type="button" class="avatar-btn avatar-btn-primary" id="guestbookSubmitBtn">Leave Message</button>
                   </div>
                 </div>
 
-                <div class="edit-card">
-                  <div class="edit-card-title">Apply</div>
-                  <button type="button" class="avatar-btn avatar-btn-primary save-btn-full" id="saveAvatarChangesBtn">
-                    Save Avatar
-                  </button>
-                  <button type="button" class="avatar-btn avatar-btn-secondary save-btn-full" id="resetAvatarBtn" style="margin-top:8px;">
-                    Reset Avatar
-                  </button>
-                  <div class="save-hint" id="saveHint">Select an item below to equip it on the avatar.</div>
-                </div>
-
-                <div class="edit-card">
-                  <div class="edit-card-title">Equipped</div>
-                  <div class="equipped-list three-col">
-                    <div class="equipped-slot-card" data-slot-card="head">
-                      <div class="equipped-label">Head</div>
-                      <div class="equipped-name" id="equippedHeadName"></div>
-                      <button type="button" class="slot-clear-btn" data-clear-slot="head">Clear</button>
-                    </div>
-                    <div class="equipped-slot-card" data-slot-card="eyes">
-                      <div class="equipped-label">Eyes</div>
-                      <div class="equipped-name" id="equippedEyesName"></div>
-                      <button type="button" class="slot-clear-btn" data-clear-slot="eyes">Clear</button>
-                    </div>
-                    <div class="equipped-slot-card" data-slot-card="mouth">
-                      <div class="equipped-label">Mouth</div>
-                      <div class="equipped-name" id="equippedMouthName"></div>
-                      <button type="button" class="slot-clear-btn" data-clear-slot="mouth">Clear</button>
-                    </div>
-                    <div class="equipped-slot-card" data-slot-card="eyebrow">
-                      <div class="equipped-label">Eyebrow</div>
-                      <div class="equipped-name" id="equippedEyebrowName"></div>
-                      <button type="button" class="slot-clear-btn" data-clear-slot="eyebrow">Clear</button>
-                    </div>
-                    <div class="equipped-slot-card" data-slot-card="front_hair">
-                      <div class="equipped-label">Front Hair</div>
-                      <div class="equipped-name" id="equippedFrontHairName"></div>
-                      <button type="button" class="slot-clear-btn" data-clear-slot="front_hair">Clear</button>
-                    </div>
-                    <div class="equipped-slot-card" data-slot-card="rear_hair">
-                      <div class="equipped-label">Rear Hair</div>
-                      <div class="equipped-name" id="equippedRearHairName"></div>
-                      <button type="button" class="slot-clear-btn" data-clear-slot="rear_hair">Clear</button>
-                    </div>
-                    <div class="equipped-slot-card" data-slot-card="body">
-                      <div class="equipped-label">Body</div>
-                      <div class="equipped-name" id="equippedBodyName"></div>
-                      <button type="button" class="slot-clear-btn" data-clear-slot="body">Clear</button>
-                    </div>
-                    <div class="equipped-slot-card" data-slot-card="top">
-                      <div class="equipped-label">Top</div>
-                      <div class="equipped-name" id="equippedTopName"></div>
-                      <button type="button" class="slot-clear-btn" data-clear-slot="top">Clear</button>
-                    </div>
-                    <div class="equipped-slot-card" data-slot-card="cloth">
-                      <div class="equipped-label">Cloth</div>
-                      <div class="equipped-name" id="equippedClothName"></div>
-                      <button type="button" class="slot-clear-btn" data-clear-slot="cloth">Clear</button>
-                    </div>
-                    <div class="equipped-slot-card" data-slot-card="pants">
-                      <div class="equipped-label">Pants</div>
-                      <div class="equipped-name" id="equippedPantsName"></div>
-                      <button type="button" class="slot-clear-btn" data-clear-slot="pants">Clear</button>
-                    </div>
-                    <div class="equipped-slot-card" data-slot-card="shoes">
-                      <div class="equipped-label">Shoes</div>
-                      <div class="equipped-name" id="equippedShoesName"></div>
-                      <button type="button" class="slot-clear-btn" data-clear-slot="shoes">Clear</button>
-                    </div>
-                    <div class="equipped-slot-card" data-slot-card="hat">
-                      <div class="equipped-label">Hat</div>
-                      <div class="equipped-name" id="equippedHatName"></div>
-                      <button type="button" class="slot-clear-btn" data-clear-slot="hat">Clear</button>
-                    </div>
+                <div class="panel-block">
+                  <h3 class="panel-title">Messages</h3>
+                  <div class="message-list" id="guestbookList">
+                    {% for entry in guestbook_entries %}
+                      <div class="message-card">
+                        <div class="message-top">
+                          <strong>{{ entry.author_display_name|default:entry.author.username }}</strong>
+                          <span>{{ entry.created_at|date:"Y-m-d H:i" }}</span>
+                        </div>
+                        <div class="message-body">{{ entry.content }}</div>
+                      </div>
+                    {% empty %}
+                      <div class="empty-text">No guestbook messages yet.</div>
+                    {% endfor %}
                   </div>
                 </div>
               </div>
 
-              <div class="avatar-edit-right">
-                <div class="edit-card avatar-inventory-card">
-                  <div class="inventory-head-row">
-                    <div>
+              <div class="tab-pane" id="tab-diary">
+                {% if is_owner %}
+                <div class="panel-block">
+                  <h3 class="panel-title">Write diary</h3>
+                  <div class="diary-form">
+                    <input type="text" id="diaryTitle" class="avatar-input" placeholder="Diary title">
+                    <textarea id="diaryContent" class="avatar-textarea" placeholder="Write your diary..."></textarea>
+                    <div class="diary-action-row">
+                      <select id="diaryVisibility" class="avatar-select avatar-select-small">
+                        <option value="private">Private</option>
+                        <option value="friends" selected>Friends</option>
+                        <option value="public">Public</option>
+                      </select>
+                      <button type="button" class="avatar-btn avatar-btn-primary" id="diarySubmitBtn">Save Diary</button>
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
+
+                <div class="panel-block">
+                  <h3 class="panel-title">Diary list</h3>
+                  <div class="message-list" id="diaryList">
+                    {% for entry in diary_entries %}
+                      <div class="message-card">
+                        <div class="message-top">
+                          <strong>{{ entry.title }}</strong>
+                          <span>{{ entry.created_at|date:"Y-m-d H:i" }}</span>
+                        </div>
+                        <div class="message-meta">{{ entry.visibility|title }}</div>
+                        <div class="message-body">{{ entry.content }}</div>
+                      </div>
+                    {% empty %}
+                      <div class="empty-text">No diary entries yet.</div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="avatar-col avatar-col-tabs">
+          <div class="avatar-card avatar-tab-card">
+            <div class="avatar-card-body">
+              <div class="side-tab-grid">
+                <button type="button" class="side-tab-btn active" data-tab-target="avatar">Avatar</button>
+                <button type="button" class="side-tab-btn" data-tab-target="guestbook">Guestbook</button>
+                <button type="button" class="side-tab-btn" data-tab-target="diary">Diary</button>
+                {% if is_owner %}
+                <a href="/shop/" class="side-tab-btn side-tab-link-btn">Shop</a>
+                <button type="button" class="side-tab-btn" data-tab-target="edit">Avatar Edit</button>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="avatar-card avatar-mobile-pane-card" id="mobileTabPaneCard">
+            <div class="avatar-card-body" id="mobileTabPaneMount"></div>
+          </div>
+
+          {% if request.user.is_authenticated %}
+          <div class="avatar-card utility-card utility-card-requests">
+            <div class="avatar-card-head">
+              <h2>Friend Requests</h2>
+            </div>
+            <div class="avatar-card-body">
+              <div class="message-list" id="friendRequestList">
+                <div class="empty-text">No pending requests.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="avatar-card utility-card utility-card-visit">
+            <div class="avatar-card-head">
+              <h2>Visit Friend</h2>
+            </div>
+            <div class="avatar-card-body">
+              <div class="visit-friend-box">
+                <select id="friendSelect" class="avatar-select">
+                  <option value="">Choose friend</option>
+                  {% for friend in my_friends %}
+                    <option value="{{ friend.username }}">{{ friend.display_name|default:friend.username }}</option>
+                  {% endfor %}
+                </select>
+                <button type="button" class="avatar-btn avatar-btn-primary visit-btn-full" id="visitFriendBtn">Visit</button>
+              </div>
+            </div>
+          </div>
+
+          {% if not is_owner %}
+          <div class="avatar-card utility-card">
+            <div class="avatar-card-head">
+              <h2>My Room</h2>
+            </div>
+            <div class="avatar-card-body">
+              <button type="button" class="avatar-btn avatar-btn-secondary visit-btn-full" id="goMyRoomBtn">
+                Back to My Avatar Room
+              </button>
+            </div>
+          </div>
+          {% endif %}
+          {% endif %}
+        </aside>
+
+        <aside class="avatar-col avatar-col-people">
+          {% if request.user.is_authenticated %}
+          <div class="avatar-card people-roomlist-card">
+            <div class="avatar-card-head">
+              <h2>People</h2>
+            </div>
+            <div class="avatar-card-body">
+              <div class="people-search-row">
+                <input type="text" id="userSearchInput" class="avatar-input people-search-input" placeholder="Search nickname / username">
+                <button type="button" class="avatar-btn avatar-btn-primary people-search-btn" id="userSearchBtn">Search</button>
+              </div>
+
+              <div class="people-list-wrap">
+                <div class="people-list" id="roomDirectoryList">
+                  <div class="empty-text">Loading list...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </aside>
+
+        {% if is_owner %}
+        <aside class="avatar-side-edit" id="avatarSideEdit" aria-hidden="true">
+          <div class="avatar-card avatar-edit-card">
+            <div class="avatar-card-head avatar-edit-head">
+              <div><h2>Avatar Edit</h2></div>
+              <button type="button" class="avatar-btn avatar-btn-secondary avatar-edit-close-btn" id="closeEditDrawerBtn">
+                Close
+              </button>
+            </div>
+
+            <div class="avatar-card-body">
+              <div class="avatar-edit-layout">
+                <div class="avatar-edit-left">
+                  <div class="edit-card edit-card-base">
+                    <div class="edit-card-title">Base</div>
+                    <div class="switch-row compact-switch-row">
+                      <button type="button" class="avatar-btn avatar-btn-secondary gender-btn" data-gender="male">Male</button>
+                      <button type="button" class="avatar-btn avatar-btn-secondary gender-btn" data-gender="female">Female</button>
+                    </div>
+                  </div>
+
+                  <div class="edit-card edit-card-apply">
+                    <div class="edit-card-title">Apply</div>
+                    <button type="button" class="avatar-btn avatar-btn-primary save-btn-full" id="saveAvatarChangesBtn">
+                      Save Avatar
+                    </button>
+                    <div class="avatar-reset-section" data-reset-section>
+                      <button type="button" class="avatar-btn avatar-btn-secondary save-btn-full" id="resetAvatarBtn" style="margin-top:8px;">
+                        Reset Avatar
+                      </button>
+                    </div>
+                    <div class="save-hint" id="saveHint"></div>
+                  </div>
+
+                  <div class="edit-card edit-card-equipped">
+                    <div class="edit-card-title">Equipped</div>
+                    <div class="equipped-list compact-equipped-grid">
+                      <div class="equipped-slot-card" data-slot-card="head"><div class="equipped-label">Head</div><button type="button" class="slot-clear-btn" data-clear-slot="head">Clear</button></div>
+                      <div class="equipped-slot-card" data-slot-card="eyes"><div class="equipped-label">Eyes</div><button type="button" class="slot-clear-btn" data-clear-slot="eyes">Clear</button></div>
+                      <div class="equipped-slot-card" data-slot-card="mouth"><div class="equipped-label">Mouth</div><button type="button" class="slot-clear-btn" data-clear-slot="mouth">Clear</button></div>
+                      <div class="equipped-slot-card" data-slot-card="eyebrow"><div class="equipped-label">Eyebrow</div><button type="button" class="slot-clear-btn" data-clear-slot="eyebrow">Clear</button></div>
+                      <div class="equipped-slot-card" data-slot-card="front_hair"><div class="equipped-label">Front Hair</div><button type="button" class="slot-clear-btn" data-clear-slot="front_hair">Clear</button></div>
+                      <div class="equipped-slot-card" data-slot-card="rear_hair"><div class="equipped-label">Rear Hair</div><button type="button" class="slot-clear-btn" data-clear-slot="rear_hair">Clear</button></div>
+                      <div class="equipped-slot-card" data-slot-card="body"><div class="equipped-label">Body</div><button type="button" class="slot-clear-btn" data-clear-slot="body">Clear</button></div>
+                      <div class="equipped-slot-card" data-slot-card="top"><div class="equipped-label">Top</div><button type="button" class="slot-clear-btn" data-clear-slot="top">Clear</button></div>
+                      <div class="equipped-slot-card" data-slot-card="cloth"><div class="equipped-label">Cloth</div><button type="button" class="slot-clear-btn" data-clear-slot="cloth">Clear</button></div>
+                      <div class="equipped-slot-card" data-slot-card="pants"><div class="equipped-label">Pants</div><button type="button" class="slot-clear-btn" data-clear-slot="pants">Clear</button></div>
+                      <div class="equipped-slot-card" data-slot-card="shoes"><div class="equipped-label">Shoes</div><button type="button" class="slot-clear-btn" data-clear-slot="shoes">Clear</button></div>
+                      <div class="equipped-slot-card" data-slot-card="hat"><div class="equipped-label">Hat</div><button type="button" class="slot-clear-btn" data-clear-slot="hat">Clear</button></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="avatar-edit-right">
+                  <div class="edit-card avatar-inventory-card">
+                    <div class="inventory-head-row">
                       <div class="edit-card-title inventory-title">Inventory</div>
-                      <div class="inventory-guide">
-                        Filter by gender first, then narrow down by type and equip items to matching layers.
+                    </div>
+
+                    <div class="inventory-filter-section">
+                      <div class="inventory-filter-bar" id="inventoryGenderFilterBar">
+                        <button type="button" class="inventory-filter-btn is-active" data-filter-group="gender" data-filter="all">All</button>
+                        <button type="button" class="inventory-filter-btn" data-filter-group="gender" data-filter="male">Male</button>
+                        <button type="button" class="inventory-filter-btn" data-filter-group="gender" data-filter="female">Female</button>
+                        <button type="button" class="inventory-filter-btn" data-filter-group="gender" data-filter="common">Common</button>
                       </div>
                     </div>
-                  </div>
 
-                  <div class="inventory-filter-section">
-                    <div class="inventory-filter-label">Gender</div>
-                    <div class="inventory-filter-bar" id="inventoryGenderFilterBar">
-                      <button type="button" class="inventory-filter-btn is-active" data-filter-group="gender" data-filter="all">All</button>
-                      <button type="button" class="inventory-filter-btn" data-filter-group="gender" data-filter="male">Male</button>
-                      <button type="button" class="inventory-filter-btn" data-filter-group="gender" data-filter="female">Female</button>
-                      <button type="button" class="inventory-filter-btn" data-filter-group="gender" data-filter="common">Common</button>
+                    <div class="inventory-filter-section">
+                      <div class="inventory-filter-bar" id="inventoryTypeFilterBar">
+                        <button type="button" class="inventory-filter-btn is-active" data-filter-group="type" data-filter="all">All</button>
+                        <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="face">Face</button>
+                        <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="hair">Hair</button>
+                        <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="body">Body</button>
+                        <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="top">Top</button>
+                        <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="cloth">Cloth</button>
+                        <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="pants">Pants</button>
+                        <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="shoes">Shoes</button>
+                        <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="hat">Hat</button>
+                      </div>
                     </div>
-                  </div>
 
-                  <div class="inventory-filter-section">
-                    <div class="inventory-filter-label">Type</div>
-                    <div class="inventory-filter-bar" id="inventoryTypeFilterBar">
-                      <button type="button" class="inventory-filter-btn is-active" data-filter-group="type" data-filter="all">All</button>
-                      <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="face">Face</button>
-                      <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="hair">Hair</button>
-                      <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="body">Body</button>
-                      <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="top">Top</button>
-                      <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="cloth">Cloth</button>
-                      <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="pants">Pants</button>
-                      <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="shoes">Shoes</button>
-                      <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="hat">Hat</button>
-                    </div>
+                    <div id="inventoryWrap" class="inventory-grid inventory-grid-wide"></div>
                   </div>
-
-                  <div id="inventoryWrap" class="inventory-grid inventory-grid-wide"></div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </aside>
-      {% endif %}
+        </aside>
+        {% endif %}
+
+      </div>
     </div>
   </div>
-</section>
+</div>
 
 <div class="confirm-modal" id="confirmModal" aria-hidden="true">
   <div class="confirm-modal-backdrop" data-close-confirm></div>
@@ -434,9 +383,11 @@
 </div>
 {% endblock %}
 
+{% block footer %}{% endblock %}
+
 {% block extra_js %}
 <script>
   window.CSRF_TOKEN = "{{ csrf_token }}";
 </script>
-<script src="{% static 'avatar/js/room.js' %}?v=20260403_add_friend_inline_1"></script>
+<script src="{% static 'avatar/js/room.js' %}"></script>
 {% endblock %}

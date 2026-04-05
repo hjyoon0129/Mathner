@@ -10,17 +10,21 @@ document.addEventListener("DOMContentLoaded", function () {
   const resetAvatarBtn = document.getElementById("resetAvatarBtn");
   const saveHint = document.getElementById("saveHint");
 
-  const avatarSide = document.querySelector(".avatar-side");
   const avatarLayout = document.getElementById("avatarLayout");
   const closeEditDrawerBtn = document.getElementById("closeEditDrawerBtn");
+
+  const stageCardBody = document.getElementById("avatarStageCardBody");
+  const stageContentCard = document.getElementById("avatarStageContentCard");
+  const mobileTabPaneCard = document.getElementById("mobileTabPaneCard");
+  const mobileTabPaneMount = document.getElementById("mobileTabPaneMount");
 
   const guestbookCreateUrl = page.dataset.guestbookCreateUrl;
   const diaryCreateUrl = page.dataset.diaryCreateUrl;
   const avatarSaveUrl = page.dataset.avatarSaveUrl;
   const avatarResetUrl = page.dataset.avatarResetUrl;
   const friendAvatarBase = page.dataset.friendAvatarBase;
+  const myRoomUrl = page.dataset.myRoomUrl || "/avatar/my-room/";
 
-  const socialUserSearchUrl = page.dataset.socialUserSearchUrl || "";
   const socialFriendRequestUrlBase = page.dataset.socialFriendRequestUrlBase || "/social/api/friends/request/";
   const socialFriendRespondUrlBase = page.dataset.socialFriendRespondUrlBase || "/social/api/friends/respond/";
   const socialFriendRequestsUrl = page.dataset.socialFriendRequestsUrl || "";
@@ -34,6 +38,10 @@ document.addEventListener("DOMContentLoaded", function () {
   const confirmOkBtn = document.getElementById("confirmOkBtn");
   const confirmCancelBtn = document.getElementById("confirmCancelBtn");
 
+  const tabAvatar = document.getElementById("tab-avatar");
+  const tabGuestbook = document.getElementById("tab-guestbook");
+  const tabDiary = document.getElementById("tab-diary");
+
   let avatar = {};
   let ownedItems = [];
   let draftAvatar = {};
@@ -42,6 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let activeInventoryGenderFilter = "all";
   let activeInventoryTypeFilter = "all";
   let currentSearchQuery = "";
+  let currentMainTab = "avatar";
 
   const COMMON_ITEM_NAMES = ["blue hoodie", "black hoodie", "red jacket"];
 
@@ -59,12 +68,25 @@ document.addEventListener("DOMContentLoaded", function () {
     ownedItems = [];
   }
 
+  function isMobileRoomUI() {
+    return window.matchMedia("(max-width: 768px)").matches;
+  }
+
   function deepCopy(obj) {
     return JSON.parse(JSON.stringify(obj || {}));
   }
 
   function updateSaveHint(text) {
-    if (saveHint) saveHint.textContent = text;
+    if (saveHint) saveHint.textContent = text || "";
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
   function forceWebp(url) {
@@ -81,6 +103,108 @@ document.addEventListener("DOMContentLoaded", function () {
       return `${pathOnly.replace(/\.(png|jpg|jpeg|gif)$/i, ".webp")}${query}`;
     }
     return `${pathOnly}${query}`;
+  }
+
+  function getDisplayName(item) {
+    if (!item) return "Player";
+    return String(
+      item.display_name ||
+      item.nickname ||
+      item.current_nickname ||
+      item.author_display_name ||
+      item.from_display_name ||
+      item.owner_display_name ||
+      item.profile_nickname ||
+      item.username ||
+      item.from_username ||
+      item.owner_username ||
+      item.author_username ||
+      "Player"
+    );
+  }
+
+  function getUsername(item) {
+    if (!item) return "";
+    return String(
+      item.username ||
+      item.from_username ||
+      item.owner_username ||
+      item.author_username ||
+      ""
+    );
+  }
+
+  function syncNavbarNickname() {
+    const ownerDisplayName =
+      page.dataset.ownerDisplayName ||
+      page.dataset.avatarOwnerDisplayName ||
+      page.dataset.displayName ||
+      "";
+
+    if (!ownerDisplayName) return;
+
+    const possibleTargets = [
+      document.getElementById("navbarNickname"),
+      document.getElementById("navNickname"),
+      document.getElementById("headerNickname"),
+      document.getElementById("userDisplayName"),
+      document.getElementById("currentUserDisplayName"),
+      document.querySelector(".navbar .user-name"),
+      document.querySelector(".navbar .username"),
+      document.querySelector(".navbar .nickname"),
+      document.querySelector(".site-header .user-name"),
+      document.querySelector(".site-header .username"),
+      document.querySelector(".site-header .nickname"),
+      document.querySelector(".nav-user-trigger"),
+      document.querySelector(".user-menu-trigger"),
+      document.querySelector(".account-dropdown-toggle"),
+      document.querySelector(".profile-dropdown-toggle")
+    ].filter(Boolean);
+
+    possibleTargets.forEach((el) => {
+      if (!el) return;
+      const hasChildren = el.children && el.children.length > 0;
+      if (!hasChildren) {
+        el.textContent = ownerDisplayName;
+      }
+    });
+  }
+
+  function syncOwnerNickname() {
+    const ownerDisplayName =
+      page.dataset.ownerDisplayName ||
+      page.dataset.avatarOwnerDisplayName ||
+      page.dataset.displayName ||
+      page.dataset.avatarOwner ||
+      "";
+
+    const ownerUsername =
+      page.dataset.avatarOwnerUsername ||
+      page.dataset.avatarOwner ||
+      "";
+
+    const ownerNameTargets = [
+      document.getElementById("roomOwnerName"),
+      document.getElementById("ownerDisplayName"),
+      document.getElementById("ownerNickname"),
+      document.getElementById("avatarOwnerName"),
+    ].filter(Boolean);
+
+    ownerNameTargets.forEach((el) => {
+      el.textContent = ownerDisplayName || ownerUsername || "Player";
+    });
+
+    const ownerUsernameTargets = [
+      document.getElementById("roomOwnerUsername"),
+      document.getElementById("ownerUsername"),
+      document.getElementById("avatarOwnerUsername"),
+    ].filter(Boolean);
+
+    ownerUsernameTargets.forEach((el) => {
+      el.textContent = ownerUsername ? `@${ownerUsername}` : "";
+    });
+
+    syncNavbarNickname();
   }
 
   function avatarBaseSet(gender) {
@@ -271,49 +395,17 @@ document.addEventListener("DOMContentLoaded", function () {
       ? createLayer(normalizeItemImageUrl(bodyItem), "avatar-layer-body", bodyItem.name || "Body")
       : createLayer(base.body, "avatar-layer-body", "Avatar body");
 
-    const pantsLayer = pantsItem
-      ? createLayer(normalizeItemImageUrl(pantsItem), "avatar-layer-pants", pantsItem.name || "Pants")
-      : null;
-
-    const shoesLayer = shoesItem
-      ? createLayer(normalizeItemImageUrl(shoesItem), "avatar-layer-shoes", shoesItem.name || "Shoes")
-      : null;
-
-    const rearHairLayer = rearHairItem
-      ? createLayer(normalizeItemImageUrl(rearHairItem), "avatar-layer-hair-rear", rearHairItem.name || "Rear hair")
-      : createLayer(base.rear_hair, "avatar-layer-hair-rear", "Avatar rear hair");
-
-    const clothLayer = clothItem
-      ? createLayer(normalizeItemImageUrl(clothItem), "avatar-layer-cloth", clothItem.name || "Cloth")
-      : null;
-
-    const topLayer = topItem
-      ? createLayer(normalizeItemImageUrl(topItem), "avatar-layer-top", topItem.name || "Top")
-      : null;
-
-    const headLayer = headItem
-      ? createLayer(normalizeItemImageUrl(headItem), "avatar-layer-head", headItem.name || "Head")
-      : createLayer(base.head, "avatar-layer-head", "Avatar head");
-
-    const eyebrowLayer = eyebrowItem
-      ? createLayer(normalizeItemImageUrl(eyebrowItem), "avatar-layer-eyebrow", eyebrowItem.name || "Eyebrow")
-      : createLayer(base.eyebrow, "avatar-layer-eyebrow", "Avatar eyebrow");
-
-    const eyesLayer = eyesItem
-      ? createLayer(normalizeItemImageUrl(eyesItem), "avatar-layer-eyes", eyesItem.name || "Eyes")
-      : createLayer(base.eyes, "avatar-layer-eyes", "Avatar eyes");
-
-    const mouthLayer = mouthItem
-      ? createLayer(normalizeItemImageUrl(mouthItem), "avatar-layer-mouth", mouthItem.name || "Mouth")
-      : createLayer(base.mouth, "avatar-layer-mouth", "Avatar mouth");
-
-    const frontHairLayer = frontHairItem
-      ? createLayer(normalizeItemImageUrl(frontHairItem), "avatar-layer-hair-front", frontHairItem.name || "Front hair")
-      : createLayer(base.front_hair, "avatar-layer-hair-front", "Avatar front hair");
-
-    const hatLayer = hatItem
-      ? createLayer(normalizeItemImageUrl(hatItem), "avatar-layer-hat", hatItem.name || "Hat")
-      : null;
+    const pantsLayer = pantsItem ? createLayer(normalizeItemImageUrl(pantsItem), "avatar-layer-pants", pantsItem.name || "Pants") : null;
+    const shoesLayer = shoesItem ? createLayer(normalizeItemImageUrl(shoesItem), "avatar-layer-shoes", shoesItem.name || "Shoes") : null;
+    const rearHairLayer = rearHairItem ? createLayer(normalizeItemImageUrl(rearHairItem), "avatar-layer-hair-rear", rearHairItem.name || "Rear hair") : createLayer(base.rear_hair, "avatar-layer-hair-rear", "Avatar rear hair");
+    const clothLayer = clothItem ? createLayer(normalizeItemImageUrl(clothItem), "avatar-layer-cloth", clothItem.name || "Cloth") : null;
+    const topLayer = topItem ? createLayer(normalizeItemImageUrl(topItem), "avatar-layer-top", topItem.name || "Top") : null;
+    const headLayer = headItem ? createLayer(normalizeItemImageUrl(headItem), "avatar-layer-head", headItem.name || "Head") : createLayer(base.head, "avatar-layer-head", "Avatar head");
+    const eyebrowLayer = eyebrowItem ? createLayer(normalizeItemImageUrl(eyebrowItem), "avatar-layer-eyebrow", eyebrowItem.name || "Eyebrow") : createLayer(base.eyebrow, "avatar-layer-eyebrow", "Avatar eyebrow");
+    const eyesLayer = eyesItem ? createLayer(normalizeItemImageUrl(eyesItem), "avatar-layer-eyes", eyesItem.name || "Eyes") : createLayer(base.eyes, "avatar-layer-eyes", "Avatar eyes");
+    const mouthLayer = mouthItem ? createLayer(normalizeItemImageUrl(mouthItem), "avatar-layer-mouth", mouthItem.name || "Mouth") : createLayer(base.mouth, "avatar-layer-mouth", "Avatar mouth");
+    const frontHairLayer = frontHairItem ? createLayer(normalizeItemImageUrl(frontHairItem), "avatar-layer-hair-front", frontHairItem.name || "Front hair") : createLayer(base.front_hair, "avatar-layer-hair-front", "Avatar front hair");
+    const hatLayer = hatItem ? createLayer(normalizeItemImageUrl(hatItem), "avatar-layer-hat", hatItem.name || "Hat") : null;
 
     if (bodyLayer) stack.appendChild(bodyLayer);
     if (pantsLayer) stack.appendChild(pantsLayer);
@@ -341,14 +433,9 @@ document.addEventListener("DOMContentLoaded", function () {
     if (raw === "common" || raw === "unisex" || raw === "all") return "common";
     if (raw === "male" || raw === "m") return "male";
     if (raw === "female" || raw === "f") return "female";
-
     if (name.includes("female") || image.includes("/female/")) return "female";
     if (name.includes("male") || image.includes("/male/")) return "male";
-
-    if (["cloth", "top", "pants", "shoes", "hat"].includes(slot)) {
-      return "male";
-    }
-
+    if (["cloth", "top", "pants", "shoes", "hat"].includes(slot)) return "male";
     return "all";
   }
 
@@ -384,42 +471,12 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function updateEquippedSlotState() {
-    const slots = [
-      "head", "eyes", "mouth", "eyebrow",
-      "front_hair", "rear_hair", "body",
-      "top", "cloth", "pants", "shoes", "hat",
-    ];
-
+    const slots = ["head", "eyes", "mouth", "eyebrow", "front_hair", "rear_hair", "body", "top", "cloth", "pants", "shoes", "hat"];
     slots.forEach((slot) => {
       const card = document.querySelector(`[data-slot-card="${slot}"]`);
       if (!card) return;
-      const item = equippedItem(slot);
-      card.classList.toggle("is-equipped", !!item);
+      card.classList.toggle("is-equipped", !!equippedItem(slot));
     });
-  }
-
-  function renderEquippedNames() {
-    const slotMap = {
-      head: document.getElementById("equippedHeadName"),
-      eyes: document.getElementById("equippedEyesName"),
-      mouth: document.getElementById("equippedMouthName"),
-      eyebrow: document.getElementById("equippedEyebrowName"),
-      front_hair: document.getElementById("equippedFrontHairName"),
-      rear_hair: document.getElementById("equippedRearHairName"),
-      body: document.getElementById("equippedBodyName"),
-      top: document.getElementById("equippedTopName"),
-      cloth: document.getElementById("equippedClothName"),
-      pants: document.getElementById("equippedPantsName"),
-      shoes: document.getElementById("equippedShoesName"),
-      hat: document.getElementById("equippedHatName"),
-    };
-
-    Object.values(slotMap).forEach((el) => {
-      if (el) el.textContent = "";
-    });
-
-    updateEquippedSlotState();
-    updateGenderButtons();
   }
 
   function renderInventory() {
@@ -431,12 +488,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    const supportedSlots = [
-      "head", "eyes", "mouth", "eyebrow",
-      "front_hair", "rear_hair", "body",
-      "top", "cloth", "pants", "shoes", "hat",
-    ];
-
+    const supportedSlots = ["head", "eyes", "mouth", "eyebrow", "front_hair", "rear_hair", "body", "top", "cloth", "pants", "shoes", "hat"];
     let visibleCount = 0;
 
     ownedItems.forEach((item) => {
@@ -445,7 +497,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const isSupportedSlot = supportedSlots.includes(normalizedSlot);
 
       if (!itemMatchesFilters(item, normalizedSlot)) return;
-
       visibleCount += 1;
 
       const card = document.createElement("div");
@@ -491,7 +542,7 @@ document.addEventListener("DOMContentLoaded", function () {
         btn.addEventListener("click", () => {
           draftAvatar[draftKey] = Number(item.item_id);
           renderAll();
-          updateSaveHint(`${item.name} equipped on the avatar. Save to apply.`);
+          updateSaveHint(`${item.name} equipped.`);
         });
       }
 
@@ -511,7 +562,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".gender-btn").forEach((btn) => {
       btn.classList.remove("avatar-btn-primary");
       btn.classList.add("avatar-btn-secondary");
-
       if (btn.dataset.gender === (draftAvatar.gender || "male")) {
         btn.classList.remove("avatar-btn-secondary");
         btn.classList.add("avatar-btn-primary");
@@ -529,41 +579,73 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  function restoreDesktopPaneLayout() {
+    if (!stageCardBody) return;
+    if (tabGuestbook && tabGuestbook.parentElement !== stageCardBody) stageCardBody.appendChild(tabGuestbook);
+    if (tabDiary && tabDiary.parentElement !== stageCardBody) stageCardBody.appendChild(tabDiary);
+    if (mobileTabPaneCard) mobileTabPaneCard.style.display = "none";
+  }
+
+  function syncResponsiveTabPanePlacement() {
+    const mobile = isMobileRoomUI();
+
+    if (!mobile) {
+      restoreDesktopPaneLayout();
+      return;
+    }
+
+    if (!mobileTabPaneCard || !mobileTabPaneMount) return;
+
+    if (currentMainTab === "guestbook" && tabGuestbook) {
+      if (tabGuestbook.parentElement !== mobileTabPaneMount) mobileTabPaneMount.appendChild(tabGuestbook);
+      mobileTabPaneCard.style.display = "block";
+    } else if (currentMainTab === "diary" && tabDiary) {
+      if (tabDiary.parentElement !== mobileTabPaneMount) mobileTabPaneMount.appendChild(tabDiary);
+      mobileTabPaneCard.style.display = "block";
+    } else {
+      mobileTabPaneCard.style.display = "none";
+    }
+  }
+
+  function updateStageContentVisibility() {
+    if (!stageContentCard) return;
+    if (currentMainTab === "guestbook" || currentMainTab === "diary") {
+      stageContentCard.style.display = "block";
+    } else {
+      stageContentCard.style.display = "none";
+    }
+  }
+
   function renderAll() {
     renderAvatarCanvas(avatarCanvasView);
     if (isOwner) {
       updateInventoryFilterButtons();
       renderInventory();
-      renderEquippedNames();
+      updateEquippedSlotState();
+      updateGenderButtons();
     }
+    syncOwnerNickname();
+    updateStageContentVisibility();
+    applyMobileRoomCleanup();
+  }
+
+  function setActiveSideTab(tabName) {
+    document.querySelectorAll(".side-tab-btn[data-tab-target]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.tabTarget === tabName);
+    });
   }
 
   function openEditMode() {
-    if (avatarSide) avatarSide.classList.add("is-editing");
+    currentMainTab = "edit";
     if (avatarLayout) avatarLayout.classList.add("is-editing");
-
-    document.querySelectorAll(".side-tab-btn").forEach((btn) => {
-      btn.classList.remove("active");
-    });
-
-    document.querySelectorAll('.side-tab-btn[data-tab-target="edit"]').forEach((btn) => {
-      btn.classList.add("active");
-    });
-
+    setActiveSideTab("edit");
     renderAll();
+    applyMobileRoomCleanup();
   }
 
   function closeEditMode() {
-    if (avatarSide) avatarSide.classList.remove("is-editing");
     if (avatarLayout) avatarLayout.classList.remove("is-editing");
-
-    document.querySelectorAll(".side-tab-btn").forEach((btn) => {
-      btn.classList.remove("active");
-    });
-
-    document.querySelectorAll('.side-tab-btn[data-tab-target="avatar"]').forEach((btn) => {
-      btn.classList.add("active");
-    });
+    applyMobileRoomCleanup();
   }
 
   async function saveCurrentState() {
@@ -634,25 +716,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
         confirmOkBtn?.removeEventListener("click", handleOk);
         confirmCancelBtn?.removeEventListener("click", handleCancel);
-        confirmModal.querySelectorAll("[data-close-confirm]").forEach((el) => {
-          el.removeEventListener("click", handleCancel);
-        });
+        confirmModal.querySelectorAll("[data-close-confirm]").forEach((el) => el.removeEventListener("click", handleCancel));
         document.removeEventListener("keydown", handleEsc);
-
         resolve(result);
       };
 
       const handleOk = () => close(true);
       const handleCancel = () => close(false);
-      const handleEsc = (e) => {
-        if (e.key === "Escape") close(false);
-      };
+      const handleEsc = (e) => { if (e.key === "Escape") close(false); };
 
       confirmOkBtn?.addEventListener("click", handleOk);
       confirmCancelBtn?.addEventListener("click", handleCancel);
-      confirmModal.querySelectorAll("[data-close-confirm]").forEach((el) => {
-        el.addEventListener("click", handleCancel);
-      });
+      confirmModal.querySelectorAll("[data-close-confirm]").forEach((el) => el.addEventListener("click", handleCancel));
       document.addEventListener("keydown", handleEsc);
     });
   }
@@ -702,20 +777,22 @@ document.addEventListener("DOMContentLoaded", function () {
     wrap.innerHTML = "";
 
     items.forEach((item) => {
+      const displayName = getDisplayName(item);
+      const username = getUsername(item);
+
       const card = document.createElement("div");
       card.className = "friend-request-card";
       card.innerHTML = `
         <div class="friend-request-top">
-          <div>
-            <div class="friend-request-name">${item.from_display_name}</div>
-            <div class="friend-request-sub">@${item.from_username}</div>
+          <div class="friend-request-head-left">
+            <div class="friend-request-name">${escapeHtml(displayName)}</div>
           </div>
-          <div class="friend-request-sub">${item.created_at}</div>
+          <div class="friend-request-sub">${escapeHtml(item.created_at || "")}</div>
         </div>
         <div class="friend-request-actions">
           <a href="${item.room_url}" class="avatar-btn avatar-btn-secondary">Visit</a>
-          <button type="button" class="avatar-btn avatar-btn-primary friend-accept-btn" data-id="${item.id}">Accept</button>
-          <button type="button" class="avatar-btn avatar-btn-secondary friend-reject-btn" data-id="${item.id}">Reject</button>
+          <button type="button" class="avatar-btn avatar-btn-primary friend-accept-btn" data-id="${item.id}" data-username="${escapeHtml(username)}">Accept</button>
+          <button type="button" class="avatar-btn avatar-btn-secondary friend-reject-btn" data-id="${item.id}" data-username="${escapeHtml(username)}">Reject</button>
         </div>
       `;
       wrap.appendChild(card);
@@ -744,6 +821,7 @@ document.addEventListener("DOMContentLoaded", function () {
           return;
         }
         await loadFriendRequests();
+        await loadFriendSelectOptions();
         await loadRoomDirectory(currentSearchQuery);
       });
     });
@@ -765,48 +843,51 @@ document.addEventListener("DOMContentLoaded", function () {
     friendSelect.innerHTML = `<option value="">Choose friend</option>`;
     (result.friends || []).forEach((friend) => {
       const option = document.createElement("option");
-      option.value = friend.username;
-      option.textContent = `${friend.display_name} (@${friend.username})`;
+      option.value = getUsername(friend);
+      option.textContent = getDisplayName(friend);
       friendSelect.appendChild(option);
     });
   }
 
-  function buildRoomCard(item, index) {
-    const number = index + 1;
+  function buildFriendActionHtml(item, username) {
     const isFriend = item.friendship_status === "accepted";
     const isPending = item.friendship_status === "pending";
 
+    if (isFriend) {
+      return `<span class="mini-pill is-warm">Friend</span>`;
+    }
+
+    if (isPending) {
+      return `<button type="button" class="avatar-btn avatar-btn-secondary directory-add-friend-btn is-pending" data-username="${escapeHtml(username)}">Cancel</button>`;
+    }
+
+    return `<button type="button" class="avatar-btn avatar-btn-secondary directory-add-friend-btn" data-username="${escapeHtml(username)}">Friend</button>`;
+  }
+
+  function buildRoomCard(item, index) {
+    const number = index + 1;
+    const username = getUsername(item);
+    const displayName = getDisplayName(item);
+
     return `
-      <div class="room-row-card numbered">
-        <div class="room-row-number">${number}</div>
-        <div class="room-row-content">
-          <div class="room-row-top">
-            <div>
-              <div class="room-row-name">${item.display_name}</div>
-              <div class="room-row-sub">@${item.username}</div>
-            </div>
-          </div>
-
-          <div class="room-mini-stats">
-
-            <span class="room-mini-stat">Today ${item.today_visits ?? 0}</span>
-            <span class="room-mini-stat">Total ${item.total_visits ?? 0}</span>
-            <span class="room-mini-stat">👍 ${item.like_count ?? 0}</span>
-          </div>
-
-          <div class="room-row-actions">
-            <a href="${item.room_url}" class="avatar-btn avatar-btn-primary">Visit</a>
-            ${
-              isFriend
-                ? `<span class="mini-pill is-warm">Friend</span>`
-                : isPending
-                  ? `<span class="mini-pill">Pending</span>`
-                  : `<button type="button" class="avatar-btn avatar-btn-secondary directory-add-friend-btn" data-username="${item.username}">Friend</button>`
-            }
-          </div>
+      <div class="room-row-card">
+        <div class="room-row-line">
+          <div class="room-row-number">${number}</div>
+          <div class="room-row-name room-row-name-fixed">${escapeHtml(displayName)}</div>
+          <a href="${item.room_url}" class="avatar-btn avatar-btn-primary people-action-btn">Visit</a>
+          ${buildFriendActionHtml(item, username)}
         </div>
       </div>
     `;
+  }
+
+  async function toggleFriendRequest(username) {
+    const result = await postJson(`${socialFriendRequestUrlBase}${username}/`, {});
+    if (!result.ok) {
+      alert(result.error || "Failed to update friend request.");
+      return false;
+    }
+    return true;
   }
 
   function renderRoomDirectory(items) {
@@ -823,11 +904,10 @@ document.addEventListener("DOMContentLoaded", function () {
     wrap.querySelectorAll(".directory-add-friend-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const username = btn.dataset.username;
-        const result = await postJson(`${socialFriendRequestUrlBase}${username}/`, {});
-        if (!result.ok) {
-          alert(result.error || "Failed to send friend request.");
-          return;
-        }
+        const ok = await toggleFriendRequest(username);
+        if (!ok) return;
+        await loadFriendRequests();
+        await loadFriendSelectOptions();
         await loadRoomDirectory(currentSearchQuery);
       });
     });
@@ -845,8 +925,8 @@ document.addEventListener("DOMContentLoaded", function () {
     if (currentSearchQuery) {
       const q = currentSearchQuery.toLowerCase();
       rooms = rooms.filter((item) => {
-        const displayName = String(item.display_name || "").toLowerCase();
-        const username = String(item.username || "").toLowerCase();
+        const displayName = String(getDisplayName(item)).toLowerCase();
+        const username = String(getUsername(item)).toLowerCase();
         return displayName.includes(q) || username.includes(q);
       });
     }
@@ -857,15 +937,43 @@ document.addEventListener("DOMContentLoaded", function () {
   async function runUserSearch() {
     const input = document.getElementById("userSearchInput");
     if (!input) return;
-    const q = input.value.trim();
-    await loadRoomDirectory(q);
+    await loadRoomDirectory(input.value.trim());
+  }
+
+  function findResetSection() {
+    if (!resetAvatarBtn) return null;
+    return resetAvatarBtn.closest(".avatar-reset-section") || resetAvatarBtn.parentElement;
+  }
+
+  function applyMobileRoomCleanup() {
+    const mobile = isMobileRoomUI();
+
+    page.classList.toggle("is-mobile-room", mobile);
+    page.classList.toggle("is-mobile-editing", mobile && currentMainTab === "edit");
+
+    const resetSection = findResetSection();
+    if (resetSection) {
+      resetSection.style.display = mobile ? "none" : "";
+    }
+
+    if (saveHint) {
+      saveHint.style.display = mobile ? "none" : "";
+    }
+
+    document.querySelectorAll(".utility-card").forEach((el) => {
+      el.style.display = mobile ? "none" : "";
+    });
+
+    setActiveSideTab(currentMainTab === "edit" ? "edit" : currentMainTab);
+    syncResponsiveTabPanePlacement();
+    updateStageContentVisibility();
   }
 
   document.querySelectorAll(".gender-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       draftAvatar.gender = btn.dataset.gender;
       renderAll();
-      updateSaveHint(`Base avatar changed to ${draftAvatar.gender}. Save to apply.`);
+      updateSaveHint(`Base changed to ${draftAvatar.gender}.`);
     });
   });
 
@@ -891,7 +999,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!slot) return;
       draftAvatar[`${slot}_item_id`] = null;
       renderAll();
-      updateSaveHint(`${slot} cleared. Save to apply.`);
+      updateSaveHint(`${slot} cleared.`);
     });
   });
 
@@ -930,31 +1038,34 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function activateMainTab(tabName) {
-    document.querySelectorAll(".tab-pane").forEach((pane) => {
-      pane.classList.remove("active");
-    });
+    currentMainTab = tabName;
 
-    document.querySelectorAll(".side-tab-btn").forEach((btn) => {
-      btn.classList.remove("active");
-    });
+    document.querySelectorAll(".tab-pane").forEach((pane) => pane.classList.remove("active"));
 
     if (tabName === "edit") {
-      const avatarPane = document.getElementById("tab-avatar");
-      if (avatarPane) avatarPane.classList.add("active");
+      if (tabAvatar) tabAvatar.classList.add("active");
       openEditMode();
+      syncResponsiveTabPanePlacement();
+      updateStageContentVisibility();
       return;
     }
 
     closeEditMode();
 
-    const targetPane = document.getElementById(`tab-${tabName}`);
-    if (targetPane) targetPane.classList.add("active");
+    if (tabName === "avatar") {
+      if (tabAvatar) tabAvatar.classList.add("active");
+    } else if (tabName === "guestbook") {
+      if (tabGuestbook) tabGuestbook.classList.add("active");
+    } else if (tabName === "diary") {
+      if (tabDiary) tabDiary.classList.add("active");
+    }
 
-    document.querySelectorAll(`.side-tab-btn[data-tab-target="${tabName}"]`).forEach((btn) => {
-      btn.classList.add("active");
-    });
+    setActiveSideTab(tabName);
 
-    setTimeout(renderAll, 30);
+    setTimeout(() => {
+      renderAll();
+      applyMobileRoomCleanup();
+    }, 20);
   }
 
   document.querySelectorAll(".side-tab-btn[data-tab-target]").forEach((btn) => {
@@ -966,13 +1077,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
   if (closeEditDrawerBtn) {
     closeEditDrawerBtn.addEventListener("click", () => {
-      closeEditMode();
+      activateMainTab("avatar");
     });
   }
 
   const visitFriendBtn = document.getElementById("visitFriendBtn");
   const friendSelect = document.getElementById("friendSelect");
-
   if (visitFriendBtn && friendSelect) {
     visitFriendBtn.addEventListener("click", () => {
       const username = friendSelect.value;
@@ -981,6 +1091,13 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
       window.location.href = `${friendAvatarBase}${username}/`;
+    });
+  }
+
+  const goMyRoomBtn = document.getElementById("goMyRoomBtn");
+  if (goMyRoomBtn) {
+    goMyRoomBtn.addEventListener("click", () => {
+      window.location.href = myRoomUrl;
     });
   }
 
@@ -1004,11 +1121,18 @@ document.addEventListener("DOMContentLoaded", function () {
       const roomOwnerUsername = page.dataset.avatarOwner;
       const result = await postJson(`${socialFriendRequestUrlBase}${roomOwnerUsername}/`, {});
       if (!result.ok) {
-        alert(result.error || "Failed to send friend request.");
+        alert(result.error || "Failed to update friend request.");
         return;
       }
-      sendFriendRequestBtn.disabled = true;
-      sendFriendRequestBtn.textContent = "Request Sent";
+
+      if (result.action === "sent") {
+        sendFriendRequestBtn.textContent = "Cancel Request";
+      } else if (result.action === "canceled") {
+        sendFriendRequestBtn.textContent = "Add Friend";
+      }
+
+      await loadFriendRequests();
+      await loadFriendSelectOptions();
       await loadRoomDirectory(currentSearchQuery);
     });
   }
@@ -1044,16 +1168,17 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
 
+      const authorName = getDisplayName(result.entry || {});
       const card = document.createElement("div");
       card.className = "message-card";
       card.innerHTML = `
         <div class="message-top">
-          <strong>${result.entry.author}</strong>
-          <span>${result.entry.created_at}</span>
+          <strong>${escapeHtml(authorName)}</strong>
+          <span>${escapeHtml(result.entry.created_at || "")}</span>
         </div>
         <div class="message-body"></div>
       `;
-      card.querySelector(".message-body").textContent = result.entry.content;
+      card.querySelector(".message-body").textContent = result.entry.content || "";
 
       if (guestbookList) {
         if (guestbookList.querySelector(".empty-text")) guestbookList.innerHTML = "";
@@ -1091,13 +1216,13 @@ document.addEventListener("DOMContentLoaded", function () {
       card.className = "message-card";
       card.innerHTML = `
         <div class="message-top">
-          <strong>${result.entry.title}</strong>
-          <span>${result.entry.created_at}</span>
+          <strong>${escapeHtml(result.entry.title || "")}</strong>
+          <span>${escapeHtml(result.entry.created_at || "")}</span>
         </div>
-        <div class="message-meta">${result.entry.visibility}</div>
+        <div class="message-meta">${escapeHtml(result.entry.visibility || "")}</div>
         <div class="message-body"></div>
       `;
-      card.querySelector(".message-body").textContent = result.entry.content;
+      card.querySelector(".message-body").textContent = result.entry.content || "";
 
       if (diaryList) {
         if (diaryList.querySelector(".empty-text")) diaryList.innerHTML = "";
@@ -1113,12 +1238,17 @@ document.addEventListener("DOMContentLoaded", function () {
   draftAvatar = deepCopy(avatar);
   renderAll();
   activateMainTab("avatar");
-  updateSaveHint("Choose items, stack layers, then save.");
-  window.addEventListener("resize", renderAll);
-
+  updateSaveHint("");
+  syncOwnerNickname();
   loadRoomStats();
   recordRoomVisit();
   loadFriendRequests();
   loadFriendSelectOptions();
   loadRoomDirectory("");
+
+  window.addEventListener("resize", () => {
+    syncResponsiveTabPanePlacement();
+    renderAll();
+    applyMobileRoomCleanup();
+  });
 });

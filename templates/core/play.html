@@ -28,9 +28,7 @@
 <div
     class="play-page"
     id="playPageRoot"
-
     data-play-avatar-json='{{ play_avatar_data_json|safe }}'
-
     data-base-body-male="{% static 'avatar/img/base/male/body.webp' %}"
     data-base-head-male="{% static 'avatar/img/base/male/head.webp' %}"
     data-base-hair-back-male="{% static 'avatar/img/base/male/rear_hair.webp' %}"
@@ -54,32 +52,13 @@
     </div>
 
     <div class="wrap wrap-compact">
-        <div class="play-quickbar">
-            <div class="play-quickbar-left">
-                <div class="play-page-title">
-                    <h1>Math Battle</h1>
-                    <p>Practice · Classic · Challenge · Combo · Fever · Avatar Aura</p>
-                </div>
-            </div>
-
-            <div class="play-quickbar-right">
-                <a href="{% url 'core:play' %}" class="btn quick-btn">Game</a>
-
-                {% if user.is_authenticated %}
-                    <a href="{% url 'avatar:my_room' %}" class="btn">Avatar</a>
-                {% else %}
-                    <a href="{% url 'account_login' %}?next={% url 'avatar:my_room' %}" class="btn">Avatar</a>
-                {% endif %}
-
-                <a href="{% url 'core:landing' %}#rank" class="btn secondary quick-btn">Ranking</a>
-            </div>
-        </div>
-
         <div class="grid grid-tight play-layout">
             <section class="card play-main-card">
-                <div class="card-h">
-                    <h2 id="leftTitle">Choose Mode</h2>
-                    <div class="sub" id="leftSub">Pick Practice, Classic, or Challenge.</div>
+                <div class="card-h play-main-head">
+                    <div class="play-head-copy">
+                        <h2 id="leftTitle">Choose Mode</h2>
+                        <div class="sub" id="leftSub">Pick Practice, Classic, or Challenge.</div>
+                    </div>
                 </div>
 
                 <div class="card-b play-main-body">
@@ -121,6 +100,7 @@
                         </div>
 
                         <div class="spacer-12"></div>
+
                         <div class="seg">
                             <button class="btn secondary" id="btnBackToModes" type="button">← Back</button>
                             <button class="btn" id="btnGoPlay" type="button">Start Game</button>
@@ -168,13 +148,18 @@
                                 <button class="btn submitBtn" id="btnSubmit" type="button" disabled>Submit</button>
                             </div>
 
-                            <div class="hudRow">
-                                <div class="badge">Mode <b id="hudMode">Practice</b></div>
-                                <div class="badge">Operation <b id="hudOperation">Add</b></div>
-                                <div class="badge">Score <b id="score">0</b></div>
-                                <div class="badge">Correct <b id="correct">0</b></div>
-                                <div class="badge">Run Stars <b id="earnedStars">0</b></div>
-                                <div class="badge combo-badge">Combo <b id="comboCount">0</b></div>
+                            <div class="play-hud-strip">
+                                <div class="play-hud-meta">
+                                    <span class="hud-inline">Mode <b id="hudMode">Practice</b></span>
+                                    <span class="hud-inline">Operation <b id="hudOperation">Add</b></span>
+                                </div>
+
+                                <div class="play-hud-stats">
+                                    <span class="hud-pill">Score <b id="score">0</b></span>
+                                    <span class="hud-pill">Correct <b id="correct">0</b></span>
+                                    <span class="hud-pill">Stars <b id="earnedStars">0</b></span>
+                                    <span class="hud-pill combo">Combo <b id="comboCount">0</b></span>
+                                </div>
                             </div>
 
                             <div class="feverDock" id="feverDock">
@@ -197,9 +182,8 @@
             </section>
 
             <aside class="card side-panel status-card">
-                <div class="card-h">
-                    <h2>Status</h2>
-                    <div class="sub">Battle HUD</div>
+                <div class="card-h status-card-head">
+                    <h2>Avatar Status</h2>
                 </div>
 
                 <div class="card-b status-body">
@@ -217,39 +201,79 @@
                                     >
                                 </div>
 
+                                <!-- 기본 fallback 아바타: 비로그인 / 데이터 없음일 때도 무조건 표시 -->
+                                <div class="status-avatar-stack" id="statusAvatarStack">
+                                    <img
+                                        class="status-avatar-layer status-avatar-layer-body"
+                                        src="{% static 'avatar/img/base/male/body.webp' %}"
+                                        alt=""
+                                    >
+                                    <img
+                                        class="status-avatar-layer status-avatar-layer-hair-rear"
+                                        src="{% static 'avatar/img/base/male/rear_hair.webp' %}"
+                                        alt=""
+                                    >
+                                    <img
+                                        class="status-avatar-layer status-avatar-layer-head"
+                                        src="{% static 'avatar/img/base/male/head.webp' %}"
+                                        alt=""
+                                    >
+                                    <img
+                                        class="status-avatar-layer status-avatar-layer-eyebrow"
+                                        src="{% static 'avatar/img/base/male/eyebrow.webp' %}"
+                                        alt=""
+                                    >
+                                    <img
+                                        class="status-avatar-layer status-avatar-layer-eyes"
+                                        src="{% static 'avatar/img/base/male/eyes.webp' %}"
+                                        alt=""
+                                    >
+                                    <img
+                                        class="status-avatar-layer status-avatar-layer-mouth"
+                                        src="{% static 'avatar/img/base/male/mouth.webp' %}"
+                                        alt=""
+                                    >
+                                    <img
+                                        class="status-avatar-layer status-avatar-layer-hair-front"
+                                        src="{% static 'avatar/img/base/male/front_hair.webp' %}"
+                                        alt=""
+                                    >
+                                </div>
+
                                 <div class="status-avatar-ground"></div>
                             </div>
                         </div>
-                        <div class="status-avatar-name">{{ my_nickname|default:"Player" }}</div>
+                        <div class="status-avatar-name">
+                            {% if user.is_authenticated %}
+                                {{ my_nickname|default:"Player" }}
+                            {% else %}
+                                Guest
+                            {% endif %}
+                        </div>
                     </div>
 
-                    <div class="status-stats-wrap">
-                        <div class="statGrid">
-                            <div class="stat">
-                                <div class="k">Selected Mode</div>
-                                <div class="v" id="statGameMode">Practice</div>
-                            </div>
-                            <div class="stat">
-                                <div class="k">Operation</div>
-                                <div class="v" id="statMode">Add</div>
-                            </div>
-                            <div class="stat">
-                                <div class="k">Difficulty Tier</div>
-                                <div class="v" id="statDifficulty">Easy</div>
-                            </div>
-                            <div class="stat">
-                                <div class="k">Total Stars</div>
-                                <div class="v" id="statStars">{{ total_stars|default:0 }}</div>
-                            </div>
-                            <div class="stat">
-                                <div class="k">Remaining Keys</div>
-                                <div class="v" id="statKeys">{{ remaining_keys|default:3 }}</div>
-                            </div>
-                            <div class="stat">
-                                <div class="k">Aura State</div>
-                                <div class="v" id="statAura">Idle</div>
-                            </div>
+                    <div class="status-core-grid">
+                        <div class="status-core-card">
+                            <div class="status-core-k">Total Stars</div>
+                            <div class="status-core-v" id="statStars">{{ total_stars|default:0 }}</div>
                         </div>
+                        <div class="status-core-card">
+                            <div class="status-core-k">Remaining Keys</div>
+                            <div class="status-core-v" id="statKeys">{{ remaining_keys|default:3 }}</div>
+                        </div>
+                        <div class="status-core-card">
+                            <div class="status-core-k">Aura State</div>
+                            <div class="status-core-v" id="statAura">Idle</div>
+                        </div>
+                        <div class="status-core-card">
+                            <div class="status-core-k">Selected Mode</div>
+                            <div class="status-core-v" id="statGameMode">Practice</div>
+                        </div>
+                    </div>
+
+                    <div class="play-hidden-stats" aria-hidden="true">
+                        <span id="statMode">Add</span>
+                        <span id="statDifficulty">Easy</span>
                     </div>
                 </div>
             </aside>
@@ -303,6 +327,39 @@
                 </div>
 
                 <div class="resultText" id="rText">Good job!</div>
+
+                <div class="resultRankBlock">
+                    <div class="resultRankHead">
+                        <h4>Friend Ranking</h4>
+                        <div class="sub">내 바로 위 / 아래 친구 랭킹</div>
+                    </div>
+
+                    <div class="resultRankSummary">
+                        <div class="resultRankSummaryItem">
+                            <div class="k">My Rank</div>
+                            <div class="v" id="rMyFriendRank">-</div>
+                        </div>
+                        <div class="resultRankSummaryItem">
+                            <div class="k">My Score</div>
+                            <div class="v" id="rMyFriendScore">-</div>
+                        </div>
+                    </div>
+
+                    <div class="resultRankNeighbors">
+                        <div class="resultRankNeighborCard">
+                            <div class="k">Above Me</div>
+                            <div class="v" id="rAboveFriend">-</div>
+                        </div>
+                        <div class="resultRankNeighborCard">
+                            <div class="k">Below Me</div>
+                            <div class="v" id="rBelowFriend">-</div>
+                        </div>
+                    </div>
+
+                    <div class="resultRankFooter">
+                        <a href="{% url 'ranking:home' %}" class="btn secondary">Open Ranking</a>
+                    </div>
+                </div>
             </div>
 
             <div class="modalActions">
@@ -346,9 +403,12 @@
     initialKeys: Number("{{ remaining_keys|default_if_none:0 }}"),
     startRunUrl: "{% url 'core:start_game_run' %}",
     finalizeRunUrl: "{% url 'core:save_game_result' %}",
+    rankingRecordUrl: "{% url 'ranking:api_record_score' %}",
+    friendNearbyRankUrl: "{% url 'ranking:api_friend_nearby_rank' %}?scope=friends",
+    rankingHomeUrl: "{% url 'ranking:home' %}",
     isAuthenticated: {{ user.is_authenticated|yesno:"true,false" }},
     avatarLoginUrl: "{% url 'account_login' %}?next={% url 'avatar:my_room' %}"
   };
 </script>
-<script src="{% static 'js/play.js' %}?v=20260402_wind_aura_rebalance_2"></script>
+<script src="{% static 'js/play.js' %}?v=20260405_guest_avatar_fix_3"></script>
 {% endblock %}

@@ -1,0 +1,254 @@
+﻿{% extends "base.html" %}
+{% load static %}
+
+{% block title %}1:1 Inquiry | mathner{% endblock %}
+
+{% block extra_css %}
+<style>
+  .inquiry-page{
+    padding:48px 0 80px;
+    background:
+      radial-gradient(circle at top left, rgba(84, 72, 238, 0.10), transparent 28%),
+      radial-gradient(circle at top right, rgba(91, 224, 193, 0.10), transparent 26%),
+      #060b14;
+    min-height:calc(100vh - var(--site-header-height));
+  }
+
+  .inquiry-shell{
+    width:min(860px, calc(100% - 24px));
+    margin:0 auto;
+  }
+
+  .inquiry-card{
+    background:linear-gradient(180deg, #0d1525, #09111f);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:28px;
+    padding:30px 24px;
+    box-shadow:0 24px 70px rgba(0,0,0,.32);
+  }
+
+  .inquiry-eyebrow{
+    margin:0 0 10px;
+    color:#7ea8ff;
+    font-size:13px;
+    font-weight:900;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+
+  .inquiry-title{
+    margin:0 0 10px;
+    font-size:clamp(2rem, 4vw, 2.6rem);
+    color:#ffffff;
+    line-height:1.08;
+  }
+
+  .inquiry-desc{
+    margin:0 0 24px;
+    color:#d6e0f3;
+    line-height:1.7;
+  }
+
+  .inquiry-meta-grid{
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:14px;
+    margin-bottom:18px;
+  }
+
+  .inquiry-meta-card{
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:18px;
+    padding:14px 16px;
+  }
+
+  .inquiry-meta-label{
+    margin-bottom:6px;
+    font-size:12px;
+    color:#9fb0c8;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+  }
+
+  .inquiry-meta-value{
+    color:#ffffff;
+    font-size:15px;
+    font-weight:800;
+    word-break:break-word;
+  }
+
+  .inquiry-private-note{
+    margin-bottom:20px;
+    padding:14px 16px;
+    border-radius:16px;
+    border:1px solid rgba(126,168,255,.18);
+    background:rgba(126,168,255,.08);
+    color:#dfe9ff;
+    line-height:1.6;
+    font-size:14px;
+    font-weight:700;
+  }
+
+  .inquiry-form{
+    display:grid;
+    gap:16px;
+  }
+
+  .inquiry-field{
+    display:grid;
+    gap:8px;
+  }
+
+  .inquiry-label{
+    color:#ffffff;
+    font-weight:800;
+    font-size:14px;
+  }
+
+  .inquiry-input,
+  .inquiry-textarea{
+    width:100%;
+    border:none;
+    outline:none;
+    border-radius:16px;
+    background:#ffffff;
+    color:#111827;
+    padding:14px 16px;
+    font-size:15px;
+  }
+
+  .inquiry-textarea{
+    min-height:220px;
+    resize:vertical;
+    line-height:1.6;
+  }
+
+  .inquiry-errors{
+    margin:4px 0 0;
+    padding-left:18px;
+    color:#ffb4c2;
+    font-size:13px;
+    line-height:1.5;
+  }
+
+  .inquiry-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-top:8px;
+  }
+
+  .inquiry-btn{
+    min-height:48px;
+    padding:0 18px;
+    border:none;
+    border-radius:14px;
+    font-weight:900;
+    cursor:pointer;
+  }
+
+  .inquiry-btn-primary{
+    background:linear-gradient(135deg, #6e7bff, #54e2b3);
+    color:#07111b;
+  }
+
+  .inquiry-btn-secondary{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    background:#ffffff;
+    color:#111827;
+    border:1px solid rgba(255,255,255,.16);
+    text-decoration:none;
+  }
+
+  @media (max-width: 640px){
+    .inquiry-page{
+      padding:24px 0 56px;
+    }
+
+    .inquiry-card{
+      padding:22px 16px;
+      border-radius:22px;
+    }
+
+    .inquiry-meta-grid{
+      grid-template-columns:1fr;
+    }
+
+    .inquiry-actions{
+      flex-direction:column;
+    }
+
+    .inquiry-btn,
+    .inquiry-btn-secondary{
+      width:100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="inquiry-page">
+  <div class="inquiry-shell">
+    <div class="inquiry-card">
+      <p class="inquiry-eyebrow">Support</p>
+      <h1 class="inquiry-title">1:1 Inquiry</h1>
+      <p class="inquiry-desc">
+        Submit your question privately. Inquiries are saved as private and can only be checked by the administrator.
+      </p>
+
+      <div class="inquiry-meta-grid">
+        <div class="inquiry-meta-card">
+          <div class="inquiry-meta-label">Author</div>
+          <div class="inquiry-meta-value">{{ author_display }}</div>
+        </div>
+        <div class="inquiry-meta-card">
+          <div class="inquiry-meta-label">Email</div>
+          <div class="inquiry-meta-value">{{ author_email|default:"No email" }}</div>
+        </div>
+      </div>
+
+      <div class="inquiry-private-note">
+        This inquiry is automatically saved as a private post. It is not public and only the administrator can view it.
+      </div>
+
+      <form method="post" class="inquiry-form">
+        {% csrf_token %}
+
+        <div class="inquiry-field">
+          <label class="inquiry-label" for="{{ form.title.id_for_label }}">Title</label>
+          {{ form.title }}
+          {% if form.title.errors %}
+            <ul class="inquiry-errors">
+              {% for error in form.title.errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="inquiry-field">
+          <label class="inquiry-label" for="{{ form.content.id_for_label }}">Content</label>
+          {{ form.content }}
+          {% if form.content.errors %}
+            <ul class="inquiry-errors">
+              {% for error in form.content.errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="inquiry-actions">
+          <a href="{% url 'core:landing' %}" class="inquiry-btn inquiry-btn-secondary">Cancel</a>
+          <button type="submit" class="inquiry-btn inquiry-btn-primary">Submit Inquiry</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

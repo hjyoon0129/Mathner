@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 
 
@@ -36,6 +37,68 @@ class Friendship(models.Model):
 
     def __str__(self):
         return f"{self.from_user_id}->{self.to_user_id} ({self.status})"
+
+    @property
+    def is_accepted(self):
+        return self.status == self.STATUS_ACCEPTED
+
+    @classmethod
+    def accepted_q(cls):
+        return Q(status=cls.STATUS_ACCEPTED)
+
+    @classmethod
+    def accepted_for_user(cls, user):
+        if not user or not getattr(user, "is_authenticated", False):
+            return cls.objects.none()
+        return cls.objects.filter(
+            cls.accepted_q() & (Q(from_user=user) | Q(to_user=user))
+        )
+
+    @classmethod
+    def friend_users_for(cls, user):
+        """
+        user의 수락된 친구 User queryset 반환
+        """
+        if not user or not getattr(user, "is_authenticated", False):
+            return settings.AUTH_USER_MODEL.objects.none()  # type: ignore[attr-defined]
+
+        accepted_rows = cls.accepted_for_user(user).select_related("from_user", "to_user")
+        friend_ids = []
+        for row in accepted_rows:
+            if row.from_user_id == user.id:
+                friend_ids.append(row.to_user_id)
+            else:
+                friend_ids.append(row.from_user_id)
+
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        return User.objects.filter(id__in=friend_ids)
+
+    @classmethod
+    def friend_ids_for(cls, user):
+        if not user or not getattr(user, "is_authenticated", False):
+            return []
+
+        accepted_rows = cls.accepted_for_user(user).only("from_user_id", "to_user_id")
+        friend_ids = []
+        for row in accepted_rows:
+            if row.from_user_id == user.id:
+                friend_ids.append(row.to_user_id)
+            else:
+                friend_ids.append(row.from_user_id)
+        return friend_ids
+
+    @classmethod
+    def are_friends(cls, user1, user2):
+        if not user1 or not user2:
+            return False
+        if user1 == user2:
+            return True
+
+        return cls.objects.filter(
+            cls.accepted_q(),
+            Q(from_user=user1, to_user=user2) | Q(from_user=user2, to_user=user1),
+        ).exists()
 
 
 class RoomGuestbookEntry(models.Model):

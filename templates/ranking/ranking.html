@@ -1,0 +1,150 @@
+﻿{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Ranking | Mathner{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'ranking/css/ranking.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="ranking-page">
+    <div class="ranking-wrap">
+        <section class="ranking-hero-card">
+            <div class="ranking-hero-copy">
+                <h1>Ranking</h1>
+                <p>Global leaderboard and friend leaderboard based on lifetime total correct answers.</p>
+            </div>
+        </section>
+
+        <section class="ranking-board-card">
+            <div class="ranking-board-head">
+                <h2>Leaderboard</h2>
+                <div class="ranking-board-sub">Switch between Global and Friends</div>
+            </div>
+
+            <div class="ranking-tab-row">
+                <button type="button" class="ranking-tab-btn is-active" id="tabGlobal">Global Ranking</button>
+                <button type="button" class="ranking-tab-btn" id="tabFriends">Friend Ranking</button>
+            </div>
+
+            <div class="ranking-notice" id="rankingNotice">
+                Showing all users ranked by lifetime total correct answers.
+            </div>
+
+            <div class="ranking-table-wrap">
+                <table class="ranking-table">
+                    <thead>
+                        <tr>
+                            <th class="col-rank">Rank</th>
+                            <th class="col-name">Nickname</th>
+                            <th class="col-correct">Total Correct</th>
+                            <th class="col-combo">Best Combo</th>
+                            <th class="col-stars">Stars Earned</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rankingTableBody">
+                        <tr>
+                            <td colspan="5" class="ranking-empty">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const tabGlobal = document.getElementById("tabGlobal");
+    const tabFriends = document.getElementById("tabFriends");
+    const rankingNotice = document.getElementById("rankingNotice");
+    const rankingTableBody = document.getElementById("rankingTableBody");
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function setActiveTab(scope) {
+        tabGlobal.classList.toggle("is-active", scope === "global");
+        tabFriends.classList.toggle("is-active", scope === "friends");
+    }
+
+    function renderEmpty(message) {
+        rankingTableBody.innerHTML = `
+            <tr>
+                <td colspan="5" class="ranking-empty">${escapeHtml(message)}</td>
+            </tr>
+        `;
+    }
+
+    function renderRows(entries) {
+        if (!entries || !entries.length) {
+            renderEmpty("No ranking data yet.");
+            return;
+        }
+
+        rankingTableBody.innerHTML = entries.map((item) => {
+            return `
+                <tr>
+                    <td class="col-rank">#${escapeHtml(item.rank)}</td>
+                    <td class="col-name">${escapeHtml(item.nickname)}</td>
+                    <td class="col-correct">${escapeHtml(item.total_correct)}</td>
+                    <td class="col-combo">${escapeHtml(item.best_combo)}</td>
+                    <td class="col-stars">${escapeHtml(item.earned_stars)}</td>
+                </tr>
+            `;
+        }).join("");
+    }
+
+    async function loadBoard(scope) {
+        setActiveTab(scope);
+        renderEmpty("Loading...");
+
+        try {
+            const response = await fetch(`{% url 'ranking:api_leaderboard' %}?scope=${scope}`, {
+                credentials: "same-origin",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.ok) {
+                rankingNotice.textContent = data.message || "Failed to load leaderboard.";
+                renderEmpty("No ranking data yet.");
+                return;
+            }
+
+            rankingNotice.textContent =
+                scope === "global"
+                    ? "Showing all users ranked by lifetime total correct answers."
+                    : "Showing you and your accepted friends ranked by lifetime total correct answers.";
+
+            renderRows(data.entries || []);
+        } catch (error) {
+            rankingNotice.textContent = "Network error.";
+            renderEmpty("No ranking data yet.");
+        }
+    }
+
+    tabGlobal.addEventListener("click", function () {
+        loadBoard("global");
+    });
+
+    tabFriends.addEventListener("click", function () {
+        loadBoard("friends");
+    });
+
+    loadBoard("global");
+})();
+</script>
+{% endblock %}

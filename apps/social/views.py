@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
+from apps.core.models import UserGameProfile
 from apps.social.models import (
     Friendship,
     RoomDiaryEntry,
@@ -19,12 +20,53 @@ from apps.social.models import (
 User = get_user_model()
 
 
+def _pick_first_nonempty(*values):
+    for value in values:
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def _get_related_nickname(obj, attr_name):
+    rel = getattr(obj, attr_name, None)
+    if not rel:
+        return ""
+    return (getattr(rel, "nickname", "") or "").strip()
+
+
+def _get_or_create_game_profile(user):
+    profile, _ = UserGameProfile.objects.get_or_create(user=user)
+    return profile
+
+
 def get_display_name(user):
-    nickname = ""
-    profile = getattr(user, "profile", None)
-    if profile:
-        nickname = getattr(profile, "nickname", "") or ""
-    return nickname or user.username or f"user{user.id}"
+    """
+    social API 전체에서 navbar와 같은 닉네임 기준 사용
+    """
+    if not user:
+        return ""
+
+    game_profile_nickname = ""
+    try:
+        game_profile = getattr(user, "game_profile", None)
+        if game_profile is None:
+            game_profile = _get_or_create_game_profile(user)
+        game_profile_nickname = (getattr(game_profile, "nickname", "") or "").strip()
+    except Exception:
+        game_profile_nickname = ""
+
+    nickname = _pick_first_nonempty(
+        game_profile_nickname,
+        getattr(user, "nickname", ""),
+        _get_related_nickname(user, "profile"),
+        _get_related_nickname(user, "userprofile"),
+        _get_related_nickname(user, "social_profile"),
+        _get_related_nickname(user, "member_profile"),
+        getattr(user, "first_name", ""),
+    )
+
+    username = (getattr(user, "username", "") or "").strip()
+    return nickname or username or f"user{user.id}"
 
 
 def get_accepted_friends(user):
@@ -115,6 +157,8 @@ def create_guestbook_entry_api(request, username):
         "entry": {
             "id": entry.id,
             "author": get_display_name(entry.author),
+            "author_username": entry.author.username,
+            "author_display_name": get_display_name(entry.author),
             "content": entry.content,
             "created_at": entry.created_at.strftime("%Y-%m-%d %H:%M"),
         }
@@ -172,14 +216,19 @@ def search_users_api(request):
     if len(query) < 1:
         return JsonResponse({"ok": True, "results": []})
 
-    users = (
-        User.objects.filter(username__icontains=query)
-        .exclude(id=request.user.id)
-        .order_by("username")[:20]
-    )
+    users = User.objects.exclude(id=request.user.id).order_by("username")
 
     results = []
+    q = query.lower()
+
     for user in users:
+        display_name = get_display_name(user)
+        username = (user.username or "").strip()
+
+        haystack = f"{display_name} {username} {(getattr(user, 'first_name', '') or '').strip()}".lower()
+        if q not in haystack:
+            continue
+
         friendship = get_friendship_between(request.user, user)
         status = "none"
         direction = ""
@@ -194,11 +243,14 @@ def search_users_api(request):
         results.append({
             "id": user.id,
             "username": user.username,
-            "display_name": get_display_name(user),
+            "display_name": display_name,
             "room_url": f"/avatar/room/{user.username}/",
             "friendship_status": status,
             "friendship_direction": direction,
         })
+
+        if len(results) >= 20:
+            break
 
     return JsonResponse({"ok": True, "results": results})
 
@@ -212,27 +264,46 @@ def send_friend_request_api(request, username):
         return JsonResponse({"ok": False, "error": "You cannot add yourself."}, status=400)
 
     existing = get_friendship_between(request.user, to_user)
+
     if existing:
         if existing.status == Friendship.STATUS_ACCEPTED:
-            return JsonResponse({"ok": False, "error": "Already friends."}, status=400)
-        if existing.status == Friendship.STATUS_PENDING:
-            return JsonResponse({"ok": False, "error": "Friend request already exists."}, status=400)
+            return JsonResponse({
+                "ok": False,
+                "error": "Already friends.",
+                "state": "accepted",
+            }, status=400)
 
-    friendship, created = Friendship.objects.get_or_create(
+        if existing.status == Friendship.STATUS_PENDING:
+            if existing.from_user_id == request.user.id:
+                existing.delete()
+                return JsonResponse({
+                    "ok": True,
+                    "message": "Friend request canceled.",
+                    "action": "canceled",
+                    "state": "none",
+                })
+
+            return JsonResponse({
+                "ok": False,
+                "error": "This user already sent you a friend request.",
+                "state": "incoming",
+            }, status=400)
+
+        if existing.status == Friendship.STATUS_REJECTED:
+            existing.delete()
+
+    friendship = Friendship.objects.create(
         from_user=request.user,
         to_user=to_user,
-        defaults={"status": Friendship.STATUS_PENDING},
+        status=Friendship.STATUS_PENDING,
     )
-
-    if not created:
-        friendship.status = Friendship.STATUS_PENDING
-        friendship.responded_at = None
-        friendship.save(update_fields=["status", "responded_at"])
 
     return JsonResponse({
         "ok": True,
         "message": "Friend request sent.",
         "friendship_id": friendship.id,
+        "action": "sent",
+        "state": "pending",
     })
 
 
@@ -310,6 +381,7 @@ def my_friends_api(request):
 def room_directory_api(request):
     users = User.objects.exclude(id=request.user.id).order_by("-date_joined", "username")[:50]
     results = []
+
     for user in users:
         stats = build_room_stats(user, request.user)
         friendship = get_friendship_between(request.user, user)
