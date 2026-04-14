@@ -185,6 +185,12 @@
   margin-top:8px;
 }
 
+.set-subfilter-section,
+.unique-subfilter-section{
+  margin-top:4px;
+  margin-bottom:2px;
+}
+
 .inventory-filter-bar{
   display:flex;
   flex-wrap:wrap;
@@ -354,7 +360,7 @@
 }
 
 .inventory-card.inventory-card-unique .inventory-meta{
-  text-transform:lowercase;
+  text-transform:none;
 }
 
 .inventory-unique-badge{

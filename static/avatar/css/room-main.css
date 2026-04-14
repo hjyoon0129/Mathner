@@ -310,12 +310,12 @@ header.navbar{
   -webkit-user-drag:none;
 }
 
+.avatar-layer-hair-rear{ z-index:5; }
 .avatar-layer-body{ z-index:10; }
-.avatar-layer-pants{ z-index:12; }
-.avatar-layer-shoes{ z-index:13; }
-.avatar-layer-hair-rear{ z-index:20; }
-.avatar-layer-cloth{ z-index:24; }
-.avatar-layer-top{ z-index:25; }
+.avatar-layer-pants{ z-index:14; }
+.avatar-layer-shoes{ z-index:18; }
+.avatar-layer-cloth{ z-index:22; }
+.avatar-layer-top{ z-index:26; }
 .avatar-layer-head{ z-index:30; }
 .avatar-layer-eyebrow{ z-index:40; }
 .avatar-layer-eyes{ z-index:45; }

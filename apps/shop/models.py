@@ -14,6 +14,9 @@ class ShopItem(models.Model):
     CATEGORY_FURNITURE = "furniture"
     CATEGORY_DECOR = "decor"
     CATEGORY_PROFILE_FONT = "profile_font"
+    CATEGORY_PROFILE_EFFECT = "profile_effect"
+    CATEGORY_SET = "set"
+    CATEGORY_UNIQUE = "unique"
 
     CATEGORY_CHOICES = [
         (CATEGORY_AVATAR_FACE, "Avatar Face"),
@@ -27,6 +30,9 @@ class ShopItem(models.Model):
         (CATEGORY_FURNITURE, "Furniture"),
         (CATEGORY_DECOR, "Decor"),
         (CATEGORY_PROFILE_FONT, "Profile Font"),
+        (CATEGORY_PROFILE_EFFECT, "Profile Effect"),
+        (CATEGORY_SET, "Set"),
+        (CATEGORY_UNIQUE, "Unique"),
     ]
 
     GENDER_COMMON = "common"
@@ -107,6 +113,19 @@ class ShopItem(models.Model):
         default="Nickname / Writing Preview",
     )
 
+    effect_key = models.CharField(
+        max_length=50,
+        blank=True,
+        default="",
+        help_text="Used only when category is profile_effect.",
+    )
+    effect_preview_class = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+        help_text="Used only when category is profile_effect.",
+    )
+
     class Meta:
         ordering = ["category", "gender", "name"]
 
@@ -116,6 +135,10 @@ class ShopItem(models.Model):
     @property
     def is_font_item(self):
         return self.category == self.CATEGORY_PROFILE_FONT
+
+    @property
+    def is_effect_item(self):
+        return self.category == self.CATEGORY_PROFILE_EFFECT
 
 
 class UserOwnedItem(models.Model):

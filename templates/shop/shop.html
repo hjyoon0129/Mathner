@@ -33,7 +33,7 @@
           <h1 class="shop-title">Avatar Shop</h1>
           <a href="/avatar/my-room/" class="shop-back-btn">Back to My Avatar</a>
         </div>
-        <p class="shop-sub">Buy avatar parts, fonts, effects, and unique items with your Stars.</p>
+        <p class="shop-sub">Buy avatar parts, fonts, effects, set items, and unique items with your Stars.</p>
       </div>
 
       <div class="shop-balance-card">
@@ -96,7 +96,7 @@
             <div class="shop-grid" id="shopMaleGrid">
               {% for category, items in grouped_items.items %}
                 {% for item in items %}
-                  {% if item.category|lower != 'unique' %}
+                  {% if item.category|lower != 'unique' and item.category|lower != 'set' %}
                   <div
                     class="shop-card {% if item.category == 'profile_font' %}shop-font-card{% endif %}"
                     data-item-id="{{ item.id }}"
@@ -236,96 +236,309 @@
         <div class="shop-section" id="shopSetSection" style="display:none;">
           <div class="shop-section-head">
             <h2>Set Items</h2>
-            <p class="shop-section-sub">Set items are coming soon.</p>
+            <p class="shop-section-sub">Complete set items grouped by subcategory.</p>
           </div>
-          <div class="shop-coming-box">
-            <div class="shop-coming-icon">✦</div>
-            <div class="shop-coming-title">Set Shop Coming Soon</div>
-            <div class="shop-coming-text">You can add set items later.</div>
+
+          <div class="shop-set-wrap" data-shop-scope="set">
+            <div class="shop-subcat-row">
+              <button type="button" class="shop-subcat-btn active" data-subcat="all">All</button>
+              <button type="button" class="shop-subcat-btn" data-subcat="cloth">Cloth</button>
+              <button type="button" class="shop-subcat-btn" data-subcat="pants">Pants</button>
+              <button type="button" class="shop-subcat-btn" data-subcat="shoes">Shoes</button>
+              <button type="button" class="shop-subcat-btn" data-subcat="hat">Hat</button>
+            </div>
+
+            <div class="shop-set-grid">
+              {% if set_items %}
+                {% for item in set_items %}
+                <div
+                  class="shop-card shop-set-card"
+                  data-item-id="{{ item.id }}"
+                  data-item-name="{{ item.name }}"
+                  data-item-price="{{ item.price_stars }}"
+                  data-item-category="set"
+                  data-item-slot="{{ item.slot|default:'cloth'|lower }}"
+                  data-subcategory="{{ item.slot|default:'cloth'|lower }}"
+                  data-item-gender="{{ item.gender|default:'common'|lower }}"
+                  data-item-image="{% if item.image_path %}{% static item.image_path %}{% endif %}"
+                >
+                  <span class="shop-premium-badge">Set</span>
+
+                  <div class="shop-thumb">
+                    {% if item.image_path %}
+                      <img src="{% static item.image_path %}" alt="{{ item.name }}">
+                    {% else %}
+                      <div class="shop-thumb-fallback">SET</div>
+                    {% endif %}
+                  </div>
+
+                  <div class="shop-item-name">{{ item.name }}</div>
+                  <div class="shop-font-note-line">Set item</div>
+                  <div class="shop-font-note-line">{{ item.slot|default:"cloth"|title }} category</div>
+
+                  <div class="shop-meta-row">
+                    <span class="shop-price">★ {{ item.price_stars }}</span>
+                  </div>
+
+                  <button type="button" class="shop-select-btn">Select</button>
+                </div>
+                {% endfor %}
+              {% else %}
+                <div
+                  class="shop-card shop-set-card"
+                  data-item-id="888001"
+                  data-item-name="Wizard Robe Set"
+                  data-item-price="4200"
+                  data-item-category="set"
+                  data-item-slot="cloth"
+                  data-subcategory="cloth"
+                  data-item-gender="common"
+                >
+                  <span class="shop-premium-badge">Set</span>
+
+                  <div class="shop-thumb">
+                    <div class="shop-thumb-fallback">SET</div>
+                  </div>
+
+                  <div class="shop-item-name">Wizard Robe Set</div>
+                  <div class="shop-font-note-line">Set item</div>
+                  <div class="shop-font-note-line">Cloth category</div>
+
+                  <div class="shop-meta-row">
+                    <span class="shop-price">★ 4200</span>
+                  </div>
+
+                  <button type="button" class="shop-select-btn">Select</button>
+                </div>
+
+                <div
+                  class="shop-card shop-set-card"
+                  data-item-id="888002"
+                  data-item-name="Royal Shoes Set"
+                  data-item-price="2100"
+                  data-item-category="set"
+                  data-item-slot="shoes"
+                  data-subcategory="shoes"
+                  data-item-gender="common"
+                >
+                  <span class="shop-premium-badge">Set</span>
+
+                  <div class="shop-thumb">
+                    <div class="shop-thumb-fallback">SET</div>
+                  </div>
+
+                  <div class="shop-item-name">Royal Shoes Set</div>
+                  <div class="shop-font-note-line">Set item</div>
+                  <div class="shop-font-note-line">Shoes category</div>
+
+                  <div class="shop-meta-row">
+                    <span class="shop-price">★ 2100</span>
+                  </div>
+
+                  <button type="button" class="shop-select-btn">Select</button>
+                </div>
+
+                <div
+                  class="shop-card shop-set-card"
+                  data-item-id="888003"
+                  data-item-name="Crown Hat Set"
+                  data-item-price="2500"
+                  data-item-category="set"
+                  data-item-slot="hat"
+                  data-subcategory="hat"
+                  data-item-gender="common"
+                >
+                  <span class="shop-premium-badge">Set</span>
+
+                  <div class="shop-thumb">
+                    <div class="shop-thumb-fallback">SET</div>
+                  </div>
+
+                  <div class="shop-item-name">Crown Hat Set</div>
+                  <div class="shop-font-note-line">Set item</div>
+                  <div class="shop-font-note-line">Hat category</div>
+
+                  <div class="shop-meta-row">
+                    <span class="shop-price">★ 2500</span>
+                  </div>
+
+                  <button type="button" class="shop-select-btn">Select</button>
+                </div>
+              {% endif %}
+            </div>
           </div>
         </div>
-
         <div class="shop-section" id="shopUniqueSection" style="display:none;">
           <div class="shop-section-head">
             <h2>Unique Items</h2>
             <p class="shop-section-sub">Rare unique items with special shining aura.</p>
           </div>
 
-          <div class="shop-unique-grid">
-            {% if unique_items %}
-              {% for item in unique_items %}
-              <div
-                class="shop-card shop-unique-card"
-                data-item-id="{{ item.id }}"
-                data-item-name="{{ item.name }}"
-                data-item-price="{{ item.price_stars }}"
-                data-item-category="unique"
-                data-item-slot="{{ item.slot|default:'hat'|lower }}"
-                data-item-gender="{{ item.gender|default:'common'|lower }}"
-                data-item-image="{% if item.image_path %}{% static item.image_path %}{% else %}{% static 'shop/img/unique/gold_wreath.png' %}{% endif %}"
-              >
-                <span class="shop-premium-badge shop-unique-badge">Unique</span>
+          <div class="shop-unique-wrap" data-shop-scope="unique">
+            <div class="shop-subcat-row">
+              <button type="button" class="shop-subcat-btn active" data-subcat="all">All</button>
+              <button type="button" class="shop-subcat-btn" data-subcat="cloth">Cloth</button>
+              <button type="button" class="shop-subcat-btn" data-subcat="pants">Pants</button>
+              <button type="button" class="shop-subcat-btn" data-subcat="shoes">Shoes</button>
+              <button type="button" class="shop-subcat-btn" data-subcat="hat">Hat</button>
+            </div>
 
-                <div class="shop-thumb shop-unique-thumb">
-                  <div class="shop-unique-glow"></div>
-                  <div class="shop-unique-ring"></div>
-                  <div class="shop-unique-spark spark-1"></div>
-                  <div class="shop-unique-spark spark-2"></div>
-                  <div class="shop-unique-spark spark-3"></div>
-                  <div class="shop-unique-spark spark-4"></div>
+            <div class="shop-unique-grid">
+              {% if unique_items %}
+                {% for item in unique_items %}
+                <div
+                  class="shop-card shop-unique-card"
+                  data-item-id="{{ item.id }}"
+                  data-item-name="{{ item.name }}"
+                  data-item-price="{{ item.price_stars }}"
+                  data-item-category="unique"
+                  data-item-slot="{% if 'robe' in item.name|lower or 'robe' in item.image_path|default:''|lower %}cloth{% else %}{% if 'crown' in item.name|lower or 'hat' in item.name|lower or 'wreath' in item.image_path|default:''|lower %}hat{% elif 'shoe' in item.name|lower or 'boot' in item.name|lower %}shoes{% elif 'pant' in item.name|lower %}pants{% else %}hat{% endif %}{% endif %}"
+                  data-subcategory="{% if 'robe' in item.name|lower or 'robe' in item.image_path|default:''|lower %}cloth{% else %}{% if 'crown' in item.name|lower or 'hat' in item.name|lower or 'wreath' in item.image_path|default:''|lower %}hat{% elif 'shoe' in item.name|lower or 'boot' in item.name|lower %}shoes{% elif 'pant' in item.name|lower %}pants{% else %}hat{% endif %}{% endif %}"
+                  data-item-gender="{{ item.gender|default:'common'|lower }}"
+                  data-item-image="{% if item.image_path %}{% static item.image_path %}{% else %}{% static 'shop/img/unique/gold_wreath.png' %}{% endif %}"
+                >
+                  <span class="shop-premium-badge shop-unique-badge">Unique</span>
 
-                  {% if item.image_path %}
-                    <img src="{% static item.image_path %}" alt="{{ item.name }}">
-                  {% else %}
-                    <img src="{% static 'shop/img/unique/gold_wreath.png' %}" alt="{{ item.name }}">
-                  {% endif %}
+                  <div class="shop-thumb shop-unique-thumb">
+                    <div class="shop-unique-glow"></div>
+                    <div class="shop-unique-ring"></div>
+                    <div class="shop-unique-spark spark-1"></div>
+                    <div class="shop-unique-spark spark-2"></div>
+                    <div class="shop-unique-spark spark-3"></div>
+                    <div class="shop-unique-spark spark-4"></div>
+
+                    {% if item.image_path %}
+                      <img src="{% static item.image_path %}" alt="{{ item.name }}">
+                    {% else %}
+                      <img src="{% static 'shop/img/unique/gold_wreath.png' %}" alt="{{ item.name }}">
+                    {% endif %}
+                  </div>
+
+                  <div class="shop-item-name">{{ item.name }}</div>
+                  <div class="shop-font-note-line">Unique item</div>
+                  <div class="shop-font-note-line">
+                    {% if 'robe' in item.name|lower or 'robe' in item.image_path|default:''|lower %}
+                      Cloth category
+                    {% elif 'crown' in item.name|lower or 'hat' in item.name|lower or 'wreath' in item.image_path|default:''|lower %}
+                      Hat category
+                    {% elif 'shoe' in item.name|lower or 'boot' in item.name|lower %}
+                      Shoes category
+                    {% elif 'pant' in item.name|lower %}
+                      Pants category
+                    {% else %}
+                      Hat category
+                    {% endif %}
+                  </div>
+
+                  <div class="shop-meta-row">
+                    <span class="shop-price">★ {{ item.price_stars }}</span>
+                  </div>
+
+                  <button type="button" class="shop-unique-select-btn shop-select-btn">Select</button>
+                </div>
+                {% endfor %}
+              {% else %}
+                <div
+                  class="shop-card shop-unique-card"
+                  data-item-id="999991"
+                  data-item-name="Golden Laurel Crown"
+                  data-item-price="5200"
+                  data-item-category="unique"
+                  data-item-slot="hat"
+                  data-subcategory="hat"
+                  data-item-gender="common"
+                  data-item-image="{% static 'shop/img/unique/gold_wreath.webp' %}"
+                >
+                  <span class="shop-premium-badge shop-unique-badge">Unique</span>
+
+                  <div class="shop-thumb shop-unique-thumb">
+                    <div class="shop-unique-glow"></div>
+                    <div class="shop-unique-ring"></div>
+                    <div class="shop-unique-spark spark-1"></div>
+                    <div class="shop-unique-spark spark-2"></div>
+                    <div class="shop-unique-spark spark-3"></div>
+                    <div class="shop-unique-spark spark-4"></div>
+                    <img src="{% static 'shop/img/unique/gold_wreath.webp' %}" alt="Golden Laurel Crown">
+                  </div>
+
+                  <div class="shop-item-name">Golden Laurel Crown</div>
+                  <div class="shop-font-note-line">Unique item</div>
+                  <div class="shop-font-note-line">Hat category</div>
+
+                  <div class="shop-meta-row">
+                    <span class="shop-price">★ 5200</span>
+                  </div>
+
+                  <button type="button" class="shop-unique-select-btn shop-select-btn">Select</button>
                 </div>
 
-                <div class="shop-item-name">{{ item.name }}</div>
-                <div class="shop-font-note-line">Unique item</div>
-                <div class="shop-font-note-line">Special shining aura</div>
+                <div
+                  class="shop-card shop-unique-card"
+                  data-item-id="999992"
+                  data-item-name="Royal Red Robe"
+                  data-item-price="6800"
+                  data-item-category="unique"
+                  data-item-slot="cloth"
+                  data-subcategory="cloth"
+                  data-item-gender="common"
+                >
+                  <span class="shop-premium-badge shop-unique-badge">Unique</span>
 
-                <div class="shop-meta-row">
-                  <span class="shop-price">★ {{ item.price_stars }}</span>
+                  <div class="shop-thumb shop-unique-thumb">
+                    <div class="shop-unique-glow"></div>
+                    <div class="shop-unique-ring"></div>
+                    <div class="shop-unique-spark spark-1"></div>
+                    <div class="shop-unique-spark spark-2"></div>
+                    <div class="shop-unique-spark spark-3"></div>
+                    <div class="shop-unique-spark spark-4"></div>
+                    <div class="shop-thumb-fallback">UNI</div>
+                  </div>
+
+                  <div class="shop-item-name">Royal Red Robe</div>
+                  <div class="shop-font-note-line">Unique item</div>
+                  <div class="shop-font-note-line">Cloth category</div>
+
+                  <div class="shop-meta-row">
+                    <span class="shop-price">★ 6800</span>
+                  </div>
+
+                  <button type="button" class="shop-unique-select-btn shop-select-btn">Select</button>
                 </div>
 
-                <button type="button" class="shop-unique-select-btn shop-select-btn">Select</button>
-              </div>
-              {% endfor %}
-            {% else %}
-              <div
-                class="shop-card shop-unique-card"
-                data-item-id="999999"
-                data-item-name="Golden Laurel Crown"
-                data-item-price="5200"
-                data-item-category="unique"
-                data-item-slot="hat"
-                data-item-gender="common"
-                data-item-image="{% static 'shop/img/unique/gold_wreath.webp' %}"
-              >
-                <span class="shop-premium-badge shop-unique-badge">Unique</span>
+                <div
+                  class="shop-card shop-unique-card"
+                  data-item-id="999993"
+                  data-item-name="Starlight Boots"
+                  data-item-price="3900"
+                  data-item-category="unique"
+                  data-item-slot="shoes"
+                  data-subcategory="shoes"
+                  data-item-gender="common"
+                >
+                  <span class="shop-premium-badge shop-unique-badge">Unique</span>
 
-                <div class="shop-thumb shop-unique-thumb">
-                  <div class="shop-unique-glow"></div>
-                  <div class="shop-unique-ring"></div>
-                  <div class="shop-unique-spark spark-1"></div>
-                  <div class="shop-unique-spark spark-2"></div>
-                  <div class="shop-unique-spark spark-3"></div>
-                  <div class="shop-unique-spark spark-4"></div>
-                  <img src="{% static 'shop/img/unique/gold_wreath.webp' %}" alt="Golden Laurel Crown">
+                  <div class="shop-thumb shop-unique-thumb">
+                    <div class="shop-unique-glow"></div>
+                    <div class="shop-unique-ring"></div>
+                    <div class="shop-unique-spark spark-1"></div>
+                    <div class="shop-unique-spark spark-2"></div>
+                    <div class="shop-unique-spark spark-3"></div>
+                    <div class="shop-unique-spark spark-4"></div>
+                    <div class="shop-thumb-fallback">UNI</div>
+                  </div>
+
+                  <div class="shop-item-name">Starlight Boots</div>
+                  <div class="shop-font-note-line">Unique item</div>
+                  <div class="shop-font-note-line">Shoes category</div>
+
+                  <div class="shop-meta-row">
+                    <span class="shop-price">★ 3900</span>
+                  </div>
+
+                  <button type="button" class="shop-unique-select-btn shop-select-btn">Select</button>
                 </div>
-
-                <div class="shop-item-name">Golden Laurel Crown</div>
-                <div class="shop-font-note-line">Unique head item</div>
-                <div class="shop-font-note-line">Shining golden aura effect</div>
-
-                <div class="shop-meta-row">
-                  <span class="shop-price">★ 5200</span>
-                </div>
-
-                <button type="button" class="shop-unique-select-btn shop-select-btn">Select</button>
-              </div>
-            {% endif %}
+              {% endif %}
+            </div>
           </div>
         </div>
       </div>

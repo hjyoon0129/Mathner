@@ -1,0 +1,23 @@
+﻿{% extends "admin/base_site.html" %}
+
+{% block content %}
+  <h1>{{ title }}</h1>
+
+  <p><strong>Total effects:</strong> {{ effect_count }}</p>
+
+  <div style="margin:12px 0 20px; padding:12px; border:1px solid #ddd; background:#fff; max-width:720px;">
+    <ul style="margin:0; padding-left:20px;">
+      {% for effect_key in effect_keys %}
+        <li>{{ effect_key }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <form method="post" style="max-width:720px;">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <button type="submit" class="default">Grant all effects</button>
+    <a href="../" style="margin-left:10px;">Cancel</a>
+  </form>
+{% endblock %}

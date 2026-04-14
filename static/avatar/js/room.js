@@ -128,8 +128,18 @@ document.addEventListener("DOMContentLoaded", () => {
   ]);
 
   const SLOT_ORDER = [
-    "body", "pants", "shoes", "rear_hair", "cloth", "top",
-    "head", "eyebrow", "eyes", "mouth", "front_hair", "hat",
+    "rear_hair",
+    "body",
+    "pants",
+    "cloth",
+    "top",
+    "shoes",
+    "head",
+    "eyebrow",
+    "eyes",
+    "mouth",
+    "front_hair",
+    "hat",
   ];
 
   const SLOT_CLASS_MAP = {
@@ -193,6 +203,23 @@ document.addEventListener("DOMContentLoaded", () => {
     float_wave: "Float Wave",
     fire_glow: "Fire Glow",
     ice_glow: "Ice Glow",
+  };
+
+  const SLOT_LABEL_MAP = {
+    head: "Head",
+    eyes: "Eyes",
+    mouth: "Mouth",
+    eyebrow: "Eyebrow",
+    front_hair: "Front Hair",
+    rear_hair: "Rear Hair",
+    body: "Body",
+    top: "Top",
+    cloth: "Cloth",
+    pants: "Pants",
+    shoes: "Shoes",
+    hat: "Hat",
+    set: "Set",
+    unique: "Unique",
   };
 
   const DEFAULT_NICKNAME_SCALE = 1.0;
@@ -384,6 +411,39 @@ document.addEventListener("DOMContentLoaded", () => {
     return ownerName || ownerUser || "Player";
   }
 
+  function inferSlotFromItemMeta(item) {
+    const source = [
+      item?.name,
+      item?.image_url,
+      item?.image_path,
+      item?.slug,
+      item?.code,
+      item?.category,
+      item?.item_group,
+      item?.subtype,
+      item?.subcategory,
+      item?.type,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    if (/(crown|wreath|laurel|halo|hat|cap|tiara)/.test(source)) return "hat";
+    if (/(robe|cloak|cape|mantle|coat|outer|cloth|outfit)/.test(source)) return "cloth";
+    if (/(pants|trouser|bottom)/.test(source)) return "pants";
+    if (/(shoe|shoes|boot|boots|sneaker)/.test(source)) return "shoes";
+    if (/(top|shirt|tee|jacket|hoodie|vest)/.test(source)) return "top";
+    if (/(front hair|front_hair|hairfront|fronthair)/.test(source)) return "front_hair";
+    if (/(rear hair|rear_hair|hairback|back hair|rearhair)/.test(source)) return "rear_hair";
+    if (/(eyebrow|brow)/.test(source)) return "eyebrow";
+    if (/(eyes|eye)/.test(source)) return "eyes";
+    if (/(mouth|lip)/.test(source)) return "mouth";
+    if (/(head|face)/.test(source)) return "head";
+    if (/(body)/.test(source)) return "body";
+
+    return "";
+  }
+
   function normalizeSlotName(slot) {
     const s = String(slot || "").toLowerCase().trim();
 
@@ -395,12 +455,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (["head", "face"].includes(s)) return "head";
     if (["body"].includes(s)) return "body";
     if (["top"].includes(s)) return "top";
-    if (["cloth", "clothes", "outfit"].includes(s)) return "cloth";
-    if (["pants", "bottom", "bottoms"].includes(s)) return "pants";
-    if (["shoes", "shoe"].includes(s)) return "shoes";
-    if (["hat", "cap"].includes(s)) return "hat";
+    if (["cloth", "clothes", "outfit", "robe", "cloak", "cape"].includes(s)) return "cloth";
+    if (["pants", "bottom", "bottoms", "trousers"].includes(s)) return "pants";
+    if (["shoes", "shoe", "boots", "boot"].includes(s)) return "shoes";s
+    if (["hat", "cap", "crown", "halo", "tiara", "wreath"].includes(s)) return "hat";
     if (["set"].includes(s)) return "set";
-    if (["unique"].includes(s)) return "hat";
+    if (["unique"].includes(s)) return "unique";
     return s;
   }
 
@@ -421,6 +481,31 @@ document.addEventListener("DOMContentLoaded", () => {
     return avatar;
   }
 
+  function resolveItemSlot(item) {
+    const candidates = [
+      item.slot,
+      item.equip_slot,
+      item.item_slot,
+      item.avatar_slot,
+      item.part,
+      item.subtype,
+      item.subcategory,
+      item.type,
+    ];
+
+    for (const candidate of candidates) {
+      const normalized = normalizeSlotName(candidate);
+      if (SUPPORTED_SLOTS.has(normalized)) return normalized;
+    }
+
+    const category = String(item.category || item.item_category || "").toLowerCase();
+    if (SUPPORTED_SLOTS.has(normalizeSlotName(category))) {
+      return normalizeSlotName(category);
+    }
+
+    return "";
+  }
+
   function normalizeInventoryItems(items) {
     if (!Array.isArray(items)) return [];
 
@@ -428,7 +513,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     for (const src of items) {
       const item = { ...(src || {}) };
-      item.slot = normalizeSlotName(item.slot || item.category || "");
+
       item.item_id = Number(item.item_id || item.id || 0);
       item.owned_item_id = Number(item.owned_item_id || 0);
       item.quantity = Number(item.quantity || 1);
@@ -437,6 +522,8 @@ document.addEventListener("DOMContentLoaded", () => {
       item.font_key = String(item.font_family_key || item.font_key || "").trim();
       item.category = String(item.category || item.item_category || "").toLowerCase();
       item.item_group = String(item.item_group || item.group || "").toLowerCase();
+
+      item.slot = resolveItemSlot(item);
 
       if (!item.item_id) continue;
 
@@ -573,7 +660,7 @@ document.addEventListener("DOMContentLoaded", () => {
         category.includes("unique") ||
         group.includes("unique") ||
         imageUrl.includes("/unique/") ||
-        /(crown|halo|angel|divine|holy|unique|laurel|golden crown|gold crown)/.test(name);
+        /(crown|halo|angel|divine|holy|unique|laurel|golden crown|gold crown|robe|cloak|cape)/.test(name);
 
       if (looksLikeUnique) {
         return {
@@ -586,8 +673,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return null;
   }
-
-
 
   function buildAvatarUniqueAura(source) {
     if (!source) return null;
@@ -996,20 +1081,29 @@ document.addEventListener("DOMContentLoaded", () => {
     updateFontEffectCarousels();
   }
 
+  function getDisplaySlotLabel(item, slot) {
+    const normalized = normalizeSlotName(slot);
+    if (SUPPORTED_SLOTS.has(normalized)) return SLOT_LABEL_MAP[normalized] || normalized;
+    if (isSetItem(item)) return `Set · ${SLOT_LABEL_MAP[normalized] || normalized || "Part"}`;
+    if (isUniqueItem(item)) return `Unique · ${SLOT_LABEL_MAP[normalized] || normalized || "Part"}`;
+    return SLOT_LABEL_MAP[normalized] || normalized || "Item";
+  }
+
   function renderInventoryCard(item) {
-    const normalizedSlot = normalizeSlotName(item.slot || item.category || "");
+    const normalizedSlot = resolveItemSlot(item);
     const isSet = isSetItem(item);
     const isUnique = isUniqueItem(item);
 
-    const displaySlot = isSet ? "set" : (isUnique ? "unique" : normalizedSlot);
-    const equipSlot = isSet ? "" : (isUnique ? "hat" : normalizedSlot);
-    const draftKey = equipSlot ? getDraftKeyBySlot(equipSlot) : "";
-    const isSupportedSlot = Boolean(equipSlot) && SUPPORTED_SLOTS.has(equipSlot);
+    const equipSlot = normalizedSlot;
+    const draftKey = equipSlot && SUPPORTED_SLOTS.has(equipSlot) ? getDraftKeyBySlot(equipSlot) : "";
+    const isSupportedSlot = Boolean(draftKey);
     const isActive = Boolean(draftKey) && Number(state.draftAvatar[draftKey]) === Number(item.item_id);
 
     const imageHtml = item.image_url
       ? `<img src="${escapeHtml(forceWebp(item.image_url))}" alt="${escapeHtml(item.name || "")}" loading="lazy" decoding="async">`
       : `<div class="empty-text">NO IMG</div>`;
+
+    const displayMeta = getDisplaySlotLabel(item, normalizedSlot);
 
     if (isUnique) {
       return `
@@ -1028,7 +1122,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
           </div>
           <div class="inventory-name">${escapeHtml(item.name || "")}</div>
-          <div class="inventory-meta">${escapeHtml(displaySlot || "unique")} · x${escapeHtml(item.quantity ?? 1)}</div>
+          <div class="inventory-meta">${escapeHtml(displayMeta)} · x${escapeHtml(item.quantity ?? 1)}</div>
           <button
             type="button"
             class="inventory-equip-btn ${isActive ? "is-active" : ""}"
@@ -1037,31 +1131,53 @@ document.addEventListener("DOMContentLoaded", () => {
             data-slot="${escapeHtml(equipSlot)}"
             ${isSupportedSlot ? "" : "disabled"}
           >
-            ${isSupportedSlot ? (isActive ? "Equipped" : "Equip") : "Unsupported"}
+            ${isSupportedSlot ? (isActive ? "Equipped" : "Equip") : "Set slot first"}
+          </button>
+        </div>
+      `;
+    }
+
+    if (isSet) {
+      return `
+        <div class="inventory-card ${isActive ? "is-equipped" : ""}">
+          <div class="inventory-thumb">
+            ${imageHtml}
+          </div>
+          <div class="inventory-name">${escapeHtml(item.name || "")}</div>
+          <div class="inventory-meta">${escapeHtml(displayMeta)} · x${escapeHtml(item.quantity ?? 1)}</div>
+          <button
+            type="button"
+            class="inventory-equip-btn ${isActive ? "is-active" : ""}"
+            data-action="equip-item"
+            data-item-id="${escapeHtml(item.item_id)}"
+            data-slot="${escapeHtml(equipSlot)}"
+            ${isSupportedSlot ? "" : "disabled"}
+          >
+            ${isSupportedSlot ? (isActive ? "Equipped" : "Equip") : "Set slot first"}
           </button>
         </div>
       `;
     }
 
     return `
-    <div class="inventory-card ${isActive ? "is-equipped" : ""}">
-      <div class="inventory-thumb">
-        ${imageHtml}
+      <div class="inventory-card ${isActive ? "is-equipped" : ""}">
+        <div class="inventory-thumb">
+          ${imageHtml}
+        </div>
+        <div class="inventory-name">${escapeHtml(item.name || "")}</div>
+        <div class="inventory-meta">${escapeHtml(displayMeta)} · x${escapeHtml(item.quantity ?? 1)}</div>
+        <button
+          type="button"
+          class="inventory-equip-btn ${isActive ? "is-active" : ""}"
+          data-action="equip-item"
+          data-item-id="${escapeHtml(item.item_id)}"
+          data-slot="${escapeHtml(equipSlot)}"
+          ${isSupportedSlot ? "" : "disabled"}
+        >
+          ${isSupportedSlot ? (isActive ? "Equipped" : "Equip") : "Unsupported"}
+        </button>
       </div>
-      <div class="inventory-name">${escapeHtml(item.name || "")}</div>
-      <div class="inventory-meta">${escapeHtml(displaySlot || "item")} · x${escapeHtml(item.quantity ?? 1)}</div>
-      <button
-        type="button"
-        class="inventory-equip-btn ${isActive ? "is-active" : ""}"
-        data-action="equip-item"
-        data-item-id="${escapeHtml(item.item_id)}"
-        data-slot="${escapeHtml(equipSlot)}"
-        ${isSupportedSlot ? "" : "disabled"}
-      >
-        ${isSupportedSlot ? (isActive ? "Equipped" : "Equip") : "Unsupported"}
-      </button>
-    </div>
-  `;
+    `;
   }
 
   function renderInventory() {
@@ -1078,7 +1194,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let visibleCount = 0;
 
     for (const item of avatarItems) {
-      const slot = normalizeSlotName(item.slot || item.category || "");
+      const slot = resolveItemSlot(item);
       if (!itemMatchesFilters(item, slot)) continue;
       visibleCount += 1;
       html.push(renderInventoryCard(item));

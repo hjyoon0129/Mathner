@@ -1,0 +1,15 @@
+﻿{% extends "admin/base_site.html" %}
+
+{% block content %}
+  <h1>{{ title }}</h1>
+
+  <p><strong>Active shop item count:</strong> {{ preview_count }}</p>
+
+  <form method="post" style="max-width:720px;">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <button type="submit" class="default">Grant all shop items</button>
+    <a href="../" style="margin-left:10px;">Cancel</a>
+  </form>
+{% endblock %}

@@ -11,8 +11,8 @@ from apps.core.models import UserGameProfile
 from .models import ShopItem, UserOwnedItem, UserOwnedEffect
 
 
-CATEGORY_SET = getattr(ShopItem, "CATEGORY_SET", "set")
-CATEGORY_UNIQUE = getattr(ShopItem, "CATEGORY_UNIQUE", "unique")
+CATEGORY_SET = ShopItem.CATEGORY_SET
+CATEGORY_UNIQUE = ShopItem.CATEGORY_UNIQUE
 
 SHOP_ALLOWED_CATEGORIES = [
     ShopItem.CATEGORY_AVATAR_FACE,
@@ -24,6 +24,7 @@ SHOP_ALLOWED_CATEGORIES = [
     ShopItem.CATEGORY_AVATAR_SHOES,
     ShopItem.CATEGORY_AVATAR_HAT,
     ShopItem.CATEGORY_PROFILE_FONT,
+    ShopItem.CATEGORY_PROFILE_EFFECT,
     CATEGORY_SET,
     CATEGORY_UNIQUE,
 ]
@@ -38,57 +39,6 @@ AVATAR_MAIN_CATEGORIES = [
     ShopItem.CATEGORY_AVATAR_SHOES,
     ShopItem.CATEGORY_AVATAR_HAT,
     ShopItem.CATEGORY_PROFILE_FONT,
-]
-
-EFFECT_CATALOG = [
-    {
-        "key": "neon-blue",
-        "name": "Neon Blue",
-        "price_stars": 90,
-        "preview_class": "effect-neon-blue",
-    },
-    {
-        "key": "rainbow-flow",
-        "name": "Rainbow Flow",
-        "price_stars": 130,
-        "preview_class": "effect-rainbow-flow",
-    },
-    {
-        "key": "gold-glow",
-        "name": "Gold Glow",
-        "price_stars": 110,
-        "preview_class": "effect-gold-glow",
-    },
-    {
-        "key": "sparkle",
-        "name": "Sparkle",
-        "price_stars": 95,
-        "preview_class": "effect-sparkle",
-    },
-    {
-        "key": "glitch",
-        "name": "Glitch",
-        "price_stars": 125,
-        "preview_class": "effect-glitch",
-    },
-    {
-        "key": "float-wave",
-        "name": "Float Wave",
-        "price_stars": 90,
-        "preview_class": "effect-float-wave",
-    },
-    {
-        "key": "fire-glow",
-        "name": "Fire Glow",
-        "price_stars": 115,
-        "preview_class": "effect-fire-glow",
-    },
-    {
-        "key": "ice-glow",
-        "name": "Ice Glow",
-        "price_stars": 115,
-        "preview_class": "effect-ice-glow",
-    },
 ]
 
 
@@ -119,6 +69,7 @@ def _slot_label_from_category(category):
         ShopItem.CATEGORY_AVATAR_SHOES: "shoes",
         ShopItem.CATEGORY_AVATAR_HAT: "hat",
         ShopItem.CATEGORY_PROFILE_FONT: "font",
+        ShopItem.CATEGORY_PROFILE_EFFECT: "effect",
         CATEGORY_SET: "set",
         CATEGORY_UNIQUE: "hat",
     }
@@ -154,6 +105,7 @@ def shop_view(request):
     }
 
     font_items = []
+    effect_items = []
     set_items = []
     unique_items = []
 
@@ -167,6 +119,9 @@ def shop_view(request):
         if item.category == ShopItem.CATEGORY_PROFILE_FONT:
             font_items.append(item)
 
+        if item.category == ShopItem.CATEGORY_PROFILE_EFFECT:
+            effect_items.append(item)
+
         if normalized_category == _normalize_category_value(CATEGORY_SET):
             set_items.append(item)
 
@@ -175,19 +130,38 @@ def shop_view(request):
 
     owned_items = UserOwnedItem.objects.filter(user=request.user).select_related("item")
     owned_map = {}
+    owned_effect_map = {}
+
     for owned in owned_items:
         owned_map[str(owned.item_id)] = int(owned.quantity or 0)
 
-    owned_effect_map = {}
+        if owned.item and owned.item.category == ShopItem.CATEGORY_PROFILE_EFFECT and owned.item.effect_key:
+            owned_effect_map[str(owned.item.effect_key)] = int(owned.quantity or 0)
+
     for owned in UserOwnedEffect.objects.filter(user=request.user):
-        owned_effect_map[str(owned.effect_key)] = int(owned.quantity or 0)
+        normalized_key = str(owned.effect_key or "").strip().lower().replace("-", "_")
+        owned_effect_map[normalized_key] = max(
+            int(owned.quantity or 0),
+            int(owned_effect_map.get(normalized_key, 0) or 0),
+        )
+
+    effect_catalog = [
+        {
+            "item_id": item.id,
+            "key": item.effect_key.replace("_", "-") if item.effect_key else "",
+            "name": item.name,
+            "price_stars": int(item.price_stars or 0),
+            "preview_class": item.effect_preview_class or "",
+        }
+        for item in effect_items
+    ]
 
     context = {
         "grouped_items": dict(grouped_items),
         "font_items": font_items,
         "set_items": set_items,
         "unique_items": unique_items,
-        "effect_catalog": EFFECT_CATALOG,
+        "effect_catalog": effect_catalog,
         "owned_map_json": json.dumps(owned_map),
         "owned_effect_map_json": json.dumps(owned_effect_map),
         "shop_star_count": shop_star_count,
@@ -312,34 +286,60 @@ def buy_effects_view(request):
     if not effect_keys:
         return JsonResponse({"ok": False, "error": "No effects selected."}, status=400)
 
-    catalog_map = {item["key"]: item for item in EFFECT_CATALOG}
-    selected_effects = []
-    total_cost = 0
+    normalized_keys = [
+        str(key or "").strip().lower().replace("-", "_")
+        for key in effect_keys
+    ]
 
-    for key in effect_keys:
-        effect = catalog_map.get(str(key))
-        if effect:
-            selected_effects.append(effect)
-            total_cost += int(effect["price_stars"])
+    selected_items = list(
+        ShopItem.objects.filter(
+            category=ShopItem.CATEGORY_PROFILE_EFFECT,
+            is_active=True,
+            effect_key__in=normalized_keys,
+        )
+    )
 
-    if not selected_effects:
+    if not selected_items:
         return JsonResponse({"ok": False, "error": "Selected effects not found."}, status=404)
 
-    already_owned_keys = set(
+    selected_map = {item.effect_key: item for item in selected_items}
+    ordered_selected_items = []
+    total_cost = 0
+
+    for key in normalized_keys:
+        item = selected_map.get(key)
+        if item:
+            ordered_selected_items.append(item)
+            total_cost += int(item.price_stars or 0)
+
+    already_owned_item_ids = set(
+        UserOwnedItem.objects.filter(
+            user=request.user,
+            item_id__in=[item.id for item in ordered_selected_items],
+        ).values_list("item_id", flat=True)
+    )
+
+    legacy_owned_keys = set(
         UserOwnedEffect.objects.filter(
             user=request.user,
-            effect_key__in=[item["key"] for item in selected_effects],
+            effect_key__in=normalized_keys,
         ).values_list("effect_key", flat=True)
     )
 
-    if already_owned_keys:
-        owned_names = [item["name"] for item in selected_effects if item["key"] in already_owned_keys]
+    owned_names = []
+    if already_owned_item_ids or legacy_owned_keys:
+        for item in ordered_selected_items:
+            if item.id in already_owned_item_ids or item.effect_key in legacy_owned_keys:
+                owned_names.append(item.name)
+
         return JsonResponse(
             {
                 "ok": False,
                 "error": "Already owned effect included.",
                 "already_owned": True,
-                "owned_effect_keys": list(already_owned_keys),
+                "owned_effect_keys": list(legacy_owned_keys) + [
+                    item.effect_key for item in ordered_selected_items if item.id in already_owned_item_ids
+                ],
                 "owned_effect_names": owned_names,
             },
             status=400,
@@ -357,16 +357,24 @@ def buy_effects_view(request):
             return JsonResponse({"ok": False, "error": "Star field was not found in profile."}, status=500)
 
         bought_effects = []
-        for effect in selected_effects:
-            owned = UserOwnedEffect.objects.create(
+        for item in ordered_selected_items:
+            UserOwnedItem.objects.create(
                 user=request.user,
-                effect_key=effect["key"],
+                item=item,
                 quantity=1,
             )
+
+            UserOwnedEffect.objects.update_or_create(
+                user=request.user,
+                effect_key=item.effect_key,
+                defaults={"quantity": 1},
+            )
+
             bought_effects.append({
-                "effect_key": effect["key"],
-                "quantity": int(owned.quantity or 1),
-                "name": effect["name"],
+                "effect_key": item.effect_key.replace("_", "-"),
+                "quantity": 1,
+                "name": item.name,
+                "item_id": item.id,
             })
 
     return JsonResponse({
