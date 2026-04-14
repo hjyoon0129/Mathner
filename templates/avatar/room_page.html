@@ -1,55 +1,66 @@
-﻿{% extends "base.html" %}
+﻿{% extends "base_app.html" %}
 {% load static %}
 
 {% block title %}My Avatar - mathner{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'avatar/css/room.css' %}">
+<link rel="stylesheet" href="{% static 'avatar/css/room-main.css' %}">
+<link rel="stylesheet" href="{% static 'avatar/css/room-guestbook.css' %}">
+<link rel="stylesheet" href="{% static 'avatar/css/room-diary.css' %}">
+<link rel="stylesheet" href="{% static 'avatar/css/room-avatar-edit.css' %}">
+<link rel="stylesheet" href="{% static 'avatar/css/room-font-edit.css' %}">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Boogaloo&family=Bubblegum+Sans&family=Cabin+Sketch:wght@400;700&family=Capriola&family=Chewy&family=Coming+Soon&family=Delius+Swash+Caps&family=Dokdo&family=Dongle:wght@400;700&family=Gaegu:wght@400;700&family=Gowun+Batang:wght@400;700&family=Life+Savers:wght@400;700;800&family=Londrina+Shadow&family=Love+Ya+Like+A+Sister&family=Luckiest+Guy&family=McLaren&family=Modak&family=Mouse+Memoirs&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
 
 <link rel="preload" as="image" href="{% static 'avatar/img/base/male/body.webp' %}">
 <link rel="preload" as="image" href="{% static 'avatar/img/base/male/head.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/male/rear_hair.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/male/front_hair.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/male/eyes.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/male/eyebrow.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/male/mouth.webp' %}">
-
-<link rel="preload" as="image" href="{% static 'avatar/img/base/female/body.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/female/head.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/female/rear_hair.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/female/front_hair.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/female/eyes.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/female/eyebrow.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/female/mouth.webp' %}">
 {% endblock %}
 
 {% block content %}
 <div
   class="avatar-page"
   id="avatarPage"
-  data-avatar-owner="{{ avatar_owner.username }}"
-  data-avatar-owner-username="{{ owner_username|default:avatar_owner.username }}"
-  data-avatar-owner-display-name="{{ owner_display_name|default:display_name|default:avatar_owner.username }}"
-  data-owner-display-name="{{ owner_display_name|default:display_name|default:avatar_owner.username }}"
-  data-display-name="{{ owner_display_name|default:display_name|default:avatar_owner.username }}"
+  data-avatar-owner="{{ room_owner.username }}"
+  data-avatar-owner-username="{{ room_owner.username }}"
+  data-avatar-owner-display-name="{{ room_owner_name|default:room_owner.username }}"
+  data-owner-display-name="{{ room_owner_name|default:room_owner.username }}"
+  data-display-name="{{ room_owner_name|default:room_owner.username }}"
   data-is-owner="{% if is_owner %}true{% else %}false{% endif %}"
   data-avatar-json='{{ avatar_data_json|safe }}'
-  data-owned-avatar-item-json='{{ owned_avatar_item_data_json|default:"[]"|safe }}'
-  data-guestbook-create-url="{% url 'social:guestbook_create' avatar_owner.username %}"
+  data-owned-avatar-item-json='{{ inventory_items_json|safe }}'
+  data-owned-effect-json='{{ owned_effect_items_json|safe }}'
+  data-inventory-items-json='{{ inventory_items_json|safe }}'
+  data-avatar-inventory-url="{% url 'avatar:avatar_inventory' %}"
+
+  data-font-pref-json='{{ viewer_font_pref_json|safe }}'
+  data-viewer-font-pref-json='{{ viewer_font_pref_json|safe }}'
+  data-room-owner-font-pref-json='{{ room_owner_font_pref_json|safe }}'
+
+  data-guestbook-list-url="/social/api/guestbook/{{ room_owner.username }}/list/"
+  data-guestbook-create-url="{% url 'social:guestbook_create' room_owner.username %}"
+  data-guestbook-delete-url-base="/social/api/guestbook/"
+  data-guestbook-reply-create-url-base="/social/api/guestbook/"
+  data-guestbook-reply-delete-url-base="/social/api/guestbook/reply/"
+
   data-diary-create-url="{% url 'social:diary_create' %}"
-  data-avatar-save-url="{% url 'avatar:save_room_state' %}"
-  data-avatar-reset-url="/avatar/api/reset-room/"
+  data-diary-calendar-url="/social/api/diary/{{ room_owner.username }}/calendar/"
+  data-diary-date-url-base="/social/api/diary/{{ room_owner.username }}/date/"
+  data-diary-update-url-base="/social/api/diary/"
+  data-diary-delete-url-base="/social/api/diary/"
+
+  data-avatar-save-url="{% url 'avatar:save_avatar_state' %}"
+  data-avatar-save-font-url="{% url 'avatar:save_font_preference' %}"
+  data-avatar-reset-url="{% url 'avatar:reset_avatar_state' %}"
   data-friend-avatar-base="/avatar/room/"
   data-my-room-url="/avatar/my-room/"
-  data-social-user-search-url="{% url 'social:user_search' %}"
-  data-social-friend-request-url-base="/social/api/friends/request/"
-  data-social-friend-respond-url-base="/social/api/friends/respond/"
-  data-social-friend-requests-url="{% url 'social:friend_requests' %}"
   data-social-friend-list-url="{% url 'social:friend_list' %}"
-  data-social-room-list-url="{% url 'social:room_directory' %}"
   data-social-room-stats-url-base="/social/api/rooms/"
   data-social-room-visit-url-base="/social/api/rooms/"
   data-social-room-like-url-base="/social/api/rooms/"
+  data-social-friend-request-url-base="/social/api/friends/request/"
+
   data-base-body-male="{% static 'avatar/img/base/male/body.webp' %}"
   data-base-head-male="{% static 'avatar/img/base/male/head.webp' %}"
   data-base-hair-back-male="{% static 'avatar/img/base/male/rear_hair.webp' %}"
@@ -67,32 +78,31 @@
 >
   <div class="wrap wrap-compact">
     <div class="avatar-shell">
-      <div class="avatar-layout avatar-layout-threecol" id="avatarLayout">
+      <div class="avatar-layout avatar-layout-room" id="avatarLayout">
 
         <section class="avatar-col avatar-col-main">
-          <div class="avatar-card avatar-status-card">
+          <div class="avatar-card avatar-hero-card is-visible" id="avatarHeroCard">
             <div class="avatar-card-head">
               <h2>Avatar Status</h2>
             </div>
 
             <div class="avatar-card-body avatar-status-body">
               <div class="avatar-status-panel">
-                <div class="tab-pane active" id="tab-avatar">
-                  <div class="avatar-stage-shell">
-                    <div class="avatar-stage-fixed">
-                      <div class="avatar-stage-wrap">
-                        <div class="avatar-canvas avatar-canvas-main" id="avatarCanvasView"></div>
-                      </div>
+                <div class="avatar-stage-shell">
+                  <div class="avatar-stage-fixed">
+                    <div class="avatar-stage-wrap">
+                      <div class="avatar-canvas avatar-canvas-main" id="avatarCanvasView"></div>
                     </div>
                   </div>
                 </div>
 
                 <div class="avatar-status-name-wrap">
-                  <div class="owner-name avatar-status-name" id="roomOwnerName">
-                    {{ owner_display_name|default:display_name|default:avatar_owner.username }}
+                  <div class="owner-name avatar-status-name font-default" id="roomOwnerName">
+                    {{ room_owner_name|default:room_owner.username }}
                   </div>
+
                   <div class="room-row-sub" id="roomOwnerUsername" style="display:none;">
-                    @{{ owner_username|default:avatar_owner.username }}
+                    @{{ room_owner.username }}
                   </div>
 
                   {% if request.user.is_authenticated %}
@@ -117,12 +127,17 @@
           </div>
 
           <div class="avatar-card avatar-stage-content-card" id="avatarStageContentCard">
+            <div class="avatar-card-head">
+              <h2 id="dynamicPanelTitle">Guestbook</h2>
+            </div>
+
             <div class="avatar-card-body" id="avatarStageCardBody">
+
               <div class="tab-pane" id="tab-guestbook">
                 <div class="panel-block">
                   <h3 class="panel-title">Leave a message</h3>
                   <div class="guestbook-form">
-                    <textarea id="guestbookContent" class="avatar-textarea" placeholder="Write your guestbook message..."></textarea>
+                    <textarea id="guestbookContent" class="avatar-textarea font-default" placeholder="Write your guestbook message..."></textarea>
                     <button type="button" class="avatar-btn avatar-btn-primary" id="guestbookSubmitBtn">Leave Message</button>
                   </div>
                 </div>
@@ -130,35 +145,51 @@
                 <div class="panel-block">
                   <h3 class="panel-title">Messages</h3>
                   <div class="message-list" id="guestbookList">
-                    {% for entry in guestbook_entries %}
-                      <div class="message-card">
-                        <div class="message-top">
-                          <strong>{{ entry.author_display_name|default:entry.author.username }}</strong>
-                          <span>{{ entry.created_at|date:"Y-m-d H:i" }}</span>
-                        </div>
-                        <div class="message-body">{{ entry.content }}</div>
-                      </div>
-                    {% empty %}
-                      <div class="empty-text">No guestbook messages yet.</div>
-                    {% endfor %}
+                    <div class="empty-text">Loading guestbook...</div>
                   </div>
                 </div>
               </div>
 
               <div class="tab-pane" id="tab-diary">
+                <div class="diary-calendar-shell">
+                  <div class="diary-calendar-header">
+                    <button type="button" class="calendar-nav-btn" id="calendarPrevBtn">‹</button>
+                    <div class="calendar-month-label" id="calendarMonthLabel">2026.04</div>
+                    <button type="button" class="calendar-nav-btn" id="calendarNextBtn">›</button>
+                  </div>
+
+                  <div class="calendar-weekdays">
+                    <span>Sun</span>
+                    <span>Mon</span>
+                    <span>Tue</span>
+                    <span>Wed</span>
+                    <span>Thu</span>
+                    <span>Fri</span>
+                    <span>Sat</span>
+                  </div>
+
+                  <div class="calendar-grid" id="calendarGrid"></div>
+                </div>
+
+                <div class="panel-block">
+                  <h3 class="panel-title">Selected date</h3>
+                  <div class="diary-form">
+                    <input type="date" id="diaryDate" class="avatar-input">
+                    <div class="message-meta" id="diarySelectedDateText">Choose a date from the calendar.</div>
+                  </div>
+                </div>
+
                 {% if is_owner %}
                 <div class="panel-block">
                   <h3 class="panel-title">Write diary</h3>
                   <div class="diary-form">
-                    <input type="text" id="diaryTitle" class="avatar-input" placeholder="Diary title">
-                    <textarea id="diaryContent" class="avatar-textarea" placeholder="Write your diary..."></textarea>
+                    <input type="hidden" id="diaryEntryId" value="">
+                    <input type="text" id="diaryTitle" class="avatar-input font-default" placeholder="Diary title">
+                    <textarea id="diaryContent" class="avatar-textarea font-default" placeholder="Write your diary..."></textarea>
                     <div class="diary-action-row">
-                      <select id="diaryVisibility" class="avatar-select avatar-select-small">
-                        <option value="private">Private</option>
-                        <option value="friends" selected>Friends</option>
-                        <option value="public">Public</option>
-                      </select>
                       <button type="button" class="avatar-btn avatar-btn-primary" id="diarySubmitBtn">Save Diary</button>
+                      <button type="button" class="avatar-btn avatar-btn-secondary" id="diaryClearBtn">Clear</button>
+                      <button type="button" class="avatar-btn avatar-btn-secondary" id="diaryDeleteBtn">Delete</button>
                     </div>
                   </div>
                 </div>
@@ -167,122 +198,88 @@
                 <div class="panel-block">
                   <h3 class="panel-title">Diary list</h3>
                   <div class="message-list" id="diaryList">
-                    {% for entry in diary_entries %}
-                      <div class="message-card">
-                        <div class="message-top">
-                          <strong>{{ entry.title }}</strong>
-                          <span>{{ entry.created_at|date:"Y-m-d H:i" }}</span>
-                        </div>
-                        <div class="message-meta">{{ entry.visibility|title }}</div>
-                        <div class="message-body">{{ entry.content }}</div>
-                      </div>
-                    {% empty %}
-                      <div class="empty-text">No diary entries yet.</div>
-                    {% endfor %}
+                    <div class="empty-text">Choose a date to load diary.</div>
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
         </section>
 
-        <aside class="avatar-col avatar-col-tabs">
-          <div class="avatar-card avatar-tab-card">
-            <div class="avatar-card-body">
-              <div class="side-tab-grid">
-                <button type="button" class="side-tab-btn active" data-tab-target="avatar">Avatar</button>
-                <button type="button" class="side-tab-btn" data-tab-target="guestbook">Guestbook</button>
-                <button type="button" class="side-tab-btn" data-tab-target="diary">Diary</button>
-                {% if is_owner %}
-                <a href="/shop/" class="side-tab-btn side-tab-link-btn">Shop</a>
-                <button type="button" class="side-tab-btn" data-tab-target="edit">Avatar Edit</button>
-                {% endif %}
-              </div>
-            </div>
-          </div>
+        <aside class="avatar-col avatar-col-side">
+          <div class="avatar-side-stack">
+            <div class="avatar-card avatar-tab-card">
+              <div class="avatar-card-body">
+                <div class="side-tab-grid">
+                  <button type="button" class="side-tab-btn active" data-tab-target="avatar">Avatar</button>
+                  <button type="button" class="side-tab-btn" data-tab-target="guestbook">Guestbook</button>
+                  <button type="button" class="side-tab-btn" data-tab-target="diary">Diary</button>
 
-          <div class="avatar-card avatar-mobile-pane-card" id="mobileTabPaneCard">
-            <div class="avatar-card-body" id="mobileTabPaneMount"></div>
-          </div>
+                  {% if is_owner %}
+                  <a href="/shop/" class="side-tab-btn side-tab-link-btn">Shop</a>
 
-          {% if request.user.is_authenticated %}
-          <div class="avatar-card utility-card utility-card-requests">
-            <div class="avatar-card-head">
-              <h2>Friend Requests</h2>
-            </div>
-            <div class="avatar-card-body">
-              <div class="message-list" id="friendRequestList">
-                <div class="empty-text">No pending requests.</div>
-              </div>
-            </div>
-          </div>
+                  <button
+                    type="button"
+                    class="side-tab-btn"
+                    data-tab-target="edit"
+                    id="openAvatarEditBtn"
+                    onclick="window.switchRightEditPanel && window.switchRightEditPanel('avatar');"
+                  >
+                    Avatar Edit
+                  </button>
 
-          <div class="avatar-card utility-card utility-card-visit">
-            <div class="avatar-card-head">
-              <h2>Visit Friend</h2>
-            </div>
-            <div class="avatar-card-body">
-              <div class="visit-friend-box">
-                <select id="friendSelect" class="avatar-select">
-                  <option value="">Choose friend</option>
-                  {% for friend in my_friends %}
-                    <option value="{{ friend.username }}">{{ friend.display_name|default:friend.username }}</option>
-                  {% endfor %}
-                </select>
-                <button type="button" class="avatar-btn avatar-btn-primary visit-btn-full" id="visitFriendBtn">Visit</button>
-              </div>
-            </div>
-          </div>
-
-          {% if not is_owner %}
-          <div class="avatar-card utility-card">
-            <div class="avatar-card-head">
-              <h2>My Room</h2>
-            </div>
-            <div class="avatar-card-body">
-              <button type="button" class="avatar-btn avatar-btn-secondary visit-btn-full" id="goMyRoomBtn">
-                Back to My Avatar Room
-              </button>
-            </div>
-          </div>
-          {% endif %}
-          {% endif %}
-        </aside>
-
-        <aside class="avatar-col avatar-col-people">
-          {% if request.user.is_authenticated %}
-          <div class="avatar-card people-roomlist-card">
-            <div class="avatar-card-head">
-              <h2>People</h2>
-            </div>
-            <div class="avatar-card-body">
-              <div class="people-search-row">
-                <input type="text" id="userSearchInput" class="avatar-input people-search-input" placeholder="Search nickname / username">
-                <button type="button" class="avatar-btn avatar-btn-primary people-search-btn" id="userSearchBtn">Search</button>
-              </div>
-
-              <div class="people-list-wrap">
-                <div class="people-list" id="roomDirectoryList">
-                  <div class="empty-text">Loading list...</div>
+                  <button
+                    type="button"
+                    class="side-tab-btn"
+                    id="openFontEditBtn"
+                    onclick="window.switchRightEditPanel && window.switchRightEditPanel('font');"
+                  >
+                    Font Edit
+                  </button>
+                  {% endif %}
                 </div>
               </div>
             </div>
+
+            {% if request.user.is_authenticated %}
+            <div class="avatar-card utility-card utility-card-visit" id="visitFriendCard">
+              <div class="avatar-card-head">
+                <h2>Visit Friend</h2>
+              </div>
+              <div class="avatar-card-body">
+                <div class="visit-friend-box">
+                  <select id="friendSelect" class="avatar-select">
+                    <option value="">Choose friend</option>
+                  </select>
+                  <button type="button" class="avatar-btn avatar-btn-primary visit-btn-full" id="visitFriendBtn">Visit</button>
+                  <button type="button" class="avatar-btn avatar-btn-secondary visit-btn-full" id="goMyRoomBtn">My Avatar Room</button>
+                </div>
+              </div>
+            </div>
+            {% endif %}
           </div>
-          {% endif %}
         </aside>
 
         {% if is_owner %}
         <aside class="avatar-side-edit" id="avatarSideEdit" aria-hidden="true">
-          <div class="avatar-card avatar-edit-card">
+
+          <div class="avatar-card avatar-edit-card" id="avatarEditPanel">
             <div class="avatar-card-head avatar-edit-head">
               <div><h2>Avatar Edit</h2></div>
-              <button type="button" class="avatar-btn avatar-btn-secondary avatar-edit-close-btn" id="closeEditDrawerBtn">
+              <button
+                type="button"
+                class="avatar-btn avatar-btn-secondary avatar-edit-close-btn"
+                id="closeEditDrawerBtn"
+                onclick="window.closeRightEditPanels && window.closeRightEditPanels();"
+              >
                 Close
               </button>
             </div>
 
             <div class="avatar-card-body">
               <div class="avatar-edit-layout">
+
                 <div class="avatar-edit-left">
                   <div class="edit-card edit-card-base">
                     <div class="edit-card-title">Base</div>
@@ -297,11 +294,13 @@
                     <button type="button" class="avatar-btn avatar-btn-primary save-btn-full" id="saveAvatarChangesBtn">
                       Save Avatar
                     </button>
+
                     <div class="avatar-reset-section" data-reset-section>
                       <button type="button" class="avatar-btn avatar-btn-secondary save-btn-full" id="resetAvatarBtn" style="margin-top:8px;">
                         Reset Avatar
                       </button>
                     </div>
+
                     <div class="save-hint" id="saveHint"></div>
                   </div>
 
@@ -330,35 +329,180 @@
                       <div class="edit-card-title inventory-title">Inventory</div>
                     </div>
 
-                    <div class="inventory-filter-section">
-                      <div class="inventory-filter-bar" id="inventoryGenderFilterBar">
-                        <button type="button" class="inventory-filter-btn is-active" data-filter-group="gender" data-filter="all">All</button>
-                        <button type="button" class="inventory-filter-btn" data-filter-group="gender" data-filter="male">Male</button>
-                        <button type="button" class="inventory-filter-btn" data-filter-group="gender" data-filter="female">Female</button>
-                        <button type="button" class="inventory-filter-btn" data-filter-group="gender" data-filter="common">Common</button>
+                    <div class="avatar-edit-subtabs">
+                      <button type="button" class="avatar-edit-subtab-btn is-active" data-edit-subtab="avatar">Avatar</button>
+                      <button type="button" class="avatar-edit-subtab-btn" data-edit-subtab="set">Set</button>
+                      <button type="button" class="avatar-edit-subtab-btn" data-edit-subtab="unique">Unique</button>
+                    </div>
+
+                    <div class="avatar-edit-subpanel is-active" id="avatarEditSubpanelAvatar">
+                      <div class="inventory-filter-section">
+                        <div class="inventory-filter-bar" id="inventoryGenderFilterBar">
+                          <button type="button" class="inventory-filter-btn is-active" data-filter-group="gender" data-filter="all">All</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="gender" data-filter="male">Male</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="gender" data-filter="female">Female</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="gender" data-filter="common">Common</button>
+                        </div>
+                      </div>
+
+                      <div class="inventory-filter-section">
+                        <div class="inventory-filter-bar" id="inventoryTypeFilterBar">
+                          <button type="button" class="inventory-filter-btn is-active" data-filter-group="type" data-filter="all">All</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="face">Face</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="hair">Hair</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="body">Body</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="top">Top</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="cloth">Cloth</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="pants">Pants</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="shoes">Shoes</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="hat">Hat</button>
+                        </div>
+                      </div>
+
+                      <div class="inventory-slider-viewport">
+                        <div id="inventoryWrap" class="inventory-grid inventory-grid-wide inventory-grid-slider">
+                          <div class="empty-text">Open Avatar Edit to load inventory.</div>
+                        </div>
                       </div>
                     </div>
 
-                    <div class="inventory-filter-section">
-                      <div class="inventory-filter-bar" id="inventoryTypeFilterBar">
-                        <button type="button" class="inventory-filter-btn is-active" data-filter-group="type" data-filter="all">All</button>
-                        <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="face">Face</button>
-                        <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="hair">Hair</button>
-                        <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="body">Body</button>
-                        <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="top">Top</button>
-                        <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="cloth">Cloth</button>
-                        <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="pants">Pants</button>
-                        <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="shoes">Shoes</button>
-                        <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="hat">Hat</button>
+                    <div class="avatar-edit-subpanel" id="avatarEditSubpanelSet">
+                      <div class="edit-subpanel-empty">
+                        <div class="edit-subpanel-empty-title">Set Inventory</div>
+                        <div class="edit-subpanel-empty-text">Set items will appear here after you purchase or unlock them.</div>
+                        <div id="setInventoryWrap" class="inventory-grid inventory-grid-wide inventory-grid-slider">
+                          <div class="empty-text">No set items yet.</div>
+                        </div>
                       </div>
                     </div>
 
-                    <div id="inventoryWrap" class="inventory-grid inventory-grid-wide"></div>
+                    <div class="avatar-edit-subpanel" id="avatarEditSubpanelUnique">
+                      <div class="edit-subpanel-empty">
+                        <div class="edit-subpanel-empty-title">Unique Inventory</div>
+                        <div class="edit-subpanel-empty-text">Unique items will appear here after you purchase or unlock them.</div>
+                        <div id="uniqueInventoryWrap" class="inventory-grid inventory-grid-wide inventory-grid-slider">
+                          <div class="empty-text">No unique items yet.</div>
+                        </div>
+                      </div>
+                    </div>
+
                   </div>
                 </div>
+
               </div>
             </div>
           </div>
+
+          <div class="avatar-card avatar-edit-card" id="fontEditPanel" hidden>
+            <div class="avatar-card-head avatar-edit-head">
+              <div><h2>Font Edit</h2></div>
+              <button
+                type="button"
+                class="avatar-btn avatar-btn-secondary"
+                id="closeFontDrawerBtn"
+                onclick="window.closeRightEditPanels && window.closeRightEditPanels();"
+              >
+                Close
+              </button>
+            </div>
+
+            <div class="avatar-card-body">
+              <div class="font-editor-layout font-editor-layout-vertical">
+
+                <div class="font-editor-top">
+                  <div class="edit-card">
+                    <div class="font-slider-head">
+                      <div class="edit-card-title">Font Inventory</div>
+                    </div>
+
+                    <div class="font-carousel" id="fontInventoryCarousel">
+                      <button type="button" class="font-carousel-nav font-carousel-nav-prev" id="fontPrevBtn" aria-label="Previous fonts">
+                        <span>‹</span>
+                      </button>
+                      <div class="font-carousel-viewport">
+                        <div class="font-grid-wrap font-grid-track" id="fontInventoryWrap">
+                          <div class="empty-text">Open Font Edit to load fonts.</div>
+                        </div>
+                      </div>
+                      <button type="button" class="font-carousel-nav font-carousel-nav-next" id="fontNextBtn" aria-label="Next fonts">
+                        <span>›</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="edit-card" style="margin-top:16px;">
+                    <div class="font-slider-head">
+                      <div class="edit-card-title">Effect Inventory</div>
+                    </div>
+
+                    <div class="font-carousel" id="effectInventoryCarousel">
+                      <button type="button" class="font-carousel-nav font-carousel-nav-prev" id="effectPrevBtn" aria-label="Previous effects">
+                        <span>‹</span>
+                      </button>
+                      <div class="font-carousel-viewport">
+                        <div class="font-grid-wrap font-grid-track" id="effectInventoryWrap">
+                          <div class="empty-text">Open Font Edit to load effects.</div>
+                        </div>
+                      </div>
+                      <button type="button" class="font-carousel-nav font-carousel-nav-next" id="effectNextBtn" aria-label="Next effects">
+                        <span>›</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="font-editor-bottom">
+                  <div class="edit-card edit-card-font">
+                    <div class="edit-card-title">Current Font</div>
+
+                    <div class="font-current-simple">
+                      <div class="font-nickname-tools">
+                        <div class="font-nickname-tool-group">
+                          <div class="font-tool-label">Nickname Size</div>
+                          <div class="font-tool-row">
+                            <button type="button" class="font-tool-btn" id="nicknameSizeDownBtn">A-</button>
+                            <div class="font-tool-value" id="nicknameSizeValue">Default</div>
+                            <button type="button" class="font-tool-btn" id="nicknameSizeUpBtn">A+</button>
+                          </div>
+                        </div>
+
+                        <div class="font-nickname-tool-group">
+                          <div class="font-tool-label">Nickname Spacing</div>
+                          <div class="font-tool-row">
+                            <button type="button" class="font-tool-btn" id="nicknameSpacingDownBtn">-</button>
+                            <div class="font-tool-value" id="nicknameSpacingValue">Default</div>
+                            <button type="button" class="font-tool-btn" id="nicknameSpacingUpBtn">+</button>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          class="avatar-btn avatar-btn-secondary font-default-btn"
+                          id="resetFontDefaultBtn"
+                          data-reset-mode="false"
+                        >
+                          Default
+                        </button>
+
+                        <button
+                          type="button"
+                          class="avatar-btn avatar-btn-primary font-apply-btn-inline"
+                          id="saveFontPreferenceBtn"
+                        >
+                          Apply
+                        </button>
+                      </div>
+
+                      <div class="save-hint" id="fontSaveHint"></div>
+                      <input type="hidden" id="fontEffectSelect" value="none">
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
         </aside>
         {% endif %}
 
@@ -381,6 +525,10 @@
     </div>
   </div>
 </div>
+
+<div class="name-visit-popover is-hidden" id="nameVisitPopover">
+  <button type="button" class="avatar-btn avatar-btn-primary" id="popoverVisitBtn">Visit</button>
+</div>
 {% endblock %}
 
 {% block footer %}{% endblock %}
@@ -388,6 +536,57 @@
 {% block extra_js %}
 <script>
   window.CSRF_TOKEN = "{{ csrf_token }}";
+
+  window.switchRightEditPanel = function(panelName) {
+    const avatarLayout = document.getElementById("avatarLayout");
+    const avatarHeroCard = document.getElementById("avatarHeroCard");
+    const avatarStageContentCard = document.getElementById("avatarStageContentCard");
+    const avatarEditPanel = document.getElementById("avatarEditPanel");
+    const fontEditPanel = document.getElementById("fontEditPanel");
+    const allSideBtns = document.querySelectorAll(".side-tab-btn");
+
+    if (avatarLayout) avatarLayout.classList.add("is-editing");
+    if (avatarHeroCard) avatarHeroCard.classList.add("is-visible");
+    if (avatarStageContentCard) avatarStageContentCard.classList.remove("is-visible");
+
+    if (avatarEditPanel) {
+      if (panelName === "avatar") avatarEditPanel.removeAttribute("hidden");
+      else avatarEditPanel.setAttribute("hidden", "hidden");
+    }
+
+    if (fontEditPanel) {
+      if (panelName === "font") fontEditPanel.removeAttribute("hidden");
+      else fontEditPanel.setAttribute("hidden", "hidden");
+    }
+
+    allSideBtns.forEach(btn => btn.classList.remove("active"));
+
+    if (panelName === "avatar") {
+      document.getElementById("openAvatarEditBtn")?.classList.add("active");
+    } else if (panelName === "font") {
+      document.getElementById("openFontEditBtn")?.classList.add("active");
+    }
+  };
+
+  window.closeRightEditPanels = function() {
+    const avatarLayout = document.getElementById("avatarLayout");
+    const avatarHeroCard = document.getElementById("avatarHeroCard");
+    const avatarStageContentCard = document.getElementById("avatarStageContentCard");
+    const avatarEditPanel = document.getElementById("avatarEditPanel");
+    const fontEditPanel = document.getElementById("fontEditPanel");
+    const allSideBtns = document.querySelectorAll(".side-tab-btn");
+    const avatarBtn = document.querySelector('.side-tab-btn[data-tab-target="avatar"]');
+
+    if (avatarLayout) avatarLayout.classList.remove("is-editing");
+    if (avatarHeroCard) avatarHeroCard.classList.add("is-visible");
+    if (avatarStageContentCard) avatarStageContentCard.classList.remove("is-visible");
+    if (avatarEditPanel) avatarEditPanel.setAttribute("hidden", "hidden");
+    if (fontEditPanel) fontEditPanel.setAttribute("hidden", "hidden");
+
+    allSideBtns.forEach(btn => btn.classList.remove("active"));
+    avatarBtn?.classList.add("active");
+  };
 </script>
-<script src="{% static 'avatar/js/room.js' %}"></script>
+
+<script src="{% static 'avatar/js/room.js' %}?v=1"></script>
 {% endblock %}

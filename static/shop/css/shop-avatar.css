@@ -1,0 +1,72 @@
+.shop-gender-section{
+  padding: 14px;
+}
+
+.shop-gender-section + .shop-gender-section{
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+
+.shop-gender-head{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.shop-gender-head h3{
+  margin: 0;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.shop-gender-badge{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.shop-gender-badge-male{
+  background: rgba(111,127,255,.18);
+  color: #9db2ff;
+  border: 1px solid rgba(111,127,255,.35);
+}
+
+.shop-gender-badge-female{
+  background: rgba(255,125,185,.16);
+  color: #ff9fcb;
+  border: 1px solid rgba(255,125,185,.30);
+}
+
+.shop-gender-badge-common{
+  background: rgba(255,179,71,.16);
+  color: #ffc46a;
+  border: 1px solid rgba(255,179,71,.30);
+}
+
+.shop-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 768px){
+  .shop-grid{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .shop-gender-section{
+    padding: 10px;
+  }
+}
+
+@media (max-width: 520px){
+  .shop-grid{
+    grid-template-columns: 1fr;
+  }
+}

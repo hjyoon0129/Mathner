@@ -1,0 +1,305 @@
+.shop-font-card .shop-thumb{
+  aspect-ratio: auto;
+  min-height: 148px;
+  background: linear-gradient(180deg, #0f1726 0%, #12203a 100%) !important;
+  border: 1px solid rgba(255,255,255,.08);
+  padding: 12px;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.shop-font-preview-wrap,
+.shop-effect-preview-box{
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 12%, rgba(110,160,255,.12), transparent 44%),
+    linear-gradient(180deg, #0f1726 0%, #121f36 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.shop-effect-preview-box{
+  min-height: 132px;
+  justify-content: center;
+}
+
+.shop-font-preview-title{
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.60);
+  text-align: center;
+  flex: 0 0 auto;
+}
+
+.shop-preview-stage{
+  width: 100%;
+  min-height: 78px;
+  height: 78px;
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 50% 22%, rgba(92,134,225,.18), transparent 40%),
+    linear-gradient(180deg, rgba(7,15,28,.92) 0%, rgba(12,24,44,.92) 100%);
+  border: 1px solid rgba(255,255,255,.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.shop-preview-stage-compact{
+  min-height: 84px;
+  height: 84px;
+}
+
+.shop-preview-text{
+  width: 100%;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -.015em;
+  color: #f7fbff;
+  font-size: 24px;
+  transition: color .18s ease, text-shadow .18s ease, filter .18s ease, transform .18s ease, opacity .18s ease;
+}
+
+.shop-effect-preview-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+  padding: 14px;
+  align-items: stretch;
+}
+
+.shop-effect-preview-label{
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.shop-effect-preview-label span{
+  font-size: 11px;
+  color: rgba(255,255,255,.72);
+  font-weight: 800;
+}
+
+.shop-effect-preview-select{
+  width: 100%;
+  min-height: 36px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: #13213b;
+  color: #fff;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.shop-font-inline-preview-label{
+  margin-top: 10px;
+  margin-bottom: 4px;
+}
+
+.font-default{ font-family: inherit; font-size: 24px; }
+.font-gaegu{ font-family: "Gaegu", cursive; font-size: 24px; }
+.font-dongle{ font-family: "Dongle", sans-serif; font-size: 31px; }
+.font-gowun_batang{ font-family: "Gowun Batang", serif; font-size: 22px; }
+.font-nanum_pen{ font-family: "Nanum Pen Script", cursive; font-size: 27px; }
+.font-dokdo{ font-family: "Dokdo", cursive; font-size: 31px; }
+.font-bubblegum_sans{ font-family:"Bubblegum Sans", cursive; font-size: 24px; }
+.font-delius_swash_caps{ font-family:"Delius Swash Caps", cursive; font-size: 22px; }
+.font-boogaloo{ font-family:"Boogaloo", cursive; font-size: 24px; }
+.font-love_ya_like_a_sister{ font-family:"Love Ya Like A Sister", cursive; font-size: 20px; }
+.font-luckiest_guy{ font-family:"Luckiest Guy", cursive; font-size: 21px; }
+.font-coming_soon{ font-family:"Coming Soon", cursive; font-size: 20px; }
+.font-life_savers{ font-family:"Life Savers", cursive; font-size: 20px; }
+.font-chewy{ font-family:"Chewy", cursive; font-size: 23px; }
+.font-cabin_sketch{ font-family:"Cabin Sketch", cursive; font-size: 20px; }
+.font-mouse_memoirs{ font-family:"Mouse Memoirs", sans-serif; font-size: 24px; }
+.font-londrina_shadow{ font-family:"Londrina Shadow", cursive; font-size: 23px; }
+.font-modak{ font-family:"Modak", cursive; font-size: 22px; }
+.font-amatic_sc{ font-family:"Amatic SC", cursive; font-size: 28px; }
+.font-capriola{ font-family:"Capriola", sans-serif; font-size: 22px; }
+.font-mclaren{ font-family:"McLaren", cursive; font-size: 22px; }
+
+.effect-none{
+  color: #f7fbff;
+  text-shadow: none;
+  filter: none;
+  opacity: 1;
+  transform: none;
+}
+
+.effect-neon-blue{
+  color: #9eeeff;
+  text-shadow:
+    0 0 2px rgba(158,238,255,.85),
+    0 0 6px rgba(120,214,255,.55),
+    0 0 12px rgba(90,175,255,.28);
+}
+
+.effect-rainbow-flow{
+  background: linear-gradient(90deg, #8c7cff 0%, #58b1ff 26%, #ff5d84 54%, #ffb34d 78%, #ffd95d 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: rainbowFlow 3s linear infinite;
+}
+
+.effect-gold-glow{
+  color: #ffd76a;
+  text-shadow:
+    0 0 3px rgba(255,215,106,.72),
+    0 0 8px rgba(255,196,77,.42),
+    0 0 16px rgba(255,172,51,.20);
+}
+
+.effect-sparkle{
+  color: #fff7c7;
+  text-shadow:
+    0 0 3px rgba(255,255,255,.85),
+    0 0 8px rgba(255,245,157,.62),
+    0 0 14px rgba(255,232,110,.34);
+  animation: sparkleBlink 1.3s ease-in-out infinite;
+}
+
+.effect-glitch{
+  color: #ffffff;
+  text-shadow:
+    -1px 0 rgba(255,0,92,.55),
+    1px 0 rgba(0,240,255,.55),
+    0 0 5px rgba(255,255,255,.14);
+  animation: glitchShake 1.4s steps(2, end) infinite;
+}
+
+.effect-float-wave{
+  color: #d7f6ff;
+  text-shadow: 0 0 8px rgba(115,223,255,.28);
+  animation: floatWave 2.2s ease-in-out infinite;
+}
+
+.effect-fire-glow{
+  color: #ffd0a3;
+  text-shadow:
+    0 0 4px rgba(255,120,0,.56),
+    0 0 8px rgba(255,80,0,.46),
+    0 0 14px rgba(255,180,0,.28);
+  animation: fireFlicker 1.1s ease-in-out infinite;
+}
+
+.effect-ice-glow{
+  color: #dff7ff;
+  text-shadow:
+    0 0 4px rgba(140,220,255,.65),
+    0 0 8px rgba(100,200,255,.48),
+    0 0 14px rgba(180,245,255,.24);
+  animation: icePulse 1.8s ease-in-out infinite;
+}
+
+@keyframes rainbowFlow {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes sparkleBlink {
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  50% { opacity: .78; filter: brightness(1.18); }
+}
+
+@keyframes glitchShake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-1px, 0); }
+  40% { transform: translate(1px, 0); }
+  60% { transform: translate(0, -1px); }
+  80% { transform: translate(0, 1px); }
+}
+
+@keyframes floatWave {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes fireFlicker {
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  50% { opacity: .9; filter: brightness(1.08); }
+}
+
+@keyframes icePulse {
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  50% { opacity: .88; filter: brightness(1.14); }
+}
+
+@media (max-width: 768px){
+  .shop-effect-preview-grid{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .shop-font-card .shop-thumb{
+    min-height: 124px;
+  }
+
+  .shop-preview-stage{
+    height: 70px;
+    min-height: 70px;
+  }
+
+  .shop-preview-stage-compact{
+    height: 76px;
+    min-height: 76px;
+  }
+
+  .shop-effect-preview-box{
+    min-height: 116px;
+  }
+
+  .font-default{ font-size: 20px; }
+  .font-gaegu{ font-size: 20px; }
+  .font-dongle{ font-size: 26px; }
+  .font-gowun_batang{ font-size: 18px; }
+  .font-nanum_pen{ font-size: 23px; }
+  .font-dokdo{ font-size: 26px; }
+  .font-bubblegum_sans{ font-size: 20px; }
+  .font-delius_swash_caps{ font-size: 18px; }
+  .font-boogaloo{ font-size: 20px; }
+  .font-love_ya_like_a_sister{ font-size: 17px; }
+  .font-luckiest_guy{ font-size: 18px; }
+  .font-coming_soon{ font-size: 17px; }
+  .font-life_savers{ font-size: 17px; }
+  .font-chewy{ font-size: 19px; }
+  .font-cabin_sketch{ font-size: 17px; }
+  .font-mouse_memoirs{ font-size: 20px; }
+  .font-londrina_shadow{ font-size: 19px; }
+  .font-modak{ font-size: 18px; }
+  .font-amatic_sc{ font-size: 24px; }
+  .font-capriola{ font-size: 18px; }
+  .font-mclaren{ font-size: 18px; }
+}
+
+@media (max-width: 520px){
+  .shop-effect-preview-grid{
+    grid-template-columns: 1fr;
+  }
+}

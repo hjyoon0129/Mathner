@@ -3,30 +3,59 @@ import json
 from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, Max, Q
+from django.db.models import Max, Q, Sum
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET, require_POST
 
+from apps.core.views import _build_nav_context
 from apps.core.models import UserGameProfile
 from apps.ranking.models import GameScore
 
 User = get_user_model()
 
+VALID_GAME_MODES = {
+    "practice",
+    "classic",
+    "challenge",
+    "avatar_aura",
+    "acid_rain",
+    "tug_of_war",
+}
+
+VALID_OPERATIONS = {"add", "sub", "mul", "div", "mixed"}
+
 
 def ranking_home(request):
-    return render(request, "ranking/ranking.html")
+    selected_mode = _normalize_mode(request.GET.get("mode"))
+    context = {
+        "selected_mode": selected_mode,
+        **_build_nav_context(request),
+    }
+    return render(request, "ranking/ranking.html", context)
 
 
 def _display_name(user):
+    if not user:
+        return "User"
+
     try:
         profile = UserGameProfile.objects.filter(user=user).first()
     except Exception:
         profile = None
 
-    nickname = getattr(profile, "nickname", None) if profile else None
-    username = getattr(user, "username", None) if user else None
-    email_prefix = ((getattr(user, "email", "") or "").split("@")[0]) if user else ""
+    nickname = None
+    if profile:
+        if hasattr(profile, "get_display_name"):
+            try:
+                nickname = profile.get_display_name()
+            except Exception:
+                nickname = getattr(profile, "nickname", None)
+        else:
+            nickname = getattr(profile, "nickname", None)
+
+    username = getattr(user, "username", None)
+    email_prefix = (getattr(user, "email", "") or "").split("@")[0]
 
     return nickname or username or email_prefix or "User"
 
@@ -121,11 +150,24 @@ def _accepted_friend_user_ids(user):
     return set()
 
 
-def _build_rank_entries(user_ids=None):
+def _normalize_mode(raw_mode):
+    mode = (raw_mode or "practice").strip().lower()
+    return mode if mode in VALID_GAME_MODES else "practice"
+
+
+def _normalize_operation(raw_operation):
+    operation = (raw_operation or "mixed").strip().lower()
+    return operation if operation in VALID_OPERATIONS else "mixed"
+
+
+def _build_rank_entries(user_ids=None, game_mode=None):
     qs = GameScore.objects.all()
 
     if user_ids is not None:
         qs = qs.filter(user_id__in=user_ids)
+
+    if game_mode:
+        qs = qs.filter(game_mode=game_mode)
 
     rows = (
         qs.values("user_id")
@@ -147,7 +189,7 @@ def _build_rank_entries(user_ids=None):
             {
                 "rank": idx,
                 "user_id": row["user_id"],
-                "nickname": _display_name(user) if user else "User",
+                "nickname": _display_name(user),
                 "total_correct": int(row["total_correct"] or 0),
                 "best_combo": int(row["best_combo"] or 0),
                 "earned_stars": int(row["total_stars"] or 0),
@@ -159,6 +201,7 @@ def _build_rank_entries(user_ids=None):
 @require_GET
 def api_leaderboard(request):
     scope = (request.GET.get("scope") or "global").strip().lower()
+    game_mode = _normalize_mode(request.GET.get("mode"))
 
     if scope == "friends":
         if not request.user.is_authenticated:
@@ -171,22 +214,22 @@ def api_leaderboard(request):
         visible_ids = set(friend_ids)
         visible_ids.add(request.user.id)
 
-        entries = _build_rank_entries(user_ids=visible_ids)
-
+        entries = _build_rank_entries(user_ids=visible_ids, game_mode=game_mode)
         return JsonResponse(
             {
                 "ok": True,
                 "scope": "friends",
+                "mode": game_mode,
                 "entries": entries,
             }
         )
 
-    entries = _build_rank_entries()
-
+    entries = _build_rank_entries(game_mode=game_mode)
     return JsonResponse(
         {
             "ok": True,
             "scope": "global",
+            "mode": game_mode,
             "entries": entries,
         }
     )
@@ -195,11 +238,13 @@ def api_leaderboard(request):
 @login_required
 @require_GET
 def api_friend_nearby_rank(request):
+    game_mode = _normalize_mode(request.GET.get("mode"))
+
     friend_ids = _accepted_friend_user_ids(request.user)
     visible_ids = set(friend_ids)
     visible_ids.add(request.user.id)
 
-    entries = _build_rank_entries(user_ids=visible_ids)
+    entries = _build_rank_entries(user_ids=visible_ids, game_mode=game_mode)
 
     my_index = None
     for i, item in enumerate(entries):
@@ -211,11 +256,13 @@ def api_friend_nearby_rank(request):
         return JsonResponse(
             {
                 "ok": True,
+                "mode": game_mode,
                 "my_rank": None,
                 "my_score": None,
                 "total_count": len(entries),
                 "above": None,
                 "below": None,
+                "my_nickname": _display_name(request.user),
             }
         )
 
@@ -226,11 +273,13 @@ def api_friend_nearby_rank(request):
     return JsonResponse(
         {
             "ok": True,
+            "mode": game_mode,
             "my_rank": mine["rank"],
             "my_score": mine["total_correct"],
             "total_count": len(entries),
             "above": above,
             "below": below,
+            "my_nickname": mine["nickname"],
         }
     )
 
@@ -246,17 +295,8 @@ def api_record_score(request):
             status=400,
         )
 
-    game_mode = (data.get("game_mode") or "practice").strip().lower()
-    operation = (data.get("operation") or "mixed").strip().lower()
-
-    valid_modes = {"practice", "classic", "challenge"}
-    valid_operations = {"add", "sub", "mul", "div", "mixed"}
-
-    if game_mode not in valid_modes:
-        game_mode = "practice"
-
-    if operation not in valid_operations:
-        operation = "mixed"
+    game_mode = _normalize_mode(data.get("game_mode"))
+    operation = _normalize_operation(data.get("operation"))
 
     score = max(0, int(data.get("score") or 0))
     correct_count = max(0, int(data.get("correct_count") or 0))
@@ -275,4 +315,9 @@ def api_record_score(request):
         best_combo=best_combo,
     )
 
-    return JsonResponse({"ok": True})
+    return JsonResponse(
+        {
+            "ok": True,
+            "mode": game_mode,
+        }
+    )

@@ -1,10 +1,17 @@
-﻿{% extends "base.html" %}
+﻿{% extends "base_app.html" %}
 {% load static %}
 
 {% block title %}Avatar Shop - mathner{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'shop/css/shop.css' %}">
+<link rel="stylesheet" href="{% static 'shop/css/shop-common.css' %}">
+<link rel="stylesheet" href="{% static 'shop/css/shop-avatar.css' %}">
+<link rel="stylesheet" href="{% static 'shop/css/shop-font-effect.css' %}">
+<link rel="stylesheet" href="{% static 'shop/css/shop-set-unique.css' %}">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Boogaloo&family=Bubblegum+Sans&family=Cabin+Sketch:wght@400;700&family=Capriola&family=Chewy&family=Coming+Soon&family=Delius+Swash+Caps&family=Dokdo&family=Dongle:wght@400;700&family=Gaegu:wght@400;700&family=Gowun+Batang:wght@400;700&family=Life+Savers:wght@400;700;800&family=Londrina+Shadow&family=Love+Ya+Like+A+Sister&family=Luckiest+Guy&family=McLaren&family=Modak&family=Mouse+Memoirs&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -12,8 +19,12 @@
   class="shop-page"
   id="shopPage"
   data-owned-map='{{ owned_map_json|escapejs }}'
+  data-owned-effect-map='{{ owned_effect_map_json|escapejs }}'
   data-current-stars="{{ shop_star_count }}"
   data-buy-url="/shop/buy/"
+  data-buy-effects-url="/shop/buy-effects/"
+  data-premium-url="/#pricing"
+  data-is-premium-user="{% if request.user.profile.is_premium %}true{% else %}false{% endif %}"
 >
   <div class="shop-wrap">
     <div class="shop-header">
@@ -22,7 +33,7 @@
           <h1 class="shop-title">Avatar Shop</h1>
           <a href="/avatar/my-room/" class="shop-back-btn">Back to My Avatar</a>
         </div>
-        <p class="shop-sub">Buy layered avatar parts and future set pieces with your Stars.</p>
+        <p class="shop-sub">Buy avatar parts, fonts, effects, and unique items with your Stars.</p>
       </div>
 
       <div class="shop-balance-card">
@@ -35,6 +46,17 @@
       <div class="shop-main">
         <div class="shop-filter-panel">
           <div class="shop-filter-group">
+            <div class="shop-filter-label">Tab</div>
+            <div class="shop-filter-bar" id="shopMainTabBar">
+              <button type="button" class="shop-filter-btn is-active" data-main-tab="avatar">Avatar</button>
+              <button type="button" class="shop-filter-btn" data-main-tab="font">Font</button>
+              <button type="button" class="shop-filter-btn" data-main-tab="effect">Font Effect</button>
+              <button type="button" class="shop-filter-btn" data-main-tab="set">Set</button>
+              <button type="button" class="shop-filter-btn" data-main-tab="unique">Unique</button>
+            </div>
+          </div>
+
+          <div class="shop-filter-group" id="shopGenderFilterGroup">
             <div class="shop-filter-label">Gender</div>
             <div class="shop-filter-bar" id="shopGenderFilterBar">
               <button type="button" class="shop-filter-btn is-active" data-filter-group="gender" data-filter="all">All</button>
@@ -44,7 +66,7 @@
             </div>
           </div>
 
-          <div class="shop-filter-group">
+          <div class="shop-filter-group" id="shopTypeFilterGroup">
             <div class="shop-filter-label">Type</div>
             <div class="shop-filter-bar" id="shopTypeFilterBar">
               <button type="button" class="shop-filter-btn is-active" data-filter-group="type" data-filter="all">All</button>
@@ -60,9 +82,9 @@
           </div>
         </div>
 
-        <div class="shop-section">
+        <div class="shop-section" id="shopItemsSection">
           <div class="shop-section-head">
-            <h2>Items</h2>
+            <h2 id="shopItemsSectionTitle">Avatar Items</h2>
           </div>
 
           <div class="shop-gender-section" id="shopMaleSection">
@@ -70,40 +92,74 @@
               <span class="shop-gender-badge shop-gender-badge-male">Male</span>
               <h3>Male Items</h3>
             </div>
+
             <div class="shop-grid" id="shopMaleGrid">
               {% for category, items in grouped_items.items %}
                 {% for item in items %}
-                <div
-                  class="shop-card"
-                  data-item-id="{{ item.id }}"
-                  data-item-name="{{ item.name }}"
-                  data-item-price="{{ item.price_stars }}"
-                  data-item-category="{{ category|lower }}"
-                  data-item-slot="{{ item.slot|default:''|lower }}"
-                  data-item-gender="{{ item.gender|default:''|lower }}"
-                  data-item-image="{% if item.image_path %}{% static item.image_path %}{% endif %}"
-                >
-                  <div class="shop-thumb">
-                    {% if item.image_path %}
-                      <img src="{% static item.image_path %}" alt="{{ item.name }}">
-                    {% else %}
-                      <div class="shop-thumb-fallback">IMG</div>
+                  {% if item.category|lower != 'unique' %}
+                  <div
+                    class="shop-card {% if item.category == 'profile_font' %}shop-font-card{% endif %}"
+                    data-item-id="{{ item.id }}"
+                    data-item-name="{{ item.name }}"
+                    data-item-price="{{ item.price_stars }}"
+                    data-item-category="{{ item.category|lower }}"
+                    data-item-slot="{{ item.slot|default:''|lower }}"
+                    data-item-gender="{{ item.gender|default:''|lower }}"
+                    data-item-font-family="{{ item.font_family_key|default:'default' }}"
+                    data-item-image="{% if item.image_path %}{% static item.image_path %}{% endif %}"
+                  >
+                    <span class="shop-premium-badge" hidden>Premium</span>
+
+                    <div class="shop-thumb">
+                      {% if item.category == 'profile_font' %}
+                        <div class="shop-font-preview-wrap">
+                          <div class="shop-font-preview-title">Font Preview</div>
+                          <div class="shop-preview-stage shop-preview-stage-compact">
+                            <div class="shop-preview-text shop-font-preview-live font-{{ item.font_family_key|default:'default' }} effect-none">
+                              Mathner Hero
+                            </div>
+                          </div>
+                        </div>
+                      {% elif item.image_path %}
+                        <img src="{% static item.image_path %}" alt="{{ item.name }}">
+                      {% else %}
+                        <div class="shop-thumb-fallback">IMG</div>
+                      {% endif %}
+                    </div>
+
+                    <div class="shop-item-name">{{ item.name }}</div>
+
+                    {% if item.category == 'profile_font' %}
+                      <div class="shop-font-note-line">Pure font only</div>
+                      <div class="shop-font-note-line">Effect is preview only</div>
+
+                      <label class="shop-effect-preview-label shop-font-inline-preview-label">
+                        <span>Preview Effect</span>
+                        <select class="shop-effect-preview-select shop-font-effect-select">
+                          <option value="none">None</option>
+                          <option value="neon-blue">Neon Blue</option>
+                          <option value="rainbow-flow">Rainbow Flow</option>
+                          <option value="gold-glow">Gold Glow</option>
+                          <option value="sparkle">Sparkle</option>
+                          <option value="glitch">Glitch</option>
+                          <option value="float-wave">Float Wave</option>
+                          <option value="fire-glow">Fire Glow</option>
+                          <option value="ice-glow">Ice Glow</option>
+                        </select>
+                      </label>
                     {% endif %}
+
+                    <div class="shop-meta-row">
+                      <span class="shop-price">★ {{ item.price_stars }}</span>
+                    </div>
+
+                    <button type="button" class="shop-select-btn">Select</button>
                   </div>
-
-                  <div class="shop-item-name">{{ item.name }}</div>
-                  <div class="shop-item-desc">{{ item.description|default:"No description yet." }}</div>
-
-                  <div class="shop-meta-row">
-                    <span class="shop-price">★ {{ item.price_stars }}</span>
-                    <span class="shop-owned" data-owned-for="{{ item.id }}">Owned 0</span>
-                  </div>
-
-                  <button type="button" class="shop-select-btn">Select</button>
-                </div>
+                  {% endif %}
                 {% endfor %}
               {% endfor %}
             </div>
+
             <div class="shop-empty-state" id="shopMaleEmptyState" style="display:none;">
               No male items match this filter.
             </div>
@@ -123,7 +179,7 @@
           <div class="shop-gender-section" id="shopCommonSection">
             <div class="shop-gender-head">
               <span class="shop-gender-badge shop-gender-badge-common">Common</span>
-              <h3>Common Items</h3>
+              <h3 id="shopCommonSectionHeading">Common Items</h3>
             </div>
             <div class="shop-grid" id="shopCommonGrid"></div>
             <div class="shop-empty-state" id="shopCommonEmptyState" style="display:none;">
@@ -131,11 +187,152 @@
             </div>
           </div>
         </div>
+
+        <div class="shop-section" id="shopEffectsSection" style="display:none;">
+          <div class="shop-section-head">
+            <h2>Font Effect Shop</h2>
+            <p class="shop-section-sub">Buy effects with Stars. Choose a font to preview each effect before selecting it.</p>
+          </div>
+
+          <div class="shop-effect-preview-grid">
+            {% for effect in effect_catalog %}
+            <div
+              class="shop-effect-card"
+              data-effect-id="{{ effect.key }}"
+              data-effect-name="{{ effect.name }}"
+              data-effect-price="{{ effect.price_stars }}"
+            >
+              <span class="shop-premium-badge" hidden>Premium</span>
+
+              <div class="shop-item-name">{{ effect.name }}</div>
+
+              <label class="shop-effect-preview-label">
+                <span>Preview Font</span>
+                <select class="shop-effect-preview-select" data-effect-preview="{{ effect.key }}">
+                  {% for font_item in font_items %}
+                    <option value="{{ font_item.font_family_key|default:'default' }}">{{ font_item.name }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+
+              <div class="shop-effect-preview-box">
+                <div class="shop-preview-stage">
+                  <div class="shop-preview-text effect-preview-target {{ effect.preview_class }}" data-effect-target="{{ effect.key }}">
+                    Mathner Hero
+                  </div>
+                </div>
+              </div>
+
+              <div class="shop-meta-row">
+                <span class="shop-price">★ {{ effect.price_stars }}</span>
+              </div>
+
+              <button type="button" class="shop-effect-select-btn shop-select-btn">Select</button>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="shop-section" id="shopSetSection" style="display:none;">
+          <div class="shop-section-head">
+            <h2>Set Items</h2>
+            <p class="shop-section-sub">Set items are coming soon.</p>
+          </div>
+          <div class="shop-coming-box">
+            <div class="shop-coming-icon">✦</div>
+            <div class="shop-coming-title">Set Shop Coming Soon</div>
+            <div class="shop-coming-text">You can add set items later.</div>
+          </div>
+        </div>
+
+        <div class="shop-section" id="shopUniqueSection" style="display:none;">
+          <div class="shop-section-head">
+            <h2>Unique Items</h2>
+            <p class="shop-section-sub">Rare unique items with special shining aura.</p>
+          </div>
+
+          <div class="shop-unique-grid">
+            {% if unique_items %}
+              {% for item in unique_items %}
+              <div
+                class="shop-card shop-unique-card"
+                data-item-id="{{ item.id }}"
+                data-item-name="{{ item.name }}"
+                data-item-price="{{ item.price_stars }}"
+                data-item-category="unique"
+                data-item-slot="{{ item.slot|default:'hat'|lower }}"
+                data-item-gender="{{ item.gender|default:'common'|lower }}"
+                data-item-image="{% if item.image_path %}{% static item.image_path %}{% else %}{% static 'shop/img/unique/gold_wreath.png' %}{% endif %}"
+              >
+                <span class="shop-premium-badge shop-unique-badge">Unique</span>
+
+                <div class="shop-thumb shop-unique-thumb">
+                  <div class="shop-unique-glow"></div>
+                  <div class="shop-unique-ring"></div>
+                  <div class="shop-unique-spark spark-1"></div>
+                  <div class="shop-unique-spark spark-2"></div>
+                  <div class="shop-unique-spark spark-3"></div>
+                  <div class="shop-unique-spark spark-4"></div>
+
+                  {% if item.image_path %}
+                    <img src="{% static item.image_path %}" alt="{{ item.name }}">
+                  {% else %}
+                    <img src="{% static 'shop/img/unique/gold_wreath.png' %}" alt="{{ item.name }}">
+                  {% endif %}
+                </div>
+
+                <div class="shop-item-name">{{ item.name }}</div>
+                <div class="shop-font-note-line">Unique item</div>
+                <div class="shop-font-note-line">Special shining aura</div>
+
+                <div class="shop-meta-row">
+                  <span class="shop-price">★ {{ item.price_stars }}</span>
+                </div>
+
+                <button type="button" class="shop-unique-select-btn shop-select-btn">Select</button>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div
+                class="shop-card shop-unique-card"
+                data-item-id="999999"
+                data-item-name="Golden Laurel Crown"
+                data-item-price="5200"
+                data-item-category="unique"
+                data-item-slot="hat"
+                data-item-gender="common"
+                data-item-image="{% static 'shop/img/unique/gold_wreath.webp' %}"
+              >
+                <span class="shop-premium-badge shop-unique-badge">Unique</span>
+
+                <div class="shop-thumb shop-unique-thumb">
+                  <div class="shop-unique-glow"></div>
+                  <div class="shop-unique-ring"></div>
+                  <div class="shop-unique-spark spark-1"></div>
+                  <div class="shop-unique-spark spark-2"></div>
+                  <div class="shop-unique-spark spark-3"></div>
+                  <div class="shop-unique-spark spark-4"></div>
+                  <img src="{% static 'shop/img/unique/gold_wreath.webp' %}" alt="Golden Laurel Crown">
+                </div>
+
+                <div class="shop-item-name">Golden Laurel Crown</div>
+                <div class="shop-font-note-line">Unique head item</div>
+                <div class="shop-font-note-line">Shining golden aura effect</div>
+
+                <div class="shop-meta-row">
+                  <span class="shop-price">★ 5200</span>
+                </div>
+
+                <button type="button" class="shop-unique-select-btn shop-select-btn">Select</button>
+              </div>
+            {% endif %}
+          </div>
+        </div>
       </div>
 
       <aside class="shop-side">
-        <div class="shop-summary-card">
-          <h2>Purchase Summary</h2>
+        <div class="shop-summary-card" id="shopSummaryCard">
+          <h2 id="summaryTitle">Purchase Summary</h2>
 
           <div class="summary-line">
             <span>Selected Items</span>
@@ -162,11 +359,29 @@
     </div>
   </div>
 </section>
+
+<div class="premium-modal" id="premiumModal" aria-hidden="true">
+  <div class="premium-modal-backdrop" data-premium-close></div>
+  <div class="premium-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="premiumModalTitle">
+    <div class="premium-modal-icon">🔒</div>
+    <h3 class="premium-modal-title" id="premiumModalTitle">Premium Locked</h3>
+    <p class="premium-modal-text">
+      This item is locked. Go to Premium pricing to unlock premium shop items, or choose later.
+    </p>
+    <div class="premium-modal-actions">
+      <button type="button" class="shop-modal-btn shop-modal-btn-secondary" id="premiumLaterBtn">Later</button>
+      <button type="button" class="shop-modal-btn shop-modal-btn-primary" id="premiumGoBtn">Go Premium</button>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
   window.CSRF_TOKEN = "{{ csrf_token }}";
 </script>
-<script src="{% static 'shop/js/shop.js' %}?v=20260401_shop_common_gender_1"></script>
+<script src="{% static 'shop/js/shop-main.js' %}"></script>
+<script src="{% static 'shop/js/shop-avatar.js' %}"></script>
+<script src="{% static 'shop/js/shop-font.js' %}"></script>
+<script src="{% static 'shop/js/shop-set-unique.js' %}"></script>
 {% endblock %}

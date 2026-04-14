@@ -1,194 +1,265 @@
 from django.conf import settings
 from django.db import models
-from django.db.models import Q
+from django.db.models import F, Q
 from django.utils import timezone
+
+
+EFFECT_NONE = "none"
+EFFECT_NEON_BLUE = "neon_blue"
+EFFECT_RAINBOW_FLOW = "rainbow_flow"
+EFFECT_GOLD_GLOW = "gold_glow"
+EFFECT_SPARKLE = "sparkle"
+EFFECT_GLITCH = "glitch"
+EFFECT_FLOAT_WAVE = "float_wave"
+EFFECT_FIRE_GLOW = "fire_glow"
+EFFECT_ICE_GLOW = "ice_glow"
+
+EFFECT_CHOICES = [
+    (EFFECT_NONE, "None"),
+    (EFFECT_NEON_BLUE, "Neon Blue"),
+    (EFFECT_RAINBOW_FLOW, "Rainbow Flow"),
+    (EFFECT_GOLD_GLOW, "Gold Glow"),
+    (EFFECT_SPARKLE, "Sparkle"),
+    (EFFECT_GLITCH, "Glitch"),
+    (EFFECT_FLOAT_WAVE, "Float Wave"),
+    (EFFECT_FIRE_GLOW, "Fire Glow"),
+    (EFFECT_ICE_GLOW, "Ice Glow"),
+]
 
 
 class Friendship(models.Model):
     STATUS_PENDING = "pending"
     STATUS_ACCEPTED = "accepted"
-    STATUS_BLOCKED = "blocked"
     STATUS_REJECTED = "rejected"
 
-    STATUS_CHOICES = (
+    STATUS_CHOICES = [
         (STATUS_PENDING, "Pending"),
         (STATUS_ACCEPTED, "Accepted"),
-        (STATUS_BLOCKED, "Blocked"),
         (STATUS_REJECTED, "Rejected"),
-    )
+    ]
 
     from_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="sent_friendships",
+        db_index=True,
     )
     to_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="received_friendships",
+        db_index=True,
     )
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
-    created_at = models.DateTimeField(auto_now_add=True)
-    responded_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING,
+        db_index=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ("from_user", "to_user")
-        ordering = ("-created_at",)
+        constraints = [
+            models.UniqueConstraint(
+                fields=["from_user", "to_user"],
+                name="uniq_friendship_from_to",
+            ),
+            models.CheckConstraint(
+                condition=~Q(from_user=F("to_user")),
+                name="friendship_no_self_link",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["from_user", "status"]),
+            models.Index(fields=["to_user", "status"]),
+            models.Index(fields=["status", "-created_at"]),
+        ]
 
     def __str__(self):
         return f"{self.from_user_id}->{self.to_user_id} ({self.status})"
 
-    @property
-    def is_accepted(self):
-        return self.status == self.STATUS_ACCEPTED
 
-    @classmethod
-    def accepted_q(cls):
-        return Q(status=cls.STATUS_ACCEPTED)
-
-    @classmethod
-    def accepted_for_user(cls, user):
-        if not user or not getattr(user, "is_authenticated", False):
-            return cls.objects.none()
-        return cls.objects.filter(
-            cls.accepted_q() & (Q(from_user=user) | Q(to_user=user))
-        )
-
-    @classmethod
-    def friend_users_for(cls, user):
-        """
-        user의 수락된 친구 User queryset 반환
-        """
-        if not user or not getattr(user, "is_authenticated", False):
-            return settings.AUTH_USER_MODEL.objects.none()  # type: ignore[attr-defined]
-
-        accepted_rows = cls.accepted_for_user(user).select_related("from_user", "to_user")
-        friend_ids = []
-        for row in accepted_rows:
-            if row.from_user_id == user.id:
-                friend_ids.append(row.to_user_id)
-            else:
-                friend_ids.append(row.from_user_id)
-
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        return User.objects.filter(id__in=friend_ids)
-
-    @classmethod
-    def friend_ids_for(cls, user):
-        if not user or not getattr(user, "is_authenticated", False):
-            return []
-
-        accepted_rows = cls.accepted_for_user(user).only("from_user_id", "to_user_id")
-        friend_ids = []
-        for row in accepted_rows:
-            if row.from_user_id == user.id:
-                friend_ids.append(row.to_user_id)
-            else:
-                friend_ids.append(row.from_user_id)
-        return friend_ids
-
-    @classmethod
-    def are_friends(cls, user1, user2):
-        if not user1 or not user2:
-            return False
-        if user1 == user2:
-            return True
-
-        return cls.objects.filter(
-            cls.accepted_q(),
-            Q(from_user=user1, to_user=user2) | Q(from_user=user2, to_user=user1),
-        ).exists()
-
-
-class RoomGuestbookEntry(models.Model):
-    room_owner = models.ForeignKey(
+class Room(models.Model):
+    owner = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="room_guestbook_entries",
+        related_name="room",
+    )
+    today_visits = models.PositiveIntegerField(default=0)
+    total_visits = models.PositiveIntegerField(default=0)
+    like_count = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["owner"]),
+        ]
+
+    def __str__(self):
+        return f"Room<{self.owner_id}>"
+
+
+class RoomVisit(models.Model):
+    room = models.ForeignKey(
+        Room,
+        on_delete=models.CASCADE,
+        related_name="visits",
+        db_index=True,
+    )
+    viewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="room_visits",
+        db_index=True,
+    )
+    guest_token = models.CharField(max_length=120, blank=True, default="", db_index=True)
+    visited_on = models.DateField(default=timezone.localdate, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["room", "visited_on"]),
+            models.Index(fields=["room", "viewer", "visited_on"]),
+            models.Index(fields=["room", "guest_token", "visited_on"]),
+        ]
+
+    def __str__(self):
+        return f"Visit(room={self.room_id}, viewer={self.viewer_id}, date={self.visited_on})"
+
+
+class RoomLike(models.Model):
+    room = models.ForeignKey(
+        Room,
+        on_delete=models.CASCADE,
+        related_name="likes",
+        db_index=True,
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="room_likes",
+        db_index=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["room", "user"],
+                name="uniq_room_like_room_user",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["room", "-created_at"]),
+            models.Index(fields=["user", "-created_at"]),
+        ]
+
+    def __str__(self):
+        return f"RoomLike(room={self.room_id}, user={self.user_id})"
+
+
+class GuestbookEntry(models.Model):
+    room = models.ForeignKey(
+        Room,
+        on_delete=models.CASCADE,
+        related_name="guestbook_entries",
+        db_index=True,
     )
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="written_guestbook_entries",
+        db_index=True,
+        related_name="guestbook_entries",
     )
-    content = models.TextField(max_length=300)
-    created_at = models.DateTimeField(auto_now_add=True)
+    content = models.TextField()
+
+    nickname_font_key = models.CharField(max_length=50, blank=True, default="")
+    nickname_effect_key = models.CharField(max_length=30, choices=EFFECT_CHOICES, default=EFFECT_NONE)
+    nickname_scale = models.FloatField(default=1.0)
+    nickname_letter_spacing = models.FloatField(default=0.0)
+
+    content_font_key = models.CharField(max_length=50, blank=True, default="")
+    content_effect_key = models.CharField(max_length=30, choices=EFFECT_CHOICES, default=EFFECT_NONE)
+
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
-        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=["room", "-created_at"]),
+            models.Index(fields=["author", "-created_at"]),
+        ]
 
     def __str__(self):
-        return f"Guestbook<{self.author_id}->{self.room_owner_id}>"
+        return f"GuestbookEntry<{self.id}>"
 
 
-class RoomDiaryEntry(models.Model):
-    VISIBILITY_PRIVATE = "private"
-    VISIBILITY_FRIENDS = "friends"
-    VISIBILITY_PUBLIC = "public"
-
-    VISIBILITY_CHOICES = (
-        (VISIBILITY_PRIVATE, "Private"),
-        (VISIBILITY_FRIENDS, "Friends"),
-        (VISIBILITY_PUBLIC, "Public"),
+class GuestbookReply(models.Model):
+    entry = models.ForeignKey(
+        GuestbookEntry,
+        on_delete=models.CASCADE,
+        related_name="replies",
+        db_index=True,
     )
-
-    user = models.ForeignKey(
+    author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="room_diaries",
+        db_index=True,
+        related_name="guestbook_replies",
     )
-    title = models.CharField(max_length=120)
-    content = models.TextField(max_length=2000)
-    visibility = models.CharField(max_length=20, choices=VISIBILITY_CHOICES, default=VISIBILITY_FRIENDS)
-    created_at = models.DateTimeField(auto_now_add=True)
+    content = models.TextField()
+
+    nickname_font_key = models.CharField(max_length=50, blank=True, default="")
+    nickname_effect_key = models.CharField(max_length=30, choices=EFFECT_CHOICES, default=EFFECT_NONE)
+    nickname_scale = models.FloatField(default=1.0)
+    nickname_letter_spacing = models.FloatField(default=0.0)
+
+    content_font_key = models.CharField(max_length=50, blank=True, default="")
+    content_effect_key = models.CharField(max_length=30, choices=EFFECT_CHOICES, default=EFFECT_NONE)
+
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
-        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=["entry", "created_at"]),
+        ]
 
     def __str__(self):
-        return f"Diary<{self.user_id}:{self.title}>"
+        return f"GuestbookReply<{self.id}>"
 
 
-class RoomLike(models.Model):
-    room_owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+class DiaryEntry(models.Model):
+    room = models.ForeignKey(
+        Room,
         on_delete=models.CASCADE,
-        related_name="received_room_likes",
+        related_name="diary_entries",
+        db_index=True,
     )
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="given_room_likes",
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+
+    title_font_key = models.CharField(max_length=50, blank=True, default="")
+    title_effect_key = models.CharField(max_length=30, choices=EFFECT_CHOICES, default=EFFECT_NONE)
+    content_font_key = models.CharField(max_length=50, blank=True, default="")
+    content_effect_key = models.CharField(max_length=30, choices=EFFECT_CHOICES, default=EFFECT_NONE)
+
+    entry_date = models.DateField(db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ("room_owner", "user")
-        ordering = ("-created_at",)
+        constraints = [
+            models.UniqueConstraint(
+                fields=["room", "entry_date"],
+                name="uniq_room_entry_date",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["room", "entry_date"]),
+            models.Index(fields=["room", "-created_at"]),
+        ]
 
     def __str__(self):
-        return f"Like<{self.user_id}->{self.room_owner_id}>"
-
-
-class RoomVisitLog(models.Model):
-    room_owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="room_visit_logs",
-    )
-    visitor = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="visited_room_logs",
-    )
-    visit_date = models.DateField(default=timezone.localdate)
-    visit_count = models.PositiveIntegerField(default=0)
-    last_visited_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        unique_together = ("room_owner", "visitor", "visit_date")
-        ordering = ("-last_visited_at",)
-
-    def __str__(self):
-        return f"Visit<{self.visitor_id}->{self.room_owner_id}:{self.visit_date}:{self.visit_count}>"
+        return f"DiaryEntry(room={self.room_id}, date={self.entry_date})"

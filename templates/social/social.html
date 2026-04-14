@@ -1,0 +1,53 @@
+﻿{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Social - mathner{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'social/css/social.css' %}?v=20260412_social_font_fx_1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dokdo&family=Dongle:wght@400;700&family=Gaegu:wght@400;700&family=Gowun+Batang:wght@400;700&family=Nanum+Pen+Script&family=Bubblegum+Sans&family=Delius+Swash+Caps&family=Boogaloo&family=Love+Ya+Like+A+Sister&family=Luckiest+Guy&family=Coming+Soon&family=Life+Savers&family=Chewy&family=Cabin+Sketch&family=Mouse+Memoirs&family=Londrina+Shadow&family=Modak&family=Amatic+SC:wght@400;700&family=Capriola&family=McLaren&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div
+  class="social-page"
+  id="socialPage"
+  data-my-room-url="/avatar/my-room/"
+  data-friend-avatar-base="/avatar/room/"
+  data-social-friend-request-url-base="/social/api/friends/request/"
+  data-social-friend-respond-url-base="/social/api/friends/respond/"
+  data-social-friend-requests-url="{% url 'social:friend_requests' %}"
+  data-social-friend-list-url="{% url 'social:friend_list' %}"
+  data-social-room-list-url="{% url 'social:room_directory' %}"
+  data-nickname-font-key="{{ nickname_font_key|default:'' }}"
+  data-writing-font-key="{{ writing_font_key|default:'' }}"
+  data-nickname-effect-key="{{ nickname_effect_key|default:'none' }}"
+  data-title-font-key="{{ title_font_key|default:'' }}"
+  data-title-effect-key="{{ title_effect_key|default:'none' }}"
+  data-content-font-key="{{ content_font_key|default:'' }}"
+  data-content-effect-key="{{ content_effect_key|default:'none' }}"
+  data-font-pref-json='{{ font_pref_json|safe }}'
+>
+  <div class="social-shell">
+    <div class="social-header-card">
+      <div class="social-header-top">
+        <h1>Social</h1>
+        <p>Find people, send friend requests, and visit your friends.</p>
+      </div>
+    </div>
+
+    {% include "social/parts/social_panel.html" %}
+  </div>
+</div>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+<script src="{% static 'social/js/social.js' %}?v=20260412_social_font_fx_1"></script>
+{% endblock %}

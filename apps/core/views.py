@@ -26,9 +26,16 @@ def _profile_int(profile, field_name, default=0):
     return int(getattr(profile, field_name, default) or 0)
 
 
-def _get_profile(user):
-    profile, _ = UserGameProfile.objects.get_or_create(user=user)
+def _get_profile(request):
+    if not request.user.is_authenticated:
+        return None
+
+    if hasattr(request, "_cached_game_profile"):
+        return request._cached_game_profile
+
+    profile, _ = UserGameProfile.objects.get_or_create(user=request.user)
     profile.refresh_daily_keys_if_needed()
+    request._cached_game_profile = profile
     return profile
 
 
@@ -88,25 +95,34 @@ def _apply_guest_run_result(request, gained_stars=0, correct=0, score=0):
     request.session.modified = True
 
 
-def _build_nav_context(request):
+def _build_nav_context(request, profile=None):
+    if hasattr(request, "_cached_nav_context"):
+        cached = request._cached_nav_context
+        if cached is not None:
+            return cached
+
     if not request.user.is_authenticated:
-        return {
+        context = {
             "nav_star_count": _get_guest_total_stars(request),
             "nav_key_count": _get_guest_remaining_keys(request),
             "username": "Guest",
             "my_nickname": "Guest",
             "is_authenticated_user": False,
         }
+        request._cached_nav_context = context
+        return context
 
-    profile = _get_profile(request.user)
+    profile = profile or _get_profile(request)
 
-    return {
+    context = {
         "nav_star_count": _profile_int(profile, "total_stars"),
-        "nav_key_count": profile.get_remaining_keys(),
+        "nav_key_count": int(profile.get_remaining_keys() or 0),
         "username": _get_username(request.user),
         "my_nickname": profile.get_display_name(),
         "is_authenticated_user": True,
     }
+    request._cached_nav_context = context
+    return context
 
 
 def _extract_set_code(item):
@@ -114,6 +130,7 @@ def _extract_set_code(item):
         return ""
 
     text = f"{item.name or ''} {item.description or ''}"
+
     match = re.search(r"\[set\s*:\s*([a-zA-Z0-9_-]+)\]", text, re.I)
     if match:
         return match.group(1).lower()
@@ -177,8 +194,25 @@ def _item_image_url(item):
     return f"/static/{item.image_path}"
 
 
-def _build_play_avatar_data(user):
-    if not user or not user.is_authenticated:
+def _get_avatar_profile(request):
+    if not request.user.is_authenticated:
+        return None
+
+    if hasattr(request, "_cached_avatar_profile"):
+        return request._cached_avatar_profile
+
+    avatar_profile, _ = UserAvatarProfile.objects.select_related(
+        "hat_item",
+        "cloth_item",
+        "shoes_item",
+    ).get_or_create(user=request.user)
+
+    request._cached_avatar_profile = avatar_profile
+    return avatar_profile
+
+
+def _build_play_avatar_data(request):
+    if not request.user.is_authenticated:
         return {
             "enabled": False,
             "gender": "male",
@@ -189,10 +223,7 @@ def _build_play_avatar_data(user):
             "active_set_code": "",
         }
 
-    avatar_profile, _ = UserAvatarProfile.objects.select_related(
-        "hat_item", "cloth_item", "shoes_item"
-    ).get_or_create(user=user)
-
+    avatar_profile = _get_avatar_profile(request)
     equipped_state = _build_equipped_avatar_state(avatar_profile)
 
     return {
@@ -206,33 +237,46 @@ def _build_play_avatar_data(user):
     }
 
 
-def landing_view(request):
-    context = _build_nav_context(request)
-    return render(request, "core/landing.html", context)
-
-
-def play_view(request):
-    nav_context = _build_nav_context(request)
-
+def _build_game_page_context(request, play_avatar_enabled=False):
     if request.user.is_authenticated:
-        profile = _get_profile(request.user)
-        remaining_keys = profile.get_remaining_keys()
+        profile = _get_profile(request)
+        nav_context = _build_nav_context(request, profile=profile)
+
+        remaining_keys = int(profile.get_remaining_keys() or 0)
         total_stars = _profile_int(profile, "total_stars")
         best_score = _profile_int(profile, "best_score")
         total_correct = _profile_int(profile, "total_correct")
         username = _get_username(request.user)
         my_nickname = profile.get_display_name()
-        play_avatar_data = _build_play_avatar_data(request.user)
+        play_avatar_data = _build_play_avatar_data(request) if play_avatar_enabled else {
+            "enabled": False,
+            "gender": "male",
+            "hat_image_url": "",
+            "cloth_image_url": "",
+            "shoes_image_url": "",
+            "active_effect": "",
+            "active_set_code": "",
+        }
     else:
+        nav_context = _build_nav_context(request)
+
         remaining_keys = _get_guest_remaining_keys(request)
         total_stars = _get_guest_total_stars(request)
         best_score = _get_guest_best_score(request)
         total_correct = _get_guest_total_correct(request)
         username = "Guest"
         my_nickname = "Guest"
-        play_avatar_data = _build_play_avatar_data(None)
+        play_avatar_data = {
+            "enabled": False,
+            "gender": "male",
+            "hat_image_url": "",
+            "cloth_image_url": "",
+            "shoes_image_url": "",
+            "active_effect": "",
+            "active_set_code": "",
+        }
 
-    context = {
+    return {
         "user_stars": total_stars,
         "user_best_score": best_score,
         "username": username,
@@ -244,7 +288,24 @@ def play_view(request):
         "play_avatar_data_json": json.dumps(play_avatar_data, ensure_ascii=False),
         **nav_context,
     }
-    return render(request, "core/play.html", context)
+
+
+def landing_view(request):
+    nav_context = _build_nav_context(request)
+    context = {
+        **nav_context,
+    }
+    return render(request, "base_landing.html", context)
+
+
+def app_home_view(request):
+    context = _build_game_page_context(request, play_avatar_enabled=False)
+    return render(request, "base_app.html", context)
+
+
+def play_view(request):
+    context = _build_game_page_context(request, play_avatar_enabled=True)
+    return render(request, "game/aura_play.html", context)
 
 
 @require_POST
@@ -253,6 +314,8 @@ def start_game_run(request):
         with transaction.atomic():
             profile, _ = UserGameProfile.objects.select_for_update().get_or_create(user=request.user)
             profile.refresh_daily_keys_if_needed()
+            request._cached_game_profile = profile
+            request._cached_nav_context = None
 
             if request.session.get(ACTIVE_RUN_SESSION_KEY):
                 return JsonResponse(
@@ -277,8 +340,7 @@ def start_game_run(request):
                     status=400,
                 )
 
-            consumed = profile.consume_key()
-            if not consumed:
+            if not profile.consume_key():
                 return JsonResponse(
                     {
                         "ok": False,
@@ -292,8 +354,8 @@ def start_game_run(request):
 
             request.session[ACTIVE_RUN_SESSION_KEY] = True
             request.session.modified = True
-
             profile.refresh_from_db()
+            request._cached_game_profile = profile
 
         return JsonResponse(
             {
@@ -327,8 +389,7 @@ def start_game_run(request):
             status=400,
         )
 
-    consumed = _consume_guest_key(request)
-    if not consumed:
+    if not _consume_guest_key(request):
         return JsonResponse(
             {
                 "ok": False,
@@ -372,6 +433,8 @@ def save_game_result(request):
         with transaction.atomic():
             profile, _ = UserGameProfile.objects.select_for_update().get_or_create(user=request.user)
             profile.refresh_daily_keys_if_needed()
+            request._cached_game_profile = profile
+            request._cached_nav_context = None
 
             active_run_consumed = bool(request.session.get(ACTIVE_RUN_SESSION_KEY))
 
@@ -388,8 +451,7 @@ def save_game_result(request):
                         status=400,
                     )
 
-                consumed = profile.consume_key()
-                if not consumed:
+                if not profile.consume_key():
                     return JsonResponse(
                         {
                             "ok": False,
@@ -409,8 +471,8 @@ def save_game_result(request):
 
             request.session[ACTIVE_RUN_SESSION_KEY] = False
             request.session.modified = True
-
             profile.refresh_from_db()
+            request._cached_game_profile = profile
 
         return JsonResponse(
             {
@@ -439,8 +501,7 @@ def save_game_result(request):
                 status=400,
             )
 
-        consumed = _consume_guest_key(request)
-        if not consumed:
+        if not _consume_guest_key(request):
             return JsonResponse(
                 {
                     "ok": False,
@@ -476,15 +537,15 @@ def save_game_result(request):
 
 
 def privacy_view(request):
-    context = _build_nav_context(request)
-    return render(request, "core/privacy.html", context)
+    nav_context = _build_nav_context(request)
+    return render(request, "core/privacy.html", nav_context)
 
 
 def terms_view(request):
-    context = _build_nav_context(request)
-    return render(request, "core/terms.html", context)
+    nav_context = _build_nav_context(request)
+    return render(request, "core/terms.html", nav_context)
 
 
 def refund_view(request):
-    context = _build_nav_context(request)
-    return render(request, "core/refund.html", context)
+    nav_context = _build_nav_context(request)
+    return render(request, "core/refund.html", nav_context)

@@ -1,10 +1,9 @@
-__pycache__/
-*.py[cod]
-*.sqlite3
-db.sqlite3
 .env
+db.sqlite3
+data.json
 .venv/
-venv/
-media/
+__pycache__/
+*.pyc
+.idea/
+.vscode/
 staticfiles/
-.DS_Store

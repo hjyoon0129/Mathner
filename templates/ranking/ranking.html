@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+﻿{% extends "base_app.html" %}
 {% load static %}
 
 {% block title %}Ranking | Mathner{% endblock %}
@@ -13,14 +13,19 @@
         <section class="ranking-hero-card">
             <div class="ranking-hero-copy">
                 <h1>Ranking</h1>
-                <p>Global leaderboard and friend leaderboard based on lifetime total correct answers.</p>
+                <p>
+                    Global leaderboard and friend leaderboard based on lifetime total correct answers.
+                </p>
             </div>
         </section>
 
         <section class="ranking-board-card">
             <div class="ranking-board-head">
                 <h2>Leaderboard</h2>
-                <div class="ranking-board-sub">Switch between Global and Friends</div>
+                <div class="ranking-board-sub">
+                    Current mode:
+                    <strong id="rankingModeLabel">{{ selected_mode }}</strong>
+                </div>
             </div>
 
             <div class="ranking-tab-row">
@@ -58,6 +63,7 @@
 {% block extra_js %}
 <script>
 (function () {
+    const selectedMode = "{{ selected_mode|default:'practice'|escapejs }}";
     const tabGlobal = document.getElementById("tabGlobal");
     const tabFriends = document.getElementById("tabFriends");
     const rankingNotice = document.getElementById("rankingNotice");
@@ -70,6 +76,18 @@
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
+    }
+
+    function prettyMode(mode) {
+        const map = {
+            practice: "Practice",
+            classic: "Classic",
+            challenge: "Challenge",
+            avatar_aura: "Avatar Aura",
+            acid_rain: "Acid Rain",
+            tug_of_war: "Tug of War",
+        };
+        return map[mode] || mode;
     }
 
     function setActiveTab(scope) {
@@ -91,17 +109,15 @@
             return;
         }
 
-        rankingTableBody.innerHTML = entries.map((item) => {
-            return `
-                <tr>
-                    <td class="col-rank">#${escapeHtml(item.rank)}</td>
-                    <td class="col-name">${escapeHtml(item.nickname)}</td>
-                    <td class="col-correct">${escapeHtml(item.total_correct)}</td>
-                    <td class="col-combo">${escapeHtml(item.best_combo)}</td>
-                    <td class="col-stars">${escapeHtml(item.earned_stars)}</td>
-                </tr>
-            `;
-        }).join("");
+        rankingTableBody.innerHTML = entries.map((item) => `
+            <tr>
+                <td class="col-rank">#${escapeHtml(item.rank)}</td>
+                <td class="col-name">${escapeHtml(item.nickname)}</td>
+                <td class="col-correct">${escapeHtml(item.total_correct)}</td>
+                <td class="col-combo">${escapeHtml(item.best_combo)}</td>
+                <td class="col-stars">${escapeHtml(item.earned_stars)}</td>
+            </tr>
+        `).join("");
     }
 
     async function loadBoard(scope) {
@@ -109,7 +125,9 @@
         renderEmpty("Loading...");
 
         try {
-            const response = await fetch(`{% url 'ranking:api_leaderboard' %}?scope=${scope}`, {
+            const url = `{% url 'ranking:api_leaderboard' %}?scope=${encodeURIComponent(scope)}&mode=${encodeURIComponent(selectedMode)}`;
+
+            const response = await fetch(url, {
                 credentials: "same-origin",
                 headers: {
                     "X-Requested-With": "XMLHttpRequest"
@@ -126,8 +144,8 @@
 
             rankingNotice.textContent =
                 scope === "global"
-                    ? "Showing all users ranked by lifetime total correct answers."
-                    : "Showing you and your accepted friends ranked by lifetime total correct answers.";
+                    ? `Showing all users ranked by lifetime total correct answers for ${prettyMode(selectedMode)}.`
+                    : `Showing you and your accepted friends ranked by lifetime total correct answers for ${prettyMode(selectedMode)}.`;
 
             renderRows(data.entries || []);
         } catch (error) {

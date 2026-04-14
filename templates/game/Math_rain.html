@@ -1,0 +1,120 @@
+﻿{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Math Rain | Mathner{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'game/css/math_rain.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="math-rain-page">
+  {{ page_cfg|json_script:"math-rain-config" }}
+
+  <div class="game-shell">
+    <header class="rain-head">
+      <div class="brand-box">
+        <h1 class="logo">MATH RAIN</h1>
+        <p class="tagline">1 key is consumed when you press Start. Stars are settled when the run ends or you leave.</p>
+      </div>
+    </header>
+
+    <section class="control-strip">
+      <div class="operation-panel">
+        <div class="panel-title">Operations</div>
+        <div class="op-buttons">
+          <button class="op-btn active" data-op="+">+</button>
+          <button class="op-btn" data-op="-">−</button>
+          <button class="op-btn" data-op="*">×</button>
+          <button class="op-btn" data-op="/">÷</button>
+          <button class="op-btn op-btn-mixed" data-op="mixed">Mixed</button>
+        </div>
+      </div>
+
+      <div class="status-panel compact-status">
+        <div class="panel-title hearts-title">Hearts</div>
+        <div class="hearts-panel">
+          <div id="heartsBar" class="hearts-bar" aria-label="Hearts"></div>
+        </div>
+      </div>
+
+      <div class="button-panel">
+        <button id="startBtn" class="main-btn">Start</button>
+        <button id="resetBtn" class="secondary-btn">Reset</button>
+      </div>
+    </section>
+
+    <section id="gameArea" class="game-area">
+      <div class="sky-glow"></div>
+      <div class="stars-bg"></div>
+      <div class="reward-aura"></div>
+      <div class="ground"></div>
+
+      <div id="startOverlay" class="overlay show">
+        <div class="overlay-card">
+          <h2>Math Rain</h2>
+          <p>Choose an operation and catch the answers before they hit the ground.</p>
+          <div class="rule-list">
+            <div>• 1 key is consumed immediately when you start</div>
+            <div>• Stars are settled when the game ends, resets, or you leave the page</div>
+            <div>• Level 1: one-digit operations</div>
+            <div>• Level 2: mostly level 1 + rare 2-digit / 1-digit</div>
+            <div>• Level 3: level 2 + rare 3-term one-digit</div>
+            <div>• Level 4: level 3 + 2-digit / 2-digit</div>
+            <div>• Bomb correct = -1 heart</div>
+            <div>• Bomb on ground = no effect</div>
+            <div>• Angel correct = clear all current blocks</div>
+            <div>• Angel on ground = -1 heart</div>
+          </div>
+          <button id="startOverlayBtn" class="main-btn start-overlay-btn">Start Game</button>
+        </div>
+      </div>
+
+      <div id="levelIntro" class="level-intro hidden">
+        <div id="levelIntroText" class="level-intro-text">LEVEL 1</div>
+      </div>
+
+      <div id="gameOverOverlay" class="overlay">
+        <div class="overlay-card">
+          <h2>Game Over</h2>
+
+          <div class="result-grid">
+            <div class="result-item">Cleared <span id="finalCleared">0</span></div>
+            <div class="result-item">Stars <span id="finalStars">0</span></div>
+            <div class="result-item">Level <span id="finalLevel">1</span></div>
+            <div class="result-item">Best <span id="finalHighScore">0</span></div>
+          </div>
+
+          <button id="restartBtnOverlay" class="main-btn start-overlay-btn">Play Again</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="bottom-panel">
+      <div class="answer-panel">
+        <input
+          id="answerInput"
+          class="answer-input"
+          type="number"
+          inputmode="numeric"
+          placeholder="Type answer"
+          autocomplete="off"
+        />
+        <button id="submitBtn" class="submit-btn">Submit</button>
+      </div>
+
+      <div class="bottom-meta">
+        <div class="info-chip">Reward <span id="starReward">1</span></div>
+        <div class="info-chip">Op <span id="selectedOp">+</span></div>
+        <div id="message" class="message">Choose an operation and press Start.</div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'game/js/math_rain.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,72 @@
+﻿<div class="social-grid">
+
+  <section class="social-card">
+    <div class="social-card-head">
+      <h2>Find People</h2>
+    </div>
+    <div class="social-card-body">
+      <div class="people-search-row">
+        <input
+          type="text"
+          id="userSearchInput"
+          class="social-input"
+          placeholder="Search nickname / username"
+        >
+        <button
+          type="button"
+          class="social-btn social-btn-primary"
+          id="userSearchBtn"
+        >
+          Search
+        </button>
+      </div>
+
+      <div class="people-list-wrap">
+        <div class="people-list" id="roomDirectoryList">
+          <div class="empty-text">Loading list...</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="social-card">
+    <div class="social-card-head">
+      <h2>Friend Requests</h2>
+    </div>
+    <div class="social-card-body">
+      <div class="message-list" id="friendRequestList">
+        <div class="empty-text">No pending requests.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="social-card">
+    <div class="social-card-head">
+      <h2>Visit Friend</h2>
+    </div>
+    <div class="social-card-body">
+      <div class="visit-friend-box">
+        <select id="friendSelect" class="social-select">
+          <option value="">Choose friend</option>
+        </select>
+
+        <button
+          type="button"
+          class="social-btn social-btn-primary visit-btn-full"
+          id="visitFriendBtn"
+        >
+          Visit
+        </button>
+
+        <button
+          type="button"
+          class="social-btn social-btn-secondary visit-btn-full"
+          id="goMyRoomBtn"
+        >
+          My Avatar Room
+        </button>
+      </div>
+    </div>
+  </section>
+
+</div>

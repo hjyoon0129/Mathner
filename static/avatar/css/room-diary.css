@@ -1,0 +1,154 @@
+.diary-form{
+  display:grid;
+  gap:10px;
+}
+
+.diary-action-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.diary-calendar-shell{
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:18px;
+  background:#0d1b33;
+  padding:14px;
+  margin-bottom:18px;
+}
+
+.diary-calendar-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:12px;
+}
+
+.calendar-nav-btn{
+  width:38px;
+  height:38px;
+  border:none;
+  border-radius:12px;
+  background:#13213b;
+  color:#fff;
+  border:1px solid rgba(255,255,255,.08);
+  font-size:20px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.calendar-month-label{
+  font-size:16px;
+  font-weight:900;
+  color:#fff;
+}
+
+.calendar-weekdays{
+  display:grid;
+  grid-template-columns:repeat(7, minmax(0, 1fr));
+  gap:6px;
+  margin-bottom:8px;
+}
+
+.calendar-weekdays span{
+  text-align:center;
+  font-size:11px;
+  color:rgba(255,255,255,.62);
+  font-weight:800;
+}
+
+.calendar-grid{
+  display:grid;
+  grid-template-columns:repeat(7, minmax(0, 1fr));
+  gap:6px;
+}
+
+.calendar-day{
+  min-height:40px;
+  border-radius:12px;
+  background:#12213d;
+  border:1px solid rgba(255,255,255,.06);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  font-weight:800;
+  color:#fff;
+  cursor:pointer;
+  transition:
+    transform .14s ease,
+    border-color .14s ease,
+    box-shadow .14s ease,
+    background .14s ease;
+}
+
+.calendar-day:hover{
+  transform:translateY(-1px);
+  border-color:rgba(126,175,255,.28);
+  box-shadow:0 8px 18px rgba(0,0,0,.18);
+}
+
+.calendar-day.is-muted{
+  opacity:.28;
+  pointer-events:none;
+}
+
+.calendar-day.is-today{
+  background:linear-gradient(135deg, rgba(111,127,255,.32), rgba(83,222,176,.28));
+  border-color:rgba(114,171,255,.34);
+}
+
+.calendar-day.is-selected{
+  background:linear-gradient(135deg, #6f7fff, #53deb0) !important;
+  color:#081120 !important;
+  border-color:rgba(255,255,255,.22) !important;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.10),
+    0 10px 22px rgba(50,110,180,.28);
+}
+
+.calendar-day.has-entry{
+  position:relative;
+}
+
+.calendar-day.has-entry::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:5px;
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#53deb0;
+  transform:translateX(-50%);
+  box-shadow:0 0 10px rgba(83,222,176,.45);
+}
+
+.calendar-day.is-selected.has-entry::after{
+  background:#081120;
+  box-shadow:none;
+}
+
+.diary-entry-top{
+  align-items:flex-start;
+}
+
+.diary-entry-title{
+  display:inline-block;
+  font-size:16px;
+  line-height:1.12;
+  font-weight:900;
+  word-break:break-word;
+}
+
+@media (max-width: 768px){
+  .diary-action-row{
+    grid-template-columns:1fr !important;
+  }
+
+  .calendar-day{
+    min-height:34px !important;
+    font-size:11px !important;
+  }
+}

@@ -1,5 +1,7 @@
-﻿{% extends "base.html" %}
+﻿{% extends "base_landing.html" %}
 {% load static %}
+
+{% block show_landing_header %}{% endblock %}
 
 {% block title %}1:1 Inquiry | mathner{% endblock %}
 
@@ -7,11 +9,8 @@
 <style>
   .inquiry-page{
     padding:48px 0 80px;
-    background:
-      radial-gradient(circle at top left, rgba(84, 72, 238, 0.10), transparent 28%),
-      radial-gradient(circle at top right, rgba(91, 224, 193, 0.10), transparent 26%),
-      #060b14;
-    min-height:calc(100vh - var(--site-header-height));
+    background:transparent;
+    min-height:auto;
   }
 
   .inquiry-shell{
@@ -20,11 +19,12 @@
   }
 
   .inquiry-card{
-    background:linear-gradient(180deg, #0d1525, #09111f);
+    background:linear-gradient(180deg, rgba(13,21,37,.92), rgba(9,17,31,.90));
     border:1px solid rgba(255,255,255,.08);
     border-radius:28px;
     padding:30px 24px;
     box-shadow:0 24px 70px rgba(0,0,0,.32);
+    backdrop-filter:blur(8px);
   }
 
   .inquiry-eyebrow{

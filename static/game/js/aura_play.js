@@ -123,6 +123,7 @@ const rBelowFriend = document.getElementById("rBelowFriend");
 const keyExhaustedModal = document.getElementById("keyExhaustedModal");
 const btnKeyModalClose = document.getElementById("btnKeyModalClose");
 const btnLater = document.getElementById("btnLater");
+const btnOpenRanking = document.getElementById("btnOpenRanking");
 
 let totalStars = Number(PAGE_CFG.initialStars || 0);
 let remainingKeys = Number(PAGE_CFG.initialKeys || 0);
@@ -209,6 +210,30 @@ function getCookie(name) {
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(";").shift();
   return "";
+}
+
+function getCurrentRankingMode() {
+  return String(selectedGameMode || "practice").toLowerCase();
+}
+
+function buildFriendNearbyRankUrl() {
+  const base = PAGE_CFG.friendNearbyRankUrlBase || PAGE_CFG.friendNearbyRankUrl || "";
+  if (!base) return "";
+  const sep = base.includes("?") ? "&" : "?";
+  return `${base}${sep}mode=${encodeURIComponent(getCurrentRankingMode())}`;
+}
+
+function buildRankingHomeUrl() {
+  const base = PAGE_CFG.rankingHomeUrlBase || PAGE_CFG.rankingHomeUrl || "";
+  if (!base) return "";
+  const sep = base.includes("?") ? "&" : "?";
+  return `${base}${sep}mode=${encodeURIComponent(getCurrentRankingMode())}`;
+}
+
+function syncRankingLinks() {
+  if (btnOpenRanking) {
+    btnOpenRanking.href = buildRankingHomeUrl();
+  }
 }
 
 function getModeConfig() {
@@ -422,6 +447,7 @@ function renderPracticeOperations() {
       renderPracticeOperations();
       renderSetupScreen();
       renderRight();
+      syncRankingLinks();
     });
     practiceOpSeg.appendChild(btn);
   });
@@ -498,6 +524,7 @@ function goSetupScreen() {
   if (leftSub) leftSub.textContent = isMobilePlayUI() ? "" : "Review the rules before starting.";
   renderSetupScreen();
   renderRight();
+  syncRankingLinks();
   show(screenSetup);
 }
 
@@ -520,6 +547,7 @@ function goPlayScreen() {
   resetGameUI();
   renderRight();
   renderTopStatus();
+  syncRankingLinks();
 }
 
 function updateTimerUI() {
@@ -975,9 +1003,11 @@ async function recordRankingRun() {
   try {
     await fetch(PAGE_CFG.rankingRecordUrl, {
       method: "POST",
+      credentials: "same-origin",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": getCookie("csrftoken"),
+        "X-Requested-With": "XMLHttpRequest",
       },
       body: JSON.stringify({
         score,
@@ -989,7 +1019,9 @@ async function recordRankingRun() {
         operation: selectedGameMode === "practice" ? selectedPracticeOperation : "mixed",
       }),
     });
-  } catch (error) {}
+  } catch (error) {
+    console.error("recordRankingRun error:", error);
+  }
 }
 
 async function loadFriendNearbyRank() {
@@ -1004,10 +1036,11 @@ async function loadFriendNearbyRank() {
     return;
   }
 
-  if (!PAGE_CFG.friendNearbyRankUrl) return;
+  const nearbyUrl = buildFriendNearbyRankUrl();
+  if (!nearbyUrl) return;
 
   try {
-    const response = await fetch(PAGE_CFG.friendNearbyRankUrl, {
+    const response = await fetch(nearbyUrl, {
       method: "GET",
       credentials: "same-origin",
       headers: {
@@ -1089,9 +1122,11 @@ async function loadFriendNearbyRank() {
 async function startRunOnServer() {
   const response = await fetch(PAGE_CFG.startRunUrl, {
     method: "POST",
+    credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
       "X-CSRFToken": getCookie("csrftoken"),
+      "X-Requested-With": "XMLHttpRequest",
     },
     body: JSON.stringify({
       game_mode: selectedGameMode,
@@ -1270,9 +1305,11 @@ async function finalizeRun(reason, options = {}) {
   try {
     const response = await fetch(PAGE_CFG.finalizeRunUrl, {
       method: "POST",
+      credentials: "same-origin",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": getCookie("csrftoken"),
+        "X-Requested-With": "XMLHttpRequest",
       },
       body: JSON.stringify(buildFinalizePayload(reason)),
       keepalive: reason === "leave",
@@ -1323,6 +1360,7 @@ async function finalizeRun(reason, options = {}) {
       }, 260);
 
       resetGameUI();
+      syncRankingLinks();
     }
   } catch (error) {
     if (!silent) setMessage("Network error while saving run.", "bad");
@@ -1355,9 +1393,11 @@ function finalizeRunOnUnload() {
     } else {
       fetch(PAGE_CFG.finalizeRunUrl, {
         method: "POST",
+        credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
           "X-CSRFToken": getCookie("csrftoken"),
+          "X-Requested-With": "XMLHttpRequest",
         },
         body: payload,
         keepalive: true,
@@ -1590,6 +1630,7 @@ function applyMobilePlayTweaks() {
   renderModeTiles();
   renderSetupScreen();
   renderRight();
+  syncRankingLinks();
 }
 
 if (btnBackToModes) {
@@ -1597,6 +1638,7 @@ if (btnBackToModes) {
     await leaveCurrentRunIfNeeded(() => {
       if (leftTitle) leftTitle.textContent = "Choose Mode";
       if (leftSub) leftSub.textContent = isMobilePlayUI() ? "" : "Pick Practice, Classic, or Challenge.";
+      syncRankingLinks();
       show(screenSelect);
       renderRight();
     });
@@ -1610,6 +1652,7 @@ if (btnBackToSetup) {
     await leaveCurrentRunIfNeeded(() => {
       if (leftTitle) leftTitle.textContent = "Choose Mode";
       if (leftSub) leftSub.textContent = "";
+      syncRankingLinks();
       show(screenSetup);
     });
   });
@@ -1669,6 +1712,7 @@ function init() {
   stopAuraCompletely();
   ensureRankNeighborCards();
   resetRankResultUI();
+  syncRankingLinks();
   show(screenSelect);
   bindLeaveProtection();
   applyMobilePlayTweaks();
