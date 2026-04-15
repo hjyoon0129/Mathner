@@ -1352,3 +1352,174 @@ header.navbar{
     transform:translateY(-42px);
   }
 }
+.avatar-unique-aura--robe{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:9;
+}
+
+.avatar-robe-glow-core{
+  position:absolute;
+  left:50%;
+  top:56%;
+  width:34%;
+  height:34%;
+  transform:translate(-50%, -50%);
+  border-radius:40%;
+  background:
+    radial-gradient(circle,
+      rgba(255,244,200,.72) 0%,
+      rgba(255,216,120,.48) 34%,
+      rgba(255,170,70,.20) 58%,
+      rgba(255,120,40,0) 78%);
+  filter:blur(7px);
+  opacity:.96;
+  animation:robeGlowPulse 2.4s ease-in-out infinite;
+}
+
+.avatar-robe-glow-soft{
+  position:absolute;
+  left:50%;
+  top:61%;
+  width:56%;
+  height:44%;
+  transform:translate(-50%, -50%);
+  border-radius:42%;
+  background:
+    radial-gradient(circle,
+      rgba(255,220,130,.30) 0%,
+      rgba(255,170,70,.14) 40%,
+      rgba(255,120,40,0) 78%);
+  filter:blur(13px);
+  opacity:.86;
+  animation:robeGlowSoft 3.2s ease-in-out infinite;
+}
+
+.avatar-robe-shine{
+  position:absolute;
+  width:16%;
+  height:34%;
+  border-radius:999px;
+  background:
+    linear-gradient(180deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,248,220,.72) 34%,
+      rgba(255,220,130,.18) 62%,
+      rgba(255,255,255,0) 100%);
+  filter:blur(2px);
+  opacity:.78;
+  mix-blend-mode:screen;
+  animation:robeShineFlicker 2.1s ease-in-out infinite;
+}
+
+.avatar-robe-shine-1{
+  left:31%;
+  top:47%;
+  transform:rotate(-8deg);
+  animation-delay:0s;
+}
+
+.avatar-robe-shine-2{
+  left:50%;
+  top:45%;
+  transform:translateX(-50%);
+  animation-delay:.55s;
+}
+
+.avatar-robe-shine-3{
+  right:30%;
+  top:48%;
+  transform:rotate(8deg);
+  animation-delay:1.05s;
+}
+
+.avatar-robe-particle{
+  position:absolute;
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:
+    radial-gradient(circle,
+      rgba(255,255,255,.95) 0%,
+      rgba(255,233,160,.92) 38%,
+      rgba(255,180,70,0) 76%);
+  box-shadow:
+    0 0 8px rgba(255,240,190,.78),
+    0 0 16px rgba(255,190,80,.28);
+  opacity:.84;
+  animation:robeParticleFloat 3.2s ease-in-out infinite;
+}
+
+.avatar-robe-particle-1{
+  left:28%;
+  top:57%;
+  animation-delay:0s;
+}
+
+.avatar-robe-particle-2{
+  right:26%;
+  top:58%;
+  animation-delay:.7s;
+}
+
+.avatar-robe-particle-3{
+  left:38%;
+  bottom:18%;
+  animation-delay:1.3s;
+}
+
+.avatar-robe-particle-4{
+  right:37%;
+  bottom:16%;
+  animation-delay:1.9s;
+}
+
+@keyframes robeGlowPulse{
+  0%,100%{
+    transform:translate(-50%, -50%) scale(1);
+    opacity:.88;
+  }
+  50%{
+    transform:translate(-50%, -50%) scale(1.08);
+    opacity:1;
+  }
+}
+
+@keyframes robeGlowSoft{
+  0%,100%{
+    transform:translate(-50%, -50%) scale(1);
+    opacity:.72;
+  }
+  50%{
+    transform:translate(-50%, -50%) scale(1.06);
+    opacity:.94;
+  }
+}
+
+@keyframes robeShineFlicker{
+  0%,100%{
+    opacity:.36;
+  }
+  50%{
+    opacity:.95;
+  }
+}
+
+@keyframes robeParticleFloat{
+  0%{
+    transform:translateY(8px) scale(.82);
+    opacity:0;
+  }
+  20%{
+    opacity:.95;
+  }
+  55%{
+    transform:translateY(-8px) scale(1);
+    opacity:.88;
+  }
+  100%{
+    transform:translateY(-20px) scale(.86);
+    opacity:0;
+  }
+}

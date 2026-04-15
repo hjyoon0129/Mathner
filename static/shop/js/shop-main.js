@@ -109,6 +109,22 @@ document.addEventListener("DOMContentLoaded", function () {
       return s;
     },
 
+    getOwnedQtyByItemId(itemId) {
+      const key = String(itemId || "").trim();
+      if (!key) return 0;
+
+      if (app.state.ownedMap[key] != null) {
+        return Number(app.state.ownedMap[key] || 0);
+      }
+
+      const numKey = Number(key);
+      if (!Number.isNaN(numKey) && app.state.ownedMap[numKey] != null) {
+        return Number(app.state.ownedMap[numKey] || 0);
+      }
+
+      return 0;
+    },
+
     postJson(url, payload) {
       return fetch(url, {
         method: "POST",
@@ -145,7 +161,9 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
   app.getSelectedCards = function () {
-    return [...document.querySelectorAll(".shop-card.selected, .shop-unique-card.selected")];
+    return [
+      ...document.querySelectorAll(".shop-card.selected, .shop-set-card.selected, .shop-unique-card.selected"),
+    ];
   };
 
   app.getSelectedEffectCards = function () {
@@ -242,34 +260,42 @@ document.addEventListener("DOMContentLoaded", function () {
     buyBtn.textContent = "Buy Selected";
   };
 
+  app.applyOwnedStateToItemCard = function (card) {
+    const itemId = String(card.dataset.itemId || "");
+    const ownedQty = app.utils.getOwnedQtyByItemId(itemId);
+    const selectBtn = card.querySelector(".shop-select-btn, .shop-unique-select-btn");
+    const isPremium = card.dataset.isPremium === "true";
+
+    if (!selectBtn) return;
+
+    card.classList.remove("is-owned");
+    selectBtn.classList.remove("is-owned");
+
+    if (ownedQty > 0) {
+      card.classList.remove("selected");
+      card.classList.add("is-owned");
+      selectBtn.textContent = "Owned";
+      selectBtn.disabled = true;
+      selectBtn.classList.add("is-owned");
+      selectBtn.setAttribute("aria-disabled", "true");
+      return;
+    }
+
+    selectBtn.disabled = false;
+    selectBtn.removeAttribute("aria-disabled");
+
+    if (isPremium) {
+      card.classList.remove("selected");
+      selectBtn.textContent = "Premium Unlock";
+      return;
+    }
+
+    selectBtn.textContent = card.classList.contains("selected") ? "Selected" : "Select";
+  };
+
   app.updateSelectButtons = function () {
-    document.querySelectorAll(".shop-card").forEach((card) => {
-      const itemId = String(card.dataset.itemId || "");
-      const ownedQty = Number(app.state.ownedMap[itemId] || 0);
-      const selectBtn = card.querySelector(".shop-select-btn");
-      const isPremium = card.dataset.isPremium === "true";
-
-      if (!selectBtn) return;
-
-      card.classList.remove("is-owned");
-
-      if (ownedQty > 0) {
-        selectBtn.textContent = "Owned";
-        selectBtn.disabled = true;
-        card.classList.remove("selected");
-        card.classList.add("is-owned");
-        return;
-      }
-
-      if (isPremium) {
-        selectBtn.disabled = false;
-        selectBtn.textContent = "Premium Unlock";
-        card.classList.remove("selected");
-        return;
-      }
-
-      selectBtn.disabled = false;
-      selectBtn.textContent = card.classList.contains("selected") ? "Selected" : "Select";
+    document.querySelectorAll(".shop-card, .shop-set-card, .shop-unique-card").forEach((card) => {
+      app.applyOwnedStateToItemCard(card);
     });
 
     document.querySelectorAll(".shop-effect-card").forEach((card) => {
@@ -285,19 +311,21 @@ document.addEventListener("DOMContentLoaded", function () {
       if (ownedQty > 0) {
         selectBtn.textContent = "Owned";
         selectBtn.disabled = true;
+        selectBtn.setAttribute("aria-disabled", "true");
         card.classList.remove("selected");
         card.classList.add("is-owned");
         return;
       }
 
+      selectBtn.disabled = false;
+      selectBtn.removeAttribute("aria-disabled");
+
       if (isPremium) {
-        selectBtn.disabled = false;
         selectBtn.textContent = "Premium Unlock";
         card.classList.remove("selected");
         return;
       }
 
-      selectBtn.disabled = false;
       selectBtn.textContent = card.classList.contains("selected") ? "Selected" : "Select";
     });
   };
@@ -385,6 +413,7 @@ document.addEventListener("DOMContentLoaded", function () {
     app.updateFilterButtons();
     app.updateMainTabLayout();
     app.avatar?.applyFilters?.();
+    app.setUnique?.applyInitialFilters?.();
     app.updateSelectButtons();
     app.renderSummary();
   };
@@ -476,6 +505,8 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!result.ok) {
         if (result.already_owned && result.owned_item_names?.length) {
           alert(`Already owned: ${result.owned_item_names.join(", ")}`);
+          app.updateSelectButtons();
+          app.renderSummary();
         } else {
           alert(result.error || "Purchase failed.");
         }
@@ -489,7 +520,7 @@ document.addEventListener("DOMContentLoaded", function () {
         app.state.ownedMap[String(item.item_id)] = item.quantity || 1;
       });
 
-      document.querySelectorAll(".shop-card.selected").forEach((card) => {
+      document.querySelectorAll(".shop-card.selected, .shop-set-card.selected, .shop-unique-card.selected").forEach((card) => {
         card.classList.remove("selected");
       });
 

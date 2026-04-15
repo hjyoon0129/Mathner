@@ -20,6 +20,39 @@ EFFECT_CHOICES = [
 ]
 
 
+class ShopItemAdminForm(forms.ModelForm):
+    class Meta:
+        model = ShopItem
+        fields = "__all__"
+
+    def clean(self):
+        cleaned = super().clean()
+        category = cleaned.get("category")
+        equip_slot = cleaned.get("equip_slot") or ""
+
+        if category in {ShopItem.CATEGORY_PROFILE_FONT, ShopItem.CATEGORY_PROFILE_EFFECT}:
+            cleaned["equip_slot"] = ""
+
+        if category in {ShopItem.CATEGORY_SET, ShopItem.CATEGORY_UNIQUE} and not equip_slot:
+            raise forms.ValidationError("Set/Unique items must have an equip slot.")
+
+        if category not in {
+            ShopItem.CATEGORY_SET,
+            ShopItem.CATEGORY_UNIQUE,
+            ShopItem.CATEGORY_AVATAR_FACE,
+            ShopItem.CATEGORY_AVATAR_HAIR,
+            ShopItem.CATEGORY_AVATAR_BODY,
+            ShopItem.CATEGORY_AVATAR_TOP,
+            ShopItem.CATEGORY_AVATAR_CLOTH,
+            ShopItem.CATEGORY_AVATAR_PANTS,
+            ShopItem.CATEGORY_AVATAR_SHOES,
+            ShopItem.CATEGORY_AVATAR_HAT,
+        }:
+            cleaned["equip_slot"] = ""
+
+        return cleaned
+
+
 class UserOwnedItemAdminForm(forms.ModelForm):
     class Meta:
         model = UserOwnedItem
@@ -30,7 +63,7 @@ class UserOwnedItemAdminForm(forms.ModelForm):
         if "item" in self.fields:
             self.fields["item"].queryset = ShopItem.objects.exclude(
                 category=ShopItem.CATEGORY_PROFILE_EFFECT
-            ).order_by("category", "name")
+            ).order_by("category", "equip_slot", "name")
 
     def clean_quantity(self):
         quantity = self.cleaned_data.get("quantity") or 0
@@ -62,11 +95,7 @@ class GrantItemsToUserForm(forms.Form):
         queryset=User.objects.all().order_by("username", "email"),
         label="Target user",
     )
-    quantity = forms.IntegerField(
-        min_value=1,
-        initial=1,
-        label="Quantity",
-    )
+    quantity = forms.IntegerField(min_value=1, initial=1, label="Quantity")
 
 
 class GrantAllItemsToUserForm(forms.Form):
@@ -74,16 +103,8 @@ class GrantAllItemsToUserForm(forms.Form):
         queryset=User.objects.all().order_by("username", "email"),
         label="Target user",
     )
-    quantity = forms.IntegerField(
-        min_value=1,
-        initial=1,
-        label="Quantity",
-    )
-    active_only = forms.BooleanField(
-        required=False,
-        initial=True,
-        label="Only active items",
-    )
+    quantity = forms.IntegerField(min_value=1, initial=1, label="Quantity")
+    active_only = forms.BooleanField(required=False, initial=True, label="Only active items")
 
 
 class GrantEffectsToUserForm(forms.Form):
@@ -91,11 +112,7 @@ class GrantEffectsToUserForm(forms.Form):
         queryset=User.objects.all().order_by("username", "email"),
         label="Target user",
     )
-    quantity = forms.IntegerField(
-        min_value=1,
-        initial=1,
-        label="Quantity",
-    )
+    quantity = forms.IntegerField(min_value=1, initial=1, label="Quantity")
 
 
 class GrantAllEffectsToUserForm(forms.Form):
@@ -103,19 +120,17 @@ class GrantAllEffectsToUserForm(forms.Form):
         queryset=User.objects.all().order_by("username", "email"),
         label="Target user",
     )
-    quantity = forms.IntegerField(
-        min_value=1,
-        initial=1,
-        label="Quantity",
-    )
+    quantity = forms.IntegerField(min_value=1, initial=1, label="Quantity")
 
 
 @admin.register(ShopItem)
 class ShopItemAdmin(admin.ModelAdmin):
+    form = ShopItemAdminForm
     list_display = (
         "id",
         "name",
         "category",
+        "equip_slot",
         "gender",
         "price_stars",
         "font_family_key",
@@ -125,6 +140,7 @@ class ShopItemAdmin(admin.ModelAdmin):
     )
     list_filter = (
         "category",
+        "equip_slot",
         "gender",
         "is_active",
         "font_family_key",
@@ -141,6 +157,7 @@ class ShopItemAdmin(admin.ModelAdmin):
     fields = (
         "name",
         "category",
+        "equip_slot",
         "gender",
         "description",
         "price_stars",
@@ -215,7 +232,7 @@ class ShopItemAdmin(admin.ModelAdmin):
 
     def grant_selected_view(self, request):
         selected_ids = request.session.get("shopitem_grant_selected_ids", [])
-        queryset = ShopItem.objects.filter(id__in=selected_ids).order_by("category", "id")
+        queryset = ShopItem.objects.filter(id__in=selected_ids).order_by("category", "equip_slot", "id")
 
         if not selected_ids or not queryset.exists():
             self.message_user(request, "No selected ShopItems found.", level=messages.WARNING)
@@ -261,7 +278,7 @@ class ShopItemAdmin(admin.ModelAdmin):
                 quantity = form.cleaned_data["quantity"]
                 active_only = form.cleaned_data["active_only"]
 
-                queryset = ShopItem.objects.all().order_by("category", "id")
+                queryset = ShopItem.objects.all().order_by("category", "equip_slot", "id")
                 if active_only:
                     queryset = queryset.filter(is_active=True)
 
@@ -295,8 +312,8 @@ class ShopItemAdmin(admin.ModelAdmin):
 @admin.register(UserOwnedItem)
 class UserOwnedItemAdmin(admin.ModelAdmin):
     form = UserOwnedItemAdminForm
-    list_display = ("id", "user", "item", "item_category", "quantity", "created_at")
-    list_filter = ("item__category", "item__gender", "item__is_active")
+    list_display = ("id", "user", "item", "item_category", "item_slot", "quantity", "created_at")
+    list_filter = ("item__category", "item__equip_slot", "item__gender", "item__is_active")
     search_fields = ("user__username", "user__email", "item__name")
     autocomplete_fields = ("user", "item")
     readonly_fields = ("created_at",)
@@ -310,15 +327,16 @@ class UserOwnedItemAdmin(admin.ModelAdmin):
         if db_field.name == "item":
             kwargs["queryset"] = ShopItem.objects.exclude(
                 category=ShopItem.CATEGORY_PROFILE_EFFECT
-            ).order_by("category", "name")
+            ).order_by("category", "equip_slot", "name")
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def item_category(self, obj):
         return obj.item.category if obj.item else "-"
     item_category.short_description = "category"
 
-    def save_model(self, request, obj, form, change):
-        super().save_model(request, obj, form, change)
+    def item_slot(self, obj):
+        return obj.item.resolved_equip_slot if obj.item else "-"
+    item_slot.short_description = "slot"
 
 
 @admin.register(UserOwnedEffect)
@@ -330,7 +348,7 @@ class UserOwnedEffectAdmin(admin.ModelAdmin):
     autocomplete_fields = ("user",)
     readonly_fields = ("created_at",)
     fields = ("user", "effect_key", "quantity", "created_at")
-    actions = ("grant_selected_effects_to_user",)
+    actions = ("grant_selected_effects_to_user", "sync_from_owned_effect_items")
 
     def effect_name(self, obj):
         catalog_map = {
@@ -414,6 +432,40 @@ class UserOwnedEffectAdmin(admin.ModelAdmin):
             return
         request.session["effect_grant_selected_ids"] = selected_ids
         return redirect("admin:shop_userownedeffect_grant_selected")
+
+    @admin.action(description="Sync missing UserOwnedEffect rows from UserOwnedItem(Profile Effect)")
+    def sync_from_owned_effect_items(self, request, queryset):
+        effect_items = UserOwnedItem.objects.filter(
+            item__category=ShopItem.CATEGORY_PROFILE_EFFECT
+        ).select_related("item", "user")
+
+        created_count = 0
+        updated_count = 0
+
+        for owned in effect_items:
+            if not owned.item or not owned.item.effect_key:
+                continue
+
+            obj, created = UserOwnedEffect.objects.get_or_create(
+                user=owned.user,
+                effect_key=normalize_effect_key(owned.item.effect_key),
+                defaults={"quantity": max(1, int(owned.quantity or 1))},
+            )
+
+            if created:
+                created_count += 1
+            else:
+                desired_quantity = max(int(obj.quantity or 0), int(owned.quantity or 1))
+                if desired_quantity != obj.quantity:
+                    obj.quantity = desired_quantity
+                    obj.save(update_fields=["quantity"])
+                    updated_count += 1
+
+        self.message_user(
+            request,
+            f"Synced UserOwnedEffect rows. created={created_count}, updated={updated_count}",
+            level=messages.SUCCESS,
+        )
 
     def grant_selected_view(self, request):
         selected_ids = request.session.get("effect_grant_selected_ids", [])

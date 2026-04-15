@@ -133,10 +133,14 @@ def shop_view(request):
     owned_effect_map = {}
 
     for owned in owned_items:
+        if not owned.item_id:
+            continue
+
         owned_map[str(owned.item_id)] = int(owned.quantity or 0)
 
         if owned.item and owned.item.category == ShopItem.CATEGORY_PROFILE_EFFECT and owned.item.effect_key:
-            owned_effect_map[str(owned.item.effect_key)] = int(owned.quantity or 0)
+            normalized_effect_key = str(owned.item.effect_key or "").strip().lower().replace("-", "_")
+            owned_effect_map[normalized_effect_key] = int(owned.quantity or 0)
 
     for owned in UserOwnedEffect.objects.filter(user=request.user):
         normalized_key = str(owned.effect_key or "").strip().lower().replace("-", "_")

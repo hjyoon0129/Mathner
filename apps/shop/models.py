@@ -45,6 +45,36 @@ class ShopItem(models.Model):
         (GENDER_FEMALE, "Female"),
     ]
 
+    EQUIP_SLOT_NONE = ""
+    EQUIP_SLOT_HEAD = "head"
+    EQUIP_SLOT_EYES = "eyes"
+    EQUIP_SLOT_MOUTH = "mouth"
+    EQUIP_SLOT_EYEBROW = "eyebrow"
+    EQUIP_SLOT_FRONT_HAIR = "front_hair"
+    EQUIP_SLOT_REAR_HAIR = "rear_hair"
+    EQUIP_SLOT_BODY = "body"
+    EQUIP_SLOT_TOP = "top"
+    EQUIP_SLOT_CLOTH = "cloth"
+    EQUIP_SLOT_PANTS = "pants"
+    EQUIP_SLOT_SHOES = "shoes"
+    EQUIP_SLOT_HAT = "hat"
+
+    EQUIP_SLOT_CHOICES = [
+        (EQUIP_SLOT_NONE, "No slot"),
+        (EQUIP_SLOT_HEAD, "Head"),
+        (EQUIP_SLOT_EYES, "Eyes"),
+        (EQUIP_SLOT_MOUTH, "Mouth"),
+        (EQUIP_SLOT_EYEBROW, "Eyebrow"),
+        (EQUIP_SLOT_FRONT_HAIR, "Front Hair"),
+        (EQUIP_SLOT_REAR_HAIR, "Rear Hair"),
+        (EQUIP_SLOT_BODY, "Body"),
+        (EQUIP_SLOT_TOP, "Top"),
+        (EQUIP_SLOT_CLOTH, "Cloth"),
+        (EQUIP_SLOT_PANTS, "Pants"),
+        (EQUIP_SLOT_SHOES, "Shoes"),
+        (EQUIP_SLOT_HAT, "Hat"),
+    ]
+
     FONT_FAMILY_DEFAULT = ""
     FONT_FAMILY_GAEGU = "gaegu"
     FONT_FAMILY_DONGLE = "dongle"
@@ -100,6 +130,14 @@ class ShopItem(models.Model):
     image_path = models.CharField(max_length=255, blank=True)
     is_active = models.BooleanField(default=True)
 
+    equip_slot = models.CharField(
+        max_length=30,
+        choices=EQUIP_SLOT_CHOICES,
+        blank=True,
+        default="",
+        help_text="Avatar/Set/Unique item equip slot. Use Cloth, Pants, Shoes, Hat, etc.",
+    )
+
     font_family_key = models.CharField(
         max_length=50,
         choices=FONT_FAMILY_CHOICES,
@@ -127,10 +165,11 @@ class ShopItem(models.Model):
     )
 
     class Meta:
-        ordering = ["category", "gender", "name"]
+        ordering = ["category", "equip_slot", "gender", "name"]
 
     def __str__(self):
-        return f"{self.name} ({self.category})"
+        slot = self.resolved_equip_slot or "-"
+        return f"{self.name} ({self.category}/{slot})"
 
     @property
     def is_font_item(self):
@@ -139,6 +178,41 @@ class ShopItem(models.Model):
     @property
     def is_effect_item(self):
         return self.category == self.CATEGORY_PROFILE_EFFECT
+
+    def _default_slot_from_category(self):
+        mapping = {
+            self.CATEGORY_AVATAR_FACE: self.EQUIP_SLOT_HEAD,
+            self.CATEGORY_AVATAR_HAIR: self.EQUIP_SLOT_FRONT_HAIR,
+            self.CATEGORY_AVATAR_BODY: self.EQUIP_SLOT_BODY,
+            self.CATEGORY_AVATAR_TOP: self.EQUIP_SLOT_TOP,
+            self.CATEGORY_AVATAR_CLOTH: self.EQUIP_SLOT_CLOTH,
+            self.CATEGORY_AVATAR_PANTS: self.EQUIP_SLOT_PANTS,
+            self.CATEGORY_AVATAR_SHOES: self.EQUIP_SLOT_SHOES,
+            self.CATEGORY_AVATAR_HAT: self.EQUIP_SLOT_HAT,
+        }
+        return mapping.get(self.category, "")
+
+    @property
+    def resolved_equip_slot(self):
+        return self.equip_slot or self._default_slot_from_category()
+
+    def save(self, *args, **kwargs):
+        if self.category in {
+            self.CATEGORY_AVATAR_FACE,
+            self.CATEGORY_AVATAR_HAIR,
+            self.CATEGORY_AVATAR_BODY,
+            self.CATEGORY_AVATAR_TOP,
+            self.CATEGORY_AVATAR_CLOTH,
+            self.CATEGORY_AVATAR_PANTS,
+            self.CATEGORY_AVATAR_SHOES,
+            self.CATEGORY_AVATAR_HAT,
+        } and not self.equip_slot:
+            self.equip_slot = self._default_slot_from_category()
+
+        if self.category in {self.CATEGORY_PROFILE_FONT, self.CATEGORY_PROFILE_EFFECT}:
+            self.equip_slot = ""
+
+        super().save(*args, **kwargs)
 
 
 class UserOwnedItem(models.Model):

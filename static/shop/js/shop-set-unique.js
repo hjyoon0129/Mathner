@@ -46,8 +46,32 @@ window.ShopApp.setUnique = {
     return raw;
   },
 
+  inferCategoryFromName(name) {
+    const value = String(name || "").trim().toLowerCase();
+
+    if (!value) return "all";
+    if (/(robe|cloak|cape|mantle|coat|outer)/.test(value)) return "cloth";
+    if (/(pants|trouser|bottom)/.test(value)) return "pants";
+    if (/(shoe|shoes|boot|boots|sneaker)/.test(value)) return "shoes";
+    if (/(hat|cap|crown|laurel|halo|tiara|wreath)/.test(value)) return "hat";
+
+    return "all";
+  },
+
   getCardCategory(card) {
     if (!card) return "all";
+
+    const explicitSlot =
+      card.dataset.itemSlot ||
+      card.dataset.equipSlot ||
+      card.dataset.subcategory ||
+      card.dataset.categorySlot ||
+      "";
+
+    const normalizedExplicit = this.normalizeCategory(explicitSlot);
+    if (normalizedExplicit && normalizedExplicit !== "all") {
+      return normalizedExplicit;
+    }
 
     const category =
       card.dataset.subcategory ||
@@ -57,7 +81,12 @@ window.ShopApp.setUnique = {
       card.dataset.type ||
       "";
 
-    return this.normalizeCategory(category);
+    const normalizedCategory = this.normalizeCategory(category);
+    if (["cloth", "pants", "shoes", "hat"].includes(normalizedCategory)) {
+      return normalizedCategory;
+    }
+
+    return this.inferCategoryFromName(card.dataset.itemName || "");
   },
 
   getScopeRoot(scope) {
@@ -86,11 +115,14 @@ window.ShopApp.setUnique = {
   },
 
   getOwnedQty(itemId) {
-    const app = this.app;
-    const ownedMap = (app.state && app.state.ownedMap) || {};
     const key = String(itemId || "").trim();
-
     if (!key) return 0;
+
+    if (typeof this.app.utils?.getOwnedQtyByItemId === "function") {
+      return this.app.utils.getOwnedQtyByItemId(key);
+    }
+
+    const ownedMap = (this.app.state && this.app.state.ownedMap) || {};
 
     if (ownedMap[key] != null) {
       return Number(ownedMap[key] || 0);
@@ -254,11 +286,6 @@ window.ShopApp.setUnique = {
         e.stopPropagation();
         this.handleCardClick(card);
       });
-
-      card.addEventListener("click", (e) => {
-        const isButtonClick = e.target.closest(".shop-select-btn, .shop-unique-select-btn");
-        if (isButtonClick) return;
-      });
     });
   },
 
@@ -272,6 +299,9 @@ window.ShopApp.setUnique = {
       return;
     }
 
+    const btn = this.getCardButton(card);
+    if (btn && btn.disabled) return;
+
     card.classList.toggle("selected");
 
     if (card.classList.contains("selected") && card.classList.contains("shop-unique-card")) {
@@ -283,6 +313,13 @@ window.ShopApp.setUnique = {
   },
 
   syncCardButton(card) {
+    if (!card) return;
+
+    if (typeof this.app.applyOwnedStateToItemCard === "function") {
+      this.app.applyOwnedStateToItemCard(card);
+      return;
+    }
+
     const btn = this.getCardButton(card);
     if (!btn) return;
 
@@ -290,9 +327,11 @@ window.ShopApp.setUnique = {
     const selected = card.classList.contains("selected");
 
     btn.classList.remove("is-owned", "is-selected");
+    card.classList.remove("is-owned");
 
     if (owned) {
       card.classList.remove("selected");
+      card.classList.add("is-owned");
       btn.textContent = "Owned";
       btn.disabled = true;
       btn.classList.add("is-owned");

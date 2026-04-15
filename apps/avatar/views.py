@@ -119,8 +119,8 @@ CATEGORY_TO_SLOT = {
     "shoes": "shoes",
     "shoe": "shoes",
 
-    "unique": "hat",
-    "set": "set",
+    "unique": "",
+    "set": "",
 }
 
 SUPPORTED_FONT_KEYS = {
@@ -389,9 +389,47 @@ def _normalize_avatar_type(category):
     return mapping.get(category, category)
 
 
-def _normalize_slot_name(category):
-    category = (category or "").strip().lower()
-    return CATEGORY_TO_SLOT.get(category, "")
+def _normalize_slot_name(value):
+    value = str(value or "").strip().lower()
+    return CATEGORY_TO_SLOT.get(value, value if value in AVATAR_SLOT_TO_FIELD else "")
+
+
+def _infer_slot_from_item(item):
+    equip_slot = (
+        getattr(item, "resolved_equip_slot", None)
+        or getattr(item, "equip_slot", None)
+        or getattr(item, "slot", None)
+        or ""
+    )
+    normalized = _normalize_slot_name(equip_slot)
+    if normalized in AVATAR_SLOT_TO_FIELD:
+        return normalized
+
+    category = str(getattr(item, "category", "") or "").strip().lower()
+    normalized = _normalize_slot_name(category)
+    if normalized in AVATAR_SLOT_TO_FIELD:
+        return normalized
+
+    source = " ".join([
+        str(getattr(item, "name", "") or ""),
+        str(getattr(item, "description", "") or ""),
+        str(getattr(item, "image_path", "") or ""),
+        str(getattr(item, "code", "") or ""),
+        str(getattr(item, "slug", "") or ""),
+    ]).lower()
+
+    if re.search(r"(robe|cloak|cape|mantle|coat|outer|cloth|outfit)", source):
+        return "cloth"
+    if re.search(r"(pants|trouser|bottom)", source):
+        return "pants"
+    if re.search(r"(shoe|shoes|boot|boots|sneaker)", source):
+        return "shoes"
+    if re.search(r"(hat|cap|crown|laurel|halo|tiara|wreath)", source):
+        return "hat"
+    if re.search(r"(shirt|tee|jacket|hoodie|vest|top)", source):
+        return "top"
+
+    return ""
 
 
 def _get_avatar_profile(user):
@@ -486,13 +524,13 @@ def _group_owned_items(user):
     grouped = OrderedDict()
     for owned in rows:
         item = owned.item
-        if item.id not in grouped:
-            category = str(getattr(item, "category", "") or "").strip().lower()
-            slot = _normalize_slot_name(category)
-            item_group = _normalize_item_group(category)
-            is_font = _is_font_item(item)
-            font_key = _font_key_from_item(item)
+        slot = _infer_slot_from_item(item)
+        category = str(getattr(item, "category", "") or "").strip().lower()
+        item_group = _normalize_item_group(category)
+        is_font = _is_font_item(item)
+        font_key = _font_key_from_item(item)
 
+        if item.id not in grouped:
             grouped[item.id] = {
                 "owned_item_id": owned.id,
                 "item_id": item.id,
@@ -502,18 +540,21 @@ def _group_owned_items(user):
                 "item_group": item_group,
                 "group": item_group,
                 "slot": slot,
+                "equip_slot": slot,
+                "resolved_equip_slot": slot,
                 "type": _normalize_avatar_type(category),
                 "gender": _normalize_gender(item),
                 "description": getattr(item, "description", "") or "",
                 "image_url": _image_url_from_item(item),
                 "price": int(getattr(item, "price_stars", 0) or 0),
-                "quantity": 1,
+                "quantity": max(1, int(getattr(owned, "quantity", 1) or 1)),
                 "is_font": is_font,
                 "font_key": font_key,
                 "font_family_key": getattr(item, "font_family_key", "") or font_key,
+                "effect_key": str(getattr(item, "effect_key", "") or "").strip().lower().replace("-", "_"),
             }
         else:
-            grouped[item.id]["quantity"] += 1
+            grouped[item.id]["quantity"] += max(1, int(getattr(owned, "quantity", 1) or 1))
 
     return list(grouped.values())
 
@@ -535,12 +576,12 @@ def _group_owned_effects(user):
             grouped[effect_key] = {
                 "effect_key": effect_key,
                 "name": EFFECT_LABEL_MAP.get(effect_key, effect_key.replace("_", " ").title()),
-                "quantity": 1,
+                "quantity": max(1, int(getattr(owned, "quantity", 1) or 1)),
                 "preview_class": f"effect-{effect_key.replace('_', '-')}",
                 "is_effect": True,
             }
         else:
-            grouped[effect_key]["quantity"] += 1
+            grouped[effect_key]["quantity"] += max(1, int(getattr(owned, "quantity", 1) or 1))
 
     return list(grouped.values())
 
@@ -610,7 +651,7 @@ def _validate_avatar_item_for_slot(user, slot, item_id):
     if not owned or not owned.item:
         return None, "You do not own this item."
 
-    actual_slot = _normalize_slot_name(getattr(owned.item, "category", "") or "")
+    actual_slot = _infer_slot_from_item(owned.item)
     if actual_slot != slot:
         return None, f"Item slot mismatch for {slot}."
 

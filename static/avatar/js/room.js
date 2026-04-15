@@ -89,6 +89,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     inventoryGenderFilterBar: $("inventoryGenderFilterBar"),
     inventoryTypeFilterBar: $("inventoryTypeFilterBar"),
+    setTypeFilterBar: $("setTypeFilterBar"),
+    uniqueTypeFilterBar: $("uniqueTypeFilterBar"),
   };
 
   const ds = page.dataset;
@@ -129,11 +131,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const SLOT_ORDER = [
     "rear_hair",
+    "cloth",
     "body",
     "pants",
-    "cloth",
-    "top",
     "shoes",
+    "top",
     "head",
     "eyebrow",
     "eyes",
@@ -282,6 +284,8 @@ document.addEventListener("DOMContentLoaded", () => {
     activeInventoryGenderFilter: "all",
     activeInventoryTypeFilter: "all",
     activeEditSubtab: "avatar",
+    activeSetTypeFilter: "all",
+    activeUniqueTypeFilter: "all",
     currentMainTab: "avatar",
     friendOptionsLoaded: false,
     inventoryLoaded: Array.isArray(safeJsonParse(ds.ownedAvatarItemJson, [])),
@@ -411,6 +415,26 @@ document.addEventListener("DOMContentLoaded", () => {
     return ownerName || ownerUser || "Player";
   }
 
+  function normalizeSlotName(slot) {
+    const s = String(slot || "").toLowerCase().trim();
+
+    if (["front_hair", "hair_front", "hairfront", "fronthair"].includes(s)) return "front_hair";
+    if (["rear_hair", "hair_rear", "hair_back", "hairrear", "hairback", "rearhair"].includes(s)) return "rear_hair";
+    if (["eye", "eyes"].includes(s)) return "eyes";
+    if (["eyebrow", "eyebrows", "brow", "brows"].includes(s)) return "eyebrow";
+    if (["mouth", "lip", "lips"].includes(s)) return "mouth";
+    if (["head", "face"].includes(s)) return "head";
+    if (["body"].includes(s)) return "body";
+    if (["top"].includes(s)) return "top";
+    if (["cloth", "clothes", "outfit", "robe", "cloak", "cape"].includes(s)) return "cloth";
+    if (["pants", "bottom", "bottoms", "trousers"].includes(s)) return "pants";
+    if (["shoes", "shoe", "boots", "boot"].includes(s)) return "shoes";
+    if (["hat", "cap", "crown", "halo", "tiara", "wreath"].includes(s)) return "hat";
+    if (["set"].includes(s)) return "set";
+    if (["unique"].includes(s)) return "unique";
+    return s;
+  }
+
   function inferSlotFromItemMeta(item) {
     const source = [
       item?.name,
@@ -428,11 +452,11 @@ document.addEventListener("DOMContentLoaded", () => {
       .join(" ")
       .toLowerCase();
 
-    if (/(crown|wreath|laurel|halo|hat|cap|tiara)/.test(source)) return "hat";
     if (/(robe|cloak|cape|mantle|coat|outer|cloth|outfit)/.test(source)) return "cloth";
     if (/(pants|trouser|bottom)/.test(source)) return "pants";
     if (/(shoe|shoes|boot|boots|sneaker)/.test(source)) return "shoes";
     if (/(top|shirt|tee|jacket|hoodie|vest)/.test(source)) return "top";
+    if (/(crown|wreath|laurel|halo|hat|cap|tiara)/.test(source)) return "hat";
     if (/(front hair|front_hair|hairfront|fronthair)/.test(source)) return "front_hair";
     if (/(rear hair|rear_hair|hairback|back hair|rearhair)/.test(source)) return "rear_hair";
     if (/(eyebrow|brow)/.test(source)) return "eyebrow";
@@ -440,28 +464,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (/(mouth|lip)/.test(source)) return "mouth";
     if (/(head|face)/.test(source)) return "head";
     if (/(body)/.test(source)) return "body";
-
     return "";
-  }
-
-  function normalizeSlotName(slot) {
-    const s = String(slot || "").toLowerCase().trim();
-
-    if (["front_hair", "hair_front", "hairfront", "fronthair"].includes(s)) return "front_hair";
-    if (["rear_hair", "hair_rear", "hair_back", "hairrear", "hairback", "rearhair"].includes(s)) return "rear_hair";
-    if (["eye", "eyes"].includes(s)) return "eyes";
-    if (["eyebrow", "eyebrows", "brow", "brows"].includes(s)) return "eyebrow";
-    if (["mouth", "lip", "lips"].includes(s)) return "mouth";
-    if (["head", "face"].includes(s)) return "head";
-    if (["body"].includes(s)) return "body";
-    if (["top"].includes(s)) return "top";
-    if (["cloth", "clothes", "outfit", "robe", "cloak", "cape"].includes(s)) return "cloth";
-    if (["pants", "bottom", "bottoms", "trousers"].includes(s)) return "pants";
-    if (["shoes", "shoe", "boots", "boot"].includes(s)) return "shoes";s
-    if (["hat", "cap", "crown", "halo", "tiara", "wreath"].includes(s)) return "hat";
-    if (["set"].includes(s)) return "set";
-    if (["unique"].includes(s)) return "unique";
-    return s;
   }
 
   function getDraftKeyBySlot(slot) {
@@ -491,6 +494,8 @@ document.addEventListener("DOMContentLoaded", () => {
       item.subtype,
       item.subcategory,
       item.type,
+      item.item_type,
+      item.item_category,
     ];
 
     for (const candidate of candidates) {
@@ -499,9 +504,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const category = String(item.category || item.item_category || "").toLowerCase();
-    if (SUPPORTED_SLOTS.has(normalizeSlotName(category))) {
-      return normalizeSlotName(category);
-    }
+    const normalizedCategory = normalizeSlotName(category);
+    if (SUPPORTED_SLOTS.has(normalizedCategory)) return normalizedCategory;
+
+    const inferred = normalizeSlotName(inferSlotFromItemMeta(item));
+    if (SUPPORTED_SLOTS.has(inferred)) return inferred;
 
     return "";
   }
@@ -518,10 +525,22 @@ document.addEventListener("DOMContentLoaded", () => {
       item.owned_item_id = Number(item.owned_item_id || 0);
       item.quantity = Number(item.quantity || 1);
       item.gender = String(item.gender || "common").toLowerCase();
-      item.is_font = Boolean(item.is_font || item.category === "profile_font" || item.type === "font");
-      item.font_key = String(item.font_family_key || item.font_key || "").trim();
       item.category = String(item.category || item.item_category || "").toLowerCase();
       item.item_group = String(item.item_group || item.group || "").toLowerCase();
+      item.font_key = String(item.font_family_key || item.font_key || "").trim();
+      item.effect_key = String(item.effect_key || item.key || "").trim().toLowerCase().replace(/-/g, "_");
+
+      item.is_font = Boolean(
+        item.is_font ||
+        item.category === "profile_font" ||
+        String(item.type || "").toLowerCase() === "font"
+      );
+
+      item.is_effect = Boolean(
+        item.is_effect ||
+        item.category === "profile_effect" ||
+        String(item.type || "").toLowerCase() === "effect"
+      );
 
       item.slot = resolveItemSlot(item);
 
@@ -571,6 +590,47 @@ document.addEventListener("DOMContentLoaded", () => {
     return Array.from(seen.values());
   }
 
+  function mergeEffectInventoryFromOwnedItems() {
+    const byKey = new Map();
+
+    for (const effect of state.ownedEffects || []) {
+      const key = String(effect.effect_key || "").trim().toLowerCase().replace(/-/g, "_");
+      if (!key) continue;
+      byKey.set(key, {
+        effect_key: key,
+        name: effect.name || EFFECT_LABEL_MAP[key] || key,
+        quantity: Number(effect.quantity || 1),
+      });
+    }
+
+    for (const item of state.ownedItems || []) {
+      const isProfileEffect =
+        Boolean(item.is_effect) ||
+        String(item.category || "").toLowerCase() === "profile_effect";
+
+      if (!isProfileEffect) continue;
+
+      const rawKey = item.effect_key || item.name || "";
+      const key = String(rawKey).trim().toLowerCase().replace(/-/g, "_").replace(/\s+/g, "_");
+      if (!key) continue;
+
+      if (!byKey.has(key)) {
+        byKey.set(key, {
+          effect_key: key,
+          name: item.name || EFFECT_LABEL_MAP[key] || key,
+          quantity: Number(item.quantity || 1),
+        });
+      } else {
+        byKey.get(key).quantity = Math.max(
+          Number(byKey.get(key).quantity || 1),
+          Number(item.quantity || 1)
+        );
+      }
+    }
+
+    state.ownedEffects = Array.from(byKey.values());
+  }
+
   function itemByItemId(itemId) {
     const target = Number(itemId);
     if (!target) return null;
@@ -617,6 +677,26 @@ document.addEventListener("DOMContentLoaded", () => {
     img.loading = "eager";
     img.decoding = "async";
     return img;
+  }
+
+  function isSetItem(item) {
+    const category = String(item.category || "").toLowerCase();
+    const group = String(item.item_group || "").toLowerCase();
+    return category === "set" || group === "set";
+  }
+
+  function isUniqueItem(item) {
+    const category = String(item.category || "").toLowerCase();
+    const group = String(item.item_group || "").toLowerCase();
+    return category === "unique" || group === "unique";
+  }
+
+  function isProfileFontItem(item) {
+    return Boolean(item?.is_font) || String(item?.category || "").toLowerCase() === "profile_font";
+  }
+
+  function isProfileEffectItem(item) {
+    return Boolean(item?.is_effect) || String(item?.category || "").toLowerCase() === "profile_effect";
   }
 
   function getUniqueAuraVariant(item) {
@@ -770,20 +850,8 @@ document.addEventListener("DOMContentLoaded", () => {
     return ["front_hair", "rear_hair"].includes(slot);
   }
 
-  function isSetItem(item) {
-    const category = String(item.category || "").toLowerCase();
-    const group = String(item.item_group || "").toLowerCase();
-    return category === "set" || group === "set";
-  }
-
-  function isUniqueItem(item) {
-    const category = String(item.category || "").toLowerCase();
-    const group = String(item.item_group || "").toLowerCase();
-    return category === "unique" || group === "unique";
-  }
-
   function isNormalAvatarItem(item) {
-    return !item.is_font && !isSetItem(item) && !isUniqueItem(item);
+    return !isProfileFontItem(item) && !isProfileEffectItem(item) && !isSetItem(item) && !isUniqueItem(item);
   }
 
   function matchesGenderFilter(item) {
@@ -799,6 +867,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (filter === "face") return isFaceSlot(slot);
     if (filter === "hair") return isHairSlot(slot);
     return slot === filter;
+  }
+
+  function matchesSetTypeFilter(slot) {
+    return state.activeSetTypeFilter === "all" || slot === state.activeSetTypeFilter;
+  }
+
+  function matchesUniqueTypeFilter(slot) {
+    return state.activeUniqueTypeFilter === "all" || slot === state.activeUniqueTypeFilter;
   }
 
   function itemMatchesFilters(item, slot) {
@@ -1002,7 +1078,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderFontInventory() {
     if (!els.fontInventoryWrap) return;
 
-    const fontItems = state.ownedItems.filter((item) => item.is_font);
+    const fontItems = state.ownedItems.filter((item) => isProfileFontItem(item));
     if (!fontItems.length) {
       els.fontInventoryWrap.innerHTML = `<div class="empty-text">No font items.</div>`;
       resetCarouselPage("fontPage");
@@ -1206,7 +1282,9 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderSetInventory() {
     if (!els.setInventoryWrap) return;
 
-    const setItems = state.ownedItems.filter((item) => isSetItem(item) && !item.is_font);
+    const setItems = state.ownedItems
+      .filter((item) => isSetItem(item) && !isProfileFontItem(item) && !isProfileEffectItem(item))
+      .filter((item) => matchesSetTypeFilter(resolveItemSlot(item)));
 
     if (!setItems.length) {
       els.setInventoryWrap.innerHTML = `<div class="empty-text">No set items yet.</div>`;
@@ -1219,7 +1297,9 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderUniqueInventory() {
     if (!els.uniqueInventoryWrap) return;
 
-    const uniqueItems = state.ownedItems.filter((item) => isUniqueItem(item) && !item.is_font);
+    const uniqueItems = state.ownedItems
+      .filter((item) => isUniqueItem(item) && !isProfileFontItem(item) && !isProfileEffectItem(item))
+      .filter((item) => matchesUniqueTypeFilter(resolveItemSlot(item)));
 
     if (!uniqueItems.length) {
       els.uniqueInventoryWrap.innerHTML = `<div class="empty-text">No unique items yet.</div>`;
@@ -1231,6 +1311,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateSubtabFilterVisibility(tabName) {
     const showAvatarFilters = tabName === "avatar";
+    const showSetFilters = tabName === "set";
+    const showUniqueFilters = tabName === "unique";
 
     if (els.inventoryGenderFilterBar) {
       const section = els.inventoryGenderFilterBar.closest(".inventory-filter-section");
@@ -1240,6 +1322,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (els.inventoryTypeFilterBar) {
       const section = els.inventoryTypeFilterBar.closest(".inventory-filter-section");
       if (section) section.style.display = showAvatarFilters ? "" : "none";
+    }
+
+    if (els.setTypeFilterBar) {
+      const section = els.setTypeFilterBar.closest(".inventory-filter-section");
+      if (section) section.style.display = showSetFilters ? "" : "none";
+    }
+
+    if (els.uniqueTypeFilterBar) {
+      const section = els.uniqueTypeFilterBar.closest(".inventory-filter-section");
+      if (section) section.style.display = showUniqueFilters ? "" : "none";
     }
   }
 
@@ -1290,13 +1382,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function loadInventoryIfNeeded(force = false) {
     if (!isOwner || !API.avatarInventoryUrl) {
+      mergeEffectInventoryFromOwnedItems();
       renderFontInventory();
       renderEffectInventory();
       renderSetInventory();
       renderUniqueInventory();
       return null;
     }
+
     if (state.inventoryLoaded && !force) {
+      mergeEffectInventoryFromOwnedItems();
       renderCurrentEditSubtab();
       renderSetInventory();
       renderUniqueInventory();
@@ -1306,6 +1401,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setActiveEditSubtab(state.activeEditSubtab || "avatar");
       return { ok: true, inventory: state.ownedItems };
     }
+
     if (state.inventoryPromise && !force) return state.inventoryPromise;
 
     if (els.inventoryWrap) els.inventoryWrap.innerHTML = `<div class="empty-text">Loading inventory...</div>`;
@@ -1321,6 +1417,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (els.setInventoryWrap) els.setInventoryWrap.innerHTML = `<div class="empty-text">${escapeHtml(result.error || "Failed to load set items.")}</div>`;
         if (els.uniqueInventoryWrap) els.uniqueInventoryWrap.innerHTML = `<div class="empty-text">${escapeHtml(result.error || "Failed to load unique items.")}</div>`;
         if (els.fontInventoryWrap) els.fontInventoryWrap.innerHTML = `<div class="empty-text">${escapeHtml(result.error || "Failed to load fonts.")}</div>`;
+        mergeEffectInventoryFromOwnedItems();
         renderEffectInventory();
         return result;
       }
@@ -1329,6 +1426,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (Array.isArray(result.effects)) {
         state.ownedEffects = normalizeOwnedEffects(result.effects);
       }
+      mergeEffectInventoryFromOwnedItems();
       state.inventoryLoaded = true;
 
       renderCurrentEditSubtab();
@@ -1363,6 +1461,12 @@ document.addEventListener("DOMContentLoaded", () => {
     $$('[data-filter-group="type"]').forEach((btn) => {
       btn.classList.toggle("is-active", btn.dataset.filter === state.activeInventoryTypeFilter);
     });
+    $$('[data-filter-group="set-type"]').forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.filter === state.activeSetTypeFilter);
+    });
+    $$('[data-filter-group="unique-type"]').forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.filter === state.activeUniqueTypeFilter);
+    });
   }
 
   function syncOwnerNickname() {
@@ -1388,6 +1492,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderAll() {
+    mergeEffectInventoryFromOwnedItems();
     renderAvatarCanvas();
     syncOwnerNickname();
     applyCurrentFontPreferenceToEditors();
@@ -1928,6 +2033,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (Array.isArray(result.effects)) {
         state.ownedEffects = normalizeOwnedEffects(result.effects);
       }
+      mergeEffectInventoryFromOwnedItems();
       state.inventoryLoaded = true;
 
       renderAll();
@@ -2233,7 +2339,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (tabName === "edit") {
       openEditMode();
       await loadInventoryIfNeeded(true);
-      return;
     }
   }
 
@@ -2306,15 +2411,37 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("click", async (e) => {
       const filterBtn = e.target.closest(".inventory-filter-btn");
       if (filterBtn) {
-        if (state.activeEditSubtab !== "avatar") return;
         closeNamePopover();
         const group = filterBtn.dataset.filterGroup;
         const filter = filterBtn.dataset.filter || "all";
-        if (group === "gender") state.activeInventoryGenderFilter = filter;
-        if (group === "type") state.activeInventoryTypeFilter = filter;
-        updateInventoryFilterButtons();
-        renderInventory();
-        return;
+
+        if (group === "gender") {
+          state.activeInventoryGenderFilter = filter;
+          updateInventoryFilterButtons();
+          renderInventory();
+          return;
+        }
+
+        if (group === "type") {
+          state.activeInventoryTypeFilter = filter;
+          updateInventoryFilterButtons();
+          renderInventory();
+          return;
+        }
+
+        if (group === "set-type") {
+          state.activeSetTypeFilter = filter;
+          updateInventoryFilterButtons();
+          renderSetInventory();
+          return;
+        }
+
+        if (group === "unique-type") {
+          state.activeUniqueTypeFilter = filter;
+          updateInventoryFilterButtons();
+          renderUniqueInventory();
+          return;
+        }
       }
 
       const clearBtn = e.target.closest("[data-clear-slot]");
@@ -2552,6 +2679,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (Array.isArray(result.effects)) {
           state.ownedEffects = normalizeOwnedEffects(result.effects);
         }
+        mergeEffectInventoryFromOwnedItems();
         state.inventoryLoaded = true;
 
         renderAll();
@@ -2733,6 +2861,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function init() {
     setDiarySelectedDate(state.selectedDiaryDate);
+
+    mergeEffectInventoryFromOwnedItems();
 
     state.previewFont = {
       itemId: null,
