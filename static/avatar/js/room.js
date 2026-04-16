@@ -2077,6 +2077,9 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
+
+
+
   async function saveFontPreference() {
     if (!isOwner || !API.avatarSaveFontUrl) return;
 
@@ -2087,6 +2090,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const selectedItem = itemByItemId(state.selectedFontItemId);
+
+    // 현재 페이지 위치 기억
+    const currentFontPage = state.fontPage;
+    const currentEffectPage = state.effectPage;
 
     const payload = {
       font_item_id: isReset ? null : state.selectedFontItemId,
@@ -2125,19 +2132,34 @@ document.addEventListener("DOMContentLoaded", () => {
           ...(result.font_pref || {}),
         };
         state.ownerFontPref = { ...state.viewerFontPref };
+
+        // 적용 후에도 현재 선택 상태 유지
+        state.selectedFontItemId = selectedItem ? Number(selectedItem.item_id) : null;
       }
 
       state.previewFont = {
-        itemId: null,
-        fontKey: "",
+        itemId: state.selectedFontItemId,
+        fontKey: isReset ? "" : (selectedItem?.font_key || state.viewerFontPref.nickname_font_key || ""),
         effectKey: state.viewerFontPref.nickname_effect_key || "none",
         nicknameScale: Number(state.viewerFontPref.nickname_scale ?? DEFAULT_NICKNAME_SCALE),
         nicknameLetterSpacing: Number(state.viewerFontPref.nickname_letter_spacing ?? DEFAULT_NICKNAME_SPACING),
       };
 
+      if (els.fontEffectSelect) {
+        els.fontEffectSelect.value = state.viewerFontPref.nickname_effect_key || "none";
+      }
+
+      // 기억해둔 페이지 복원
+      state.fontPage = currentFontPage;
+      state.effectPage = currentEffectPage;
+
       applyCurrentFontPreferenceToEditors();
-      renderFontInventory();
-      renderEffectInventory();
+
+      // 첫 페이지로 안 돌아가게 preservePage 사용
+      renderFontInventory({ preservePage: true });
+      renderEffectInventory({ preservePage: true });
+      updateFontEffectCarousels();
+
       updateFontSaveHint("Font applied.");
       els.resetFontDefaultBtn.dataset.resetMode = "false";
     } finally {
@@ -2147,6 +2169,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   }
+
+
+
+
 
   function openConfirmModal() {
     return new Promise((resolve) => {
