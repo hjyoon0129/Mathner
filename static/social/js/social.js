@@ -10,9 +10,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const socialFriendListUrl = page.dataset.socialFriendListUrl || "";
   const socialRoomListUrl = page.dataset.socialRoomListUrl || "";
 
-  const currentNicknameFontKey = String(page.dataset.nicknameFontKey || "").trim();
-  const currentWritingFontKey = String(page.dataset.writingFontKey || "").trim();
-
   let currentSearchQuery = "";
   let roomDirectoryLoaded = false;
   let friendRequestsLoaded = false;
@@ -30,6 +27,36 @@ document.addEventListener("DOMContentLoaded", function () {
   function fontClassFromKey(key) {
     if (!key) return "font-default";
     return `font-${String(key).trim()}`;
+  }
+
+  function effectClassFromKey(key) {
+    const normalized = String(key || "none").trim().replace(/_/g, "-");
+    return `effect-${normalized || "none"}`;
+  }
+
+  function getNicknameFontKey(item) {
+    return String(item?.nickname_font_key || "").trim();
+  }
+
+  function getNicknameEffectKey(item) {
+    return String(item?.nickname_effect_key || "none").trim();
+  }
+
+  function getNicknameScale(item) {
+    const value = Number(item?.nickname_scale ?? 1.0);
+    return Number.isFinite(value) ? value : 1.0;
+  }
+
+  function getNicknameLetterSpacing(item) {
+    const value = Number(item?.nickname_letter_spacing ?? 0.0);
+    return Number.isFinite(value) ? value : 0.0;
+  }
+
+  function buildNicknameStyle(item, baseSize = 14) {
+    const scale = getNicknameScale(item);
+    const spacing = getNicknameLetterSpacing(item);
+    const fontSize = Math.max(14, Math.round(baseSize * scale));
+    return `font-size:${fontSize}px; letter-spacing:${spacing}px;`;
   }
 
   function getDisplayName(item) {
@@ -155,9 +182,14 @@ document.addEventListener("DOMContentLoaded", function () {
       card.innerHTML = `
         <div class="friend-request-top">
           <div class="friend-request-head-left">
-            <div class="friend-request-name ${fontClassFromKey(currentNicknameFontKey)}">${escapeHtml(displayName)}</div>
+            <div
+              class="friend-request-name ${fontClassFromKey(getNicknameFontKey(item))} ${effectClassFromKey(getNicknameEffectKey(item))}"
+              style="${buildNicknameStyle(item, 14)}"
+            >
+              ${escapeHtml(displayName)}
+            </div>
           </div>
-          <div class="friend-request-sub ${fontClassFromKey(currentWritingFontKey)}">${escapeHtml(item.created_at || "")}</div>
+          <div class="friend-request-sub">${escapeHtml(item.created_at || "")}</div>
         </div>
         <div class="friend-request-actions">
           <a href="${roomUrl}" class="social-btn social-btn-secondary">Visit</a>
@@ -206,13 +238,20 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   async function loadFriendRequests(force = false) {
+    const wrap = document.getElementById("friendRequestList");
     if (!socialFriendRequestsUrl) return;
     if (friendRequestsLoaded && !force) return;
+
+    if (wrap) {
+      wrap.innerHTML = `<div class="empty-text">Loading requests...</div>`;
+    }
 
     const result = await fetchJson(socialFriendRequestsUrl);
     if (result.ok) {
       renderFriendRequests(result.requests || []);
       friendRequestsLoaded = true;
+    } else if (wrap) {
+      wrap.innerHTML = `<div class="empty-text">${escapeHtml(result.error || "Failed to load requests.")}</div>`;
     }
   }
 
@@ -260,7 +299,12 @@ document.addEventListener("DOMContentLoaded", function () {
       <div class="room-row-card">
         <div class="room-row-line">
           <div class="room-row-number">${number}</div>
-          <div class="room-row-name room-row-name-fixed ${fontClassFromKey(currentNicknameFontKey)}">${escapeHtml(displayName)}</div>
+          <div
+            class="room-row-name room-row-name-fixed ${fontClassFromKey(getNicknameFontKey(item))} ${effectClassFromKey(getNicknameEffectKey(item))}"
+            style="${buildNicknameStyle(item, 14)}"
+          >
+            ${escapeHtml(displayName)}
+          </div>
           <a href="${roomUrl}" class="social-btn social-btn-primary people-action-btn">Visit</a>
           ${buildFriendActionHtml(item, username)}
         </div>
@@ -304,14 +348,24 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   async function loadRoomDirectory(query = "", force = false) {
+    const wrap = document.getElementById("roomDirectoryList");
     if (!socialRoomListUrl) return;
 
     currentSearchQuery = query || "";
 
     if (!force && roomDirectoryLoaded && currentSearchQuery === "") return;
 
+    if (wrap) {
+      wrap.innerHTML = `<div class="empty-text">Loading list...</div>`;
+    }
+
     const result = await fetchJson(socialRoomListUrl);
-    if (!result.ok) return;
+    if (!result.ok) {
+      if (wrap) {
+        wrap.innerHTML = `<div class="empty-text">${escapeHtml(result.error || "Failed to load users.")}</div>`;
+      }
+      return;
+    }
 
     let rooms = result.rooms || [];
 

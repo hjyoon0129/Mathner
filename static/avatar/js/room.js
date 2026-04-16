@@ -934,11 +934,12 @@ document.addEventListener("DOMContentLoaded", () => {
     return (els.fontEffectSelect?.value || "none").replace(/-/g, "_");
   }
 
-  function setEffectSelection(effectKey = "none") {
+  function setEffectSelection(effectKey = "none", options = {}) {
+    const { preservePage = false } = options;
     const normalized = String(effectKey || "none").replace(/-/g, "_");
     if (els.fontEffectSelect) els.fontEffectSelect.value = normalized;
     state.previewFont.effectKey = normalized;
-    renderEffectInventory();
+    renderEffectInventory({ preservePage });
   }
 
   function syncNicknameToolUI() {
@@ -1075,13 +1076,15 @@ document.addEventListener("DOMContentLoaded", () => {
     state[pageKey] = 0;
   }
 
-  function renderFontInventory() {
+  function renderFontInventory(options = {}) {
     if (!els.fontInventoryWrap) return;
+
+    const { preservePage = false } = options;
 
     const fontItems = state.ownedItems.filter((item) => isProfileFontItem(item));
     if (!fontItems.length) {
       els.fontInventoryWrap.innerHTML = `<div class="empty-text">No font items.</div>`;
-      resetCarouselPage("fontPage");
+      if (!preservePage) resetCarouselPage("fontPage");
       updateFontEffectCarousels();
       return;
     }
@@ -1111,16 +1114,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }).join("");
 
     els.fontInventoryWrap.innerHTML = html;
-    resetCarouselPage("fontPage");
+
+    if (!preservePage) resetCarouselPage("fontPage");
     updateFontEffectCarousels();
   }
 
-  function renderEffectInventory() {
+  function renderEffectInventory(options = {}) {
     if (!els.effectInventoryWrap) return;
+
+    const { preservePage = false } = options;
 
     if (!state.ownedEffects.length) {
       els.effectInventoryWrap.innerHTML = `<div class="empty-text">No effect items.</div>`;
-      resetCarouselPage("effectPage");
+      if (!preservePage) resetCarouselPage("effectPage");
       updateFontEffectCarousels();
       return;
     }
@@ -1153,7 +1159,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }).join("");
 
     els.effectInventoryWrap.innerHTML = html;
-    resetCarouselPage("effectPage");
+
+    if (!preservePage) resetCarouselPage("effectPage");
     updateFontEffectCarousels();
   }
 
@@ -2488,9 +2495,11 @@ document.addEventListener("DOMContentLoaded", () => {
         state.previewFont.effectKey = currentSelectedEffectKey();
         state.previewFont.nicknameScale = Number(state.viewerFontPref.nickname_scale ?? DEFAULT_NICKNAME_SCALE);
         state.previewFont.nicknameLetterSpacing = Number(state.viewerFontPref.nickname_letter_spacing ?? DEFAULT_NICKNAME_SPACING);
+
         if (els.resetFontDefaultBtn) els.resetFontDefaultBtn.dataset.resetMode = "false";
-        renderFontInventory();
-        renderEffectInventory();
+
+        renderFontInventory({ preservePage: true });
+        renderEffectInventory({ preservePage: true });
         applyLiveNicknamePreview();
         syncNicknameToolUI();
         return;
@@ -2500,11 +2509,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (effectBtn) {
         closeNamePopover();
         const effectKey = String(effectBtn.dataset.effectKey || "none");
-        setEffectSelection(effectKey);
+        setEffectSelection(effectKey, { preservePage: true });
         state.previewFont.effectKey = effectKey;
         if (els.resetFontDefaultBtn) els.resetFontDefaultBtn.dataset.resetMode = "false";
-        renderEffectInventory();
+
+        renderFontInventory({ preservePage: true });
+        renderEffectInventory({ preservePage: true });
         applyLiveNicknamePreview();
+        syncNicknameToolUI();
         return;
       }
 

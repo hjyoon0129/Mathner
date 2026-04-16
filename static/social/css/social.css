@@ -92,11 +92,13 @@ header.navbar{
   margin:0;
   font-size:28px;
   font-weight:900;
+  color:#f4f8ff;
+  text-shadow:0 2px 12px rgba(0,0,0,.18);
 }
 
 .social-header-top p{
   margin:8px 0 0;
-  color:rgba(255,255,255,.68);
+  color:rgba(244,248,255,.88);
   font-size:13px;
 }
 
@@ -120,6 +122,7 @@ header.navbar{
   margin:0;
   font-size:16px;
   font-weight:900;
+  color:#eef4ff;
 }
 
 .social-card-body{
@@ -146,6 +149,10 @@ header.navbar{
   padding:11px 12px;
   font-size:13px;
   box-sizing:border-box;
+}
+
+.social-input::placeholder{
+  color:rgba(238,244,255,.55);
 }
 
 .social-btn{
@@ -204,6 +211,7 @@ header.navbar{
 }
 
 .room-row-name{
+  display:block;
   font-weight:900;
   color:#fff;
   font-size:14px;
@@ -212,6 +220,11 @@ header.navbar{
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
+}
+
+.room-row-name-fixed{
+  min-width:0;
+  max-width:100%;
 }
 
 .people-action-btn{
@@ -229,12 +242,19 @@ header.navbar{
 }
 
 .friend-request-name{
+  display:inline-block;
+  max-width:100%;
   font-size:14px;
   font-weight:900;
+  line-height:1.15;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  color:#fff;
 }
 
 .friend-request-sub{
-  color:rgba(255,255,255,.58);
+  color:rgba(238,244,255,.78);
   font-size:11px;
   font-weight:700;
 }
@@ -267,12 +287,104 @@ header.navbar{
 }
 
 .empty-text{
-  color:rgba(255,255,255,.58);
+  color:rgba(238,244,255,.78);
   font-size:12px;
 }
 
 .visit-btn-full{
   width:100%;
+}
+
+/* font classes */
+.font-default{ font-family: inherit; }
+.font-gaegu{ font-family: "Gaegu", cursive; }
+.font-dongle{ font-family: "Dongle", sans-serif; }
+.font-gowun_batang{ font-family: "Gowun Batang", serif; }
+.font-nanum_pen{ font-family: "Nanum Pen Script", cursive; }
+.font-dokdo{ font-family: "Dokdo", cursive; }
+.font-bubblegum_sans{ font-family: "Bubblegum Sans", cursive; }
+.font-delius_swash_caps{ font-family: "Delius Swash Caps", cursive; }
+.font-boogaloo{ font-family: "Boogaloo", cursive; }
+.font-love_ya_like_a_sister{ font-family: "Love Ya Like A Sister", cursive; }
+.font-luckiest_guy{ font-family: "Luckiest Guy", cursive; }
+.font-coming_soon{ font-family: "Coming Soon", cursive; }
+.font-life_savers{ font-family: "Life Savers", cursive; }
+.font-chewy{ font-family: "Chewy", cursive; }
+.font-cabin_sketch{ font-family: "Cabin Sketch", cursive; }
+.font-mouse_memoirs{ font-family: "Mouse Memoirs", sans-serif; }
+.font-londrina_shadow{ font-family: "Londrina Shadow", cursive; }
+.font-modak{ font-family: "Modak", cursive; }
+.font-amatic_sc{ font-family: "Amatic SC", cursive; }
+.font-capriola{ font-family: "Capriola", sans-serif; }
+.font-mclaren{ font-family: "McLaren", cursive; }
+
+/* effect classes */
+.effect-none{
+  text-shadow:none;
+}
+
+.effect-neon-blue{
+  color:#c9f3ff !important;
+  text-shadow:
+    0 0 6px rgba(120,220,255,.55),
+    0 0 14px rgba(90,180,255,.42);
+}
+
+.effect-gold-glow{
+  color:#fff4c2 !important;
+  text-shadow:
+    0 0 6px rgba(255,214,102,.45),
+    0 0 14px rgba(255,185,64,.38);
+}
+
+.effect-sparkle{
+  color:#ffffff !important;
+  text-shadow:
+    0 0 8px rgba(255,255,255,.42),
+    0 0 18px rgba(255,255,255,.22);
+}
+
+.effect-glitch{
+  color:#f4f8ff !important;
+  text-shadow:
+    -1px 0 rgba(255,0,102,.45),
+    1px 0 rgba(0,255,255,.35),
+    0 0 8px rgba(255,255,255,.15);
+}
+
+.effect-float-wave{
+  color:#e7f3ff !important;
+  text-shadow:
+    0 0 8px rgba(126,200,255,.18);
+}
+
+.effect-fire-glow{
+  color:#ffe3b8 !important;
+  text-shadow:
+    0 0 6px rgba(255,120,40,.42),
+    0 0 14px rgba(255,70,0,.28);
+}
+
+.effect-ice-glow{
+  color:#dff6ff !important;
+  text-shadow:
+    0 0 6px rgba(120,220,255,.38),
+    0 0 16px rgba(160,240,255,.24);
+}
+
+.effect-rainbow-flow{
+  background:linear-gradient(90deg, #ff6b6b, #ffd93d, #6bffb8, #6bb8ff, #d96bff, #ff6b6b);
+  background-size:200% auto;
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent !important;
+  -webkit-text-fill-color:transparent;
+  animation:socialRainbowFlow 3s linear infinite;
+}
+
+@keyframes socialRainbowFlow{
+  0%{ background-position:0% 50%; }
+  100%{ background-position:200% 50%; }
 }
 
 @media (max-width: 980px){
@@ -312,9 +424,3 @@ header.navbar{
     grid-column:1 / -1;
   }
 }
-.font-default{ font-family: inherit; }
-.font-gaegu{ font-family: "Gaegu", cursive; }
-.font-dongle{ font-family: "Dongle", sans-serif; }
-.font-gowun_batang{ font-family: "Gowun Batang", serif; }
-.font-nanum_pen{ font-family: "Nanum Pen Script", cursive; }
-.font-dokdo{ font-family: "Dokdo", cursive; }

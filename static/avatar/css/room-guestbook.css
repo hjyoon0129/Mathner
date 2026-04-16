@@ -215,3 +215,11 @@
 .reply-body.effect-rainbow-flow{
   display:block;
 }
+#guestbookContent{
+  font-size:16px !important;
+  line-height:1.7 !important;
+}
+
+#guestbookContent::placeholder{
+  font-size:15px;
+}

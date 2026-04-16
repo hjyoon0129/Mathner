@@ -91,6 +91,27 @@ def _font_key_from_item(item):
     return (getattr(item, "font_family_key", "") or "").strip()
 
 
+def _font_pref_map(user_ids):
+    if not user_ids:
+        return {}
+
+    rows = (
+        UserFontPreference.objects
+        .select_related("nickname_font_item")
+        .filter(user_id__in=user_ids)
+    )
+
+    data = {}
+    for pref in rows:
+        data[pref.user_id] = {
+            "nickname_font_key": _font_key_from_item(pref.nickname_font_item),
+            "nickname_effect_key": _normalize_effect_key(getattr(pref, "nickname_effect_key", "none")),
+            "nickname_scale": float(getattr(pref, "nickname_scale", 1.0) or 1.0),
+            "nickname_letter_spacing": float(getattr(pref, "nickname_letter_spacing", 0.0) or 0.0),
+        }
+    return data
+
+
 def _get_font_pref(user):
     if not user or not user.is_authenticated:
         return {
@@ -313,17 +334,23 @@ def friend_requests(request):
 
     user_ids = [row.from_user_id for row in rows if row.from_user_id]
     nickname_map = _nickname_map(user_ids)
+    font_pref_map = _font_pref_map(user_ids)
 
-    data = [
-        {
+    data = []
+    for row in rows:
+        pref = font_pref_map.get(row.from_user_id, {})
+        data.append({
             "id": row.id,
             "username": row.from_user.username,
             "display_name": _display_name(row.from_user, nickname_map),
             "room_url": f"/avatar/room/{row.from_user.username}/",
             "created_at": timezone.localtime(row.created_at).strftime("%Y-%m-%d %H:%M"),
-        }
-        for row in rows
-    ]
+            "nickname_font_key": pref.get("nickname_font_key", ""),
+            "nickname_effect_key": pref.get("nickname_effect_key", "none"),
+            "nickname_scale": pref.get("nickname_scale", 1.0),
+            "nickname_letter_spacing": pref.get("nickname_letter_spacing", 0.0),
+        })
+
     return JsonResponse({"ok": True, "requests": data})
 
 
@@ -336,15 +363,21 @@ def friend_list(request):
         return JsonResponse({"ok": True, "friends": cached})
 
     friend_users = _get_friend_users(request.user)
-    nickname_map = _nickname_map([u.id for u in friend_users])
+    user_ids = [u.id for u in friend_users]
+    nickname_map = _nickname_map(user_ids)
+    font_pref_map = _font_pref_map(user_ids)
 
-    friends = [
-        {
+    friends = []
+    for user in friend_users:
+        pref = font_pref_map.get(user.id, {})
+        friends.append({
             "username": user.username,
             "display_name": _display_name(user, nickname_map),
-        }
-        for user in friend_users
-    ]
+            "nickname_font_key": pref.get("nickname_font_key", ""),
+            "nickname_effect_key": pref.get("nickname_effect_key", "none"),
+            "nickname_scale": pref.get("nickname_scale", 1.0),
+            "nickname_letter_spacing": pref.get("nickname_letter_spacing", 0.0),
+        })
 
     cache.set(cache_key, friends, timeout=60)
     return JsonResponse({"ok": True, "friends": friends})
@@ -359,17 +392,23 @@ def room_directory(request):
         return JsonResponse({"ok": True, "rooms": cached})
 
     users = _get_friend_users(request.user)
-    nickname_map = _nickname_map([u.id for u in users])
+    user_ids = [u.id for u in users]
+    nickname_map = _nickname_map(user_ids)
+    font_pref_map = _font_pref_map(user_ids)
 
-    rooms = [
-        {
+    rooms = []
+    for user in users:
+        pref = font_pref_map.get(user.id, {})
+        rooms.append({
             "username": user.username,
             "display_name": _display_name(user, nickname_map),
             "room_url": f"/avatar/room/{user.username}/",
             "friendship_status": Friendship.STATUS_ACCEPTED,
-        }
-        for user in users
-    ]
+            "nickname_font_key": pref.get("nickname_font_key", ""),
+            "nickname_effect_key": pref.get("nickname_effect_key", "none"),
+            "nickname_scale": pref.get("nickname_scale", 1.0),
+            "nickname_letter_spacing": pref.get("nickname_letter_spacing", 0.0),
+        })
 
     cache.set(cache_key, rooms, timeout=60)
     return JsonResponse({"ok": True, "rooms": rooms})
