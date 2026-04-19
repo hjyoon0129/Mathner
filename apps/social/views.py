@@ -217,6 +217,20 @@ def _get_friend_users(user):
     return friend_users
 
 
+def _sync_room_today_visits(room):
+    today = timezone.localdate()
+
+    if room.last_visit_date != today:
+        Room.objects.filter(id=room.id).update(
+            today_visits=0,
+            last_visit_date=today,
+        )
+        room.today_visits = 0
+        room.last_visit_date = today
+
+    return room
+
+
 def _base_room_stats_payload(room):
     return {
         "today_visits": int(room.today_visits or 0),
@@ -488,25 +502,22 @@ def friend_request_respond(request, friendship_id):
 
 @require_GET
 def room_stats_api(request, username):
-    cache_key = room_stats_key(username)
-    cached = cache.get(cache_key)
+    room = get_object_or_404(
+        Room.objects.select_related("owner").only(
+            "id",
+            "owner__id",
+            "owner__username",
+            "today_visits",
+            "total_visits",
+            "like_count",
+            "last_visit_date",
+        ),
+        owner__username=username,
+    )
 
-    if cached is None:
-        room = get_object_or_404(
-            Room.objects.select_related("owner").only(
-                "id",
-                "owner__id",
-                "owner__username",
-                "today_visits",
-                "total_visits",
-                "like_count",
-            ),
-            owner__username=username,
-        )
-        base_stats = _base_room_stats_payload(room)
-        cache.set(cache_key, base_stats, timeout=20)
-    else:
-        base_stats = cached
+    room = _sync_room_today_visits(room)
+    base_stats = _base_room_stats_payload(room)
+    cache.set(room_stats_key(username), base_stats, timeout=20)
 
     liked_by_me = False
     if request.user.is_authenticated:
@@ -532,9 +543,12 @@ def room_like_toggle_api(request, username):
             "today_visits",
             "total_visits",
             "like_count",
+            "last_visit_date",
         ),
         owner__username=username,
     )
+
+    room = _sync_room_today_visits(room)
 
     with transaction.atomic():
         deleted_count, _ = RoomLike.objects.filter(room_id=room.id, user_id=request.user.id).delete()
@@ -547,7 +561,7 @@ def room_like_toggle_api(request, username):
             Room.objects.filter(id=room.id).update(like_count=F("like_count") + 1)
             liked_by_me = True
 
-    room.refresh_from_db(fields=["today_visits", "total_visits", "like_count"])
+    room.refresh_from_db(fields=["today_visits", "total_visits", "like_count", "last_visit_date"])
     cache.delete(room_stats_key(username))
 
     stats = {
@@ -566,15 +580,20 @@ def room_visit_api(request, username):
             "today_visits",
             "total_visits",
             "like_count",
+            "last_visit_date",
         ),
         owner__username=username,
     )
 
+    room = _sync_room_today_visits(room)
+    today = timezone.localdate()
+
     Room.objects.filter(id=room.id).update(
         today_visits=F("today_visits") + 1,
         total_visits=F("total_visits") + 1,
+        last_visit_date=today,
     )
-    room.refresh_from_db(fields=["today_visits", "total_visits", "like_count"])
+    room.refresh_from_db(fields=["today_visits", "total_visits", "like_count", "last_visit_date"])
     cache.delete(room_stats_key(username))
 
     liked_by_me = False

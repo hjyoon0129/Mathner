@@ -18,5 +18,6 @@ def math_rain_view(request):
         "initialKeys": context.get("nav_key_count", context.get("remaining_keys", 0)),
         "startRunUrl": reverse("core:start_game_run"),
         "finalizeRunUrl": reverse("core:save_game_result"),
+        "recordRankingUrl": reverse("ranking:api_record_score"),
     }
     return render(request, "game/Math_rain.html", context)

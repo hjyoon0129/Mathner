@@ -17,10 +17,11 @@ class GameScoreAdmin(admin.ModelAdmin):
         "game_mode",
         "operation",
         "score",
+        "correct_count",
         "earned_stars",
         "best_combo",
         "played_at",
     )
     search_fields = ("user__username", "user__email")
     list_filter = ("game_mode", "operation", "played_at")
-    ordering = ("-score", "-played_at")
+    ordering = ("-played_at", "-correct_count", "-earned_stars")

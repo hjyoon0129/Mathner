@@ -504,7 +504,7 @@
       width:100%;
       height:170px;
       border-radius:18px;
-      display: flex;
+      display:flex;
       overflow:hidden;
       background:
         linear-gradient(135deg, rgba(126,168,255,.18), rgba(103,224,203,.14)),
@@ -592,35 +592,6 @@
         linear-gradient(180deg, rgba(170,255,208,.06), rgba(77,255,154,.10)),
         radial-gradient(circle at 50% 100%, rgba(122,255,180,.18), transparent 45%);
       mix-blend-mode:screen;
-    }
-
-    .placeholder-tug::before,
-    .placeholder-tug::after{
-      content:"";
-      position:absolute;
-      pointer-events:none;
-    }
-
-    .placeholder-tug::before{
-      left:14%;
-      right:14%;
-      top:50%;
-      height:6px;
-      transform:translateY(-50%);
-      border-radius:999px;
-      background:linear-gradient(90deg, rgba(255,255,255,.18), rgba(255,255,255,.52), rgba(255,255,255,.18));
-      box-shadow:0 0 18px rgba(255,255,255,.12);
-    }
-
-    .placeholder-tug::after{
-      left:50%;
-      top:50%;
-      width:18px;
-      height:18px;
-      transform:translate(-50%, -50%);
-      border-radius:999px;
-      background:linear-gradient(135deg, #7ea8ff, #67e0cb);
-      box-shadow:0 0 0 5px rgba(255,255,255,.10);
     }
 
     .game-actions{
@@ -848,9 +819,13 @@
         {% if user.is_authenticated %}
           <a href="{% url 'avatar:my_room' %}">Avatar</a>
           <a href="{% url 'social:hub' %}">Social</a>
+          <a href="{% url 'community:home' %}">Community</a>
+          <a href="{% url 'ranking:home' %}">Ranking</a>
         {% else %}
           <a href="{% url 'account_login' %}?next={% url 'avatar:my_room' %}">Avatar</a>
           <a href="{% url 'account_login' %}?next={% url 'social:hub' %}">Social</a>
+          <a href="{% url 'account_login' %}?next={% url 'community:home' %}">Community</a>
+          <a href="{% url 'account_login' %}?next={% url 'ranking:home' %}">Ranking</a>
         {% endif %}
       </nav>
 
@@ -880,6 +855,7 @@
               <a href="{% url 'core:app_home' %}">Game</a>
               <a href="{% url 'avatar:my_room' %}">Avatar</a>
               <a href="{% url 'social:hub' %}">Social</a>
+              <a href="{% url 'community:home' %}">Community</a>
               <a href="{% url 'ranking:home' %}">Ranking</a>
               <a href="#" id="openNicknameChange">Change Nickname</a>
 
@@ -913,6 +889,7 @@
         {% if user.is_authenticated %}
           <a href="{% url 'avatar:my_room' %}">Avatar</a>
           <a href="{% url 'social:hub' %}">Social</a>
+          <a href="{% url 'community:home' %}">Community</a>
           <a href="{% url 'ranking:home' %}">Ranking</a>
 
           <form method="post" action="{% url 'account_logout' %}">
@@ -922,6 +899,8 @@
         {% else %}
           <a href="{% url 'account_login' %}?next={% url 'avatar:my_room' %}">Avatar</a>
           <a href="{% url 'account_login' %}?next={% url 'social:hub' %}">Social</a>
+          <a href="{% url 'account_login' %}?next={% url 'community:home' %}">Community</a>
+          <a href="{% url 'account_login' %}?next={% url 'ranking:home' %}">Ranking</a>
           <a href="{% provider_login_url 'google' process='login' next=request.path %}">Google Login</a>
           <a href="{% url 'account_login' %}?next={{ request.path }}">Sign in</a>
           <a href="{% url 'account_signup' %}?next={{ request.path }}">Sign up</a>
@@ -938,16 +917,18 @@
           <span class="app-kicker">⚡ Game hub</span>
           <h1>Choose your game.</h1>
           <p>
-            Pick a mode below, or move straight into Avatar or Social from here.
+            Pick a mode below, or move straight into Avatar, Social, or Community from here.
           </p>
 
           <div class="app-hero-actions">
             {% if user.is_authenticated %}
               <a href="{% url 'avatar:my_room' %}" class="btn btn-solid">Go to Avatar</a>
               <a href="{% url 'social:hub' %}" class="btn btn-outline">Open Social</a>
+              <a href="{% url 'community:home' %}" class="btn btn-outline">Open Community</a>
             {% else %}
               <a href="{% url 'account_login' %}?next={% url 'avatar:my_room' %}" class="btn btn-solid">Go to Avatar</a>
               <a href="{% url 'account_login' %}?next={% url 'social:hub' %}" class="btn btn-outline">Open Social</a>
+              <a href="{% url 'account_login' %}?next={% url 'community:home' %}" class="btn btn-outline">Open Community</a>
             {% endif %}
           </div>
         </div>
@@ -972,9 +953,9 @@
           </div>
 
           <div class="quick-card">
-            <div class="quick-title">Social</div>
-            <div class="quick-value">💬 Live</div>
-            <div class="quick-sub">Guestbook, diary, friends, and movement feed back into play.</div>
+            <div class="quick-title">Community</div>
+            <div class="quick-value">📝 Open</div>
+            <div class="quick-sub">Announcements and community posts can live in one clean community app.</div>
           </div>
         </div>
       </section>
@@ -991,7 +972,7 @@
           <div class="carousel-header">
             <div>
               <div class="carousel-title">Featured game modes</div>
-              <div class="carousel-sub">Each card can hold a real game preview image.</div>
+              <div class="carousel-sub">Launching first with Game 01 and Game 02.</div>
             </div>
 
             <div class="carousel-controls">
@@ -1065,48 +1046,17 @@
               </article>
 
               <article class="game-card">
-                <span class="game-badge">Game 03</span>
-                <h3>Tug of War</h3>
-                <p>
-                  Win the push-and-pull through correct answers.
-                  This mode is built for rivalry, momentum, and versus energy.
-                </p>
-
-                <div class="game-points">
-                  <span>versus feel</span>
-                  <span>push and pull</span>
-                  <span>competitive</span>
-                </div>
-
-                <div class="game-inline-media">
-                  <img src="{% static 'img/games/tug-of-war.png' %}" alt="Tug of War game preview" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                  <div class="game-inline-placeholder placeholder-tug">
-                    <div class="placeholder-inner">
-                      <div class="placeholder-icon">🪢</div>
-                      <div class="placeholder-title">Tug of War</div>
-                      <div class="placeholder-sub">Versus Clash</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="game-actions">
-                  <a href="{% url 'core:play' %}?mode=tug-of-war" class="btn btn-card">Play</a>
-                  <a href="{% url 'social:hub' %}" class="btn btn-card-dark">Social</a>
-                </div>
-              </article>
-
-              <article class="game-card">
                 <span class="game-badge">Coming next</span>
                 <h3>More Games</h3>
                 <p>
-                  Add future modes here as real image cards.
-                  The same carousel can keep expanding as Game 4, Game 5, and beyond.
+                  Game 03 and later modes can be added here after launch.
+                  For now, the first release focuses on Avatar Aura and Math Rain.
                 </p>
 
                 <div class="game-points">
-                  <span>expandable</span>
-                  <span>new games</span>
-                  <span>future cards</span>
+                  <span>coming next</span>
+                  <span>future modes</span>
+                  <span>after launch</span>
                 </div>
 
                 <div class="game-inline-media">

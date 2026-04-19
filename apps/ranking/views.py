@@ -8,31 +8,44 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET, require_POST
 
-from apps.core.views import _build_nav_context
 from apps.core.models import UserGameProfile
+from apps.core.views import _build_nav_context
 from apps.ranking.models import GameScore
 
 User = get_user_model()
+
+VALID_GAME_TABS = {
+    "total",
+    "avatar_aura",
+    "math_rain",
+    "tug_of_war",
+}
 
 VALID_GAME_MODES = {
     "practice",
     "classic",
     "challenge",
     "avatar_aura",
+    "math_rain",
     "acid_rain",
     "tug_of_war",
 }
 
 VALID_OPERATIONS = {"add", "sub", "mul", "div", "mixed"}
 
+GAME_TAB_LABELS = {
+    "total": "Total Ranking",
+    "avatar_aura": "Avatar Aura",
+    "math_rain": "Math Rain",
+    "tug_of_war": "Tug of War",
+}
 
-def ranking_home(request):
-    selected_mode = _normalize_mode(request.GET.get("mode"))
-    context = {
-        "selected_mode": selected_mode,
-        **_build_nav_context(request),
-    }
-    return render(request, "ranking/ranking.html", context)
+GAME_TAB_MODE_MAP = {
+    "total": None,
+    "avatar_aura": ["practice", "classic", "challenge", "avatar_aura"],
+    "math_rain": ["math_rain", "acid_rain"],
+    "tug_of_war": ["tug_of_war"],
+}
 
 
 def _display_name(user):
@@ -152,6 +165,8 @@ def _accepted_friend_user_ids(user):
 
 def _normalize_mode(raw_mode):
     mode = (raw_mode or "practice").strip().lower()
+    if mode == "acid_rain":
+        return "math_rain"
     return mode if mode in VALID_GAME_MODES else "practice"
 
 
@@ -160,14 +175,43 @@ def _normalize_operation(raw_operation):
     return operation if operation in VALID_OPERATIONS else "mixed"
 
 
-def _build_rank_entries(user_ids=None, game_mode=None):
+def _mode_to_game_tab(mode):
+    normalized = _normalize_mode(mode)
+
+    if normalized in {"practice", "classic", "challenge", "avatar_aura"}:
+        return "avatar_aura"
+    if normalized in {"math_rain", "acid_rain"}:
+        return "math_rain"
+    if normalized == "tug_of_war":
+        return "tug_of_war"
+    return "total"
+
+
+def _normalize_game_tab(raw_game=None, raw_mode=None):
+    game = (raw_game or "").strip().lower()
+    if game in VALID_GAME_TABS:
+        return game
+
+    if raw_mode:
+        return _mode_to_game_tab(raw_mode)
+
+    return "total"
+
+
+def _mode_filters_for_game_tab(game_tab):
+    return GAME_TAB_MODE_MAP.get(game_tab)
+
+
+def _build_rank_entries(user_ids=None, game_tab="total"):
     qs = GameScore.objects.all()
 
     if user_ids is not None:
         qs = qs.filter(user_id__in=user_ids)
 
-    if game_mode:
-        qs = qs.filter(game_mode=game_mode)
+    mode_filters = _mode_filters_for_game_tab(game_tab)
+    if mode_filters:
+        normalized_modes = [_normalize_mode(mode) for mode in mode_filters]
+        qs = qs.filter(game_mode__in=normalized_modes)
 
     rows = (
         qs.values("user_id")
@@ -198,10 +242,32 @@ def _build_rank_entries(user_ids=None, game_mode=None):
     return entries
 
 
+def ranking_home(request):
+    selected_game = _normalize_game_tab(
+        raw_game=request.GET.get("game"),
+        raw_mode=request.GET.get("mode"),
+    )
+
+    context = {
+        "selected_game": selected_game,
+        "selected_game_label": GAME_TAB_LABELS.get(selected_game, "Total Ranking"),
+        "game_tabs": [
+            {"key": "total", "label": "Total"},
+            {"key": "avatar_aura", "label": "Avatar Aura"},
+            {"key": "math_rain", "label": "Math Rain"},
+        ],
+        **_build_nav_context(request),
+    }
+    return render(request, "ranking/ranking.html", context)
+
+
 @require_GET
 def api_leaderboard(request):
     scope = (request.GET.get("scope") or "global").strip().lower()
-    game_mode = _normalize_mode(request.GET.get("mode"))
+    selected_game = _normalize_game_tab(
+        raw_game=request.GET.get("game"),
+        raw_mode=request.GET.get("mode"),
+    )
 
     if scope == "friends":
         if not request.user.is_authenticated:
@@ -214,22 +280,22 @@ def api_leaderboard(request):
         visible_ids = set(friend_ids)
         visible_ids.add(request.user.id)
 
-        entries = _build_rank_entries(user_ids=visible_ids, game_mode=game_mode)
+        entries = _build_rank_entries(user_ids=visible_ids, game_tab=selected_game)
         return JsonResponse(
             {
                 "ok": True,
                 "scope": "friends",
-                "mode": game_mode,
+                "game": selected_game,
                 "entries": entries,
             }
         )
 
-    entries = _build_rank_entries(game_mode=game_mode)
+    entries = _build_rank_entries(game_tab=selected_game)
     return JsonResponse(
         {
             "ok": True,
             "scope": "global",
-            "mode": game_mode,
+            "game": selected_game,
             "entries": entries,
         }
     )
@@ -238,13 +304,16 @@ def api_leaderboard(request):
 @login_required
 @require_GET
 def api_friend_nearby_rank(request):
-    game_mode = _normalize_mode(request.GET.get("mode"))
+    selected_game = _normalize_game_tab(
+        raw_game=request.GET.get("game"),
+        raw_mode=request.GET.get("mode"),
+    )
 
     friend_ids = _accepted_friend_user_ids(request.user)
     visible_ids = set(friend_ids)
     visible_ids.add(request.user.id)
 
-    entries = _build_rank_entries(user_ids=visible_ids, game_mode=game_mode)
+    entries = _build_rank_entries(user_ids=visible_ids, game_tab=selected_game)
 
     my_index = None
     for i, item in enumerate(entries):
@@ -256,7 +325,7 @@ def api_friend_nearby_rank(request):
         return JsonResponse(
             {
                 "ok": True,
-                "mode": game_mode,
+                "game": selected_game,
                 "my_rank": None,
                 "my_score": None,
                 "total_count": len(entries),
@@ -273,7 +342,7 @@ def api_friend_nearby_rank(request):
     return JsonResponse(
         {
             "ok": True,
-            "mode": game_mode,
+            "game": selected_game,
             "my_rank": mine["rank"],
             "my_score": mine["total_correct"],
             "total_count": len(entries),
@@ -319,5 +388,6 @@ def api_record_score(request):
         {
             "ok": True,
             "mode": game_mode,
+            "game": _mode_to_game_tab(game_mode),
         }
     )

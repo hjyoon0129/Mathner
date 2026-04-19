@@ -89,11 +89,13 @@ class Room(models.Model):
     today_visits = models.PositiveIntegerField(default=0)
     total_visits = models.PositiveIntegerField(default=0)
     like_count = models.PositiveIntegerField(default=0)
+    last_visit_date = models.DateField(null=True, blank=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         indexes = [
             models.Index(fields=["owner"]),
+            models.Index(fields=["last_visit_date"]),
         ]
 
     def __str__(self):

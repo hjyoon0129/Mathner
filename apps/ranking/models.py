@@ -26,7 +26,7 @@ class GameScore(models.Model):
         ("classic", "Classic"),
         ("challenge", "Challenge"),
         ("avatar_aura", "Avatar Aura"),
-        ("acid_rain", "Acid Rain"),
+        ("math_rain", "Math Rain"),
         ("tug_of_war", "Tug of War"),
     )
 

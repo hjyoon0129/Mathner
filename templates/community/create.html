@@ -1,0 +1,81 @@
+﻿{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }} - Community{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Boogaloo&family=Bubblegum+Sans&family=Cabin+Sketch:wght@400;700&family=Capriola&family=Chewy&family=Coming+Soon&family=Delius+Swash+Caps&family=Dokdo&family=Dongle:wght@400;700&family=Gaegu:wght@400;700&family=Gowun+Batang:wght@400;700&family=Life+Savers:wght@400;700;800&family=Londrina+Shadow&family=Love+Ya+Like+A+Sister&family=Luckiest+Guy&family=McLaren&family=Modak&family=Mouse+Memoirs&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'community/css/community.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="community-page">
+  <div class="community-wrap community-wrap-narrow">
+    <div class="write-card">
+      <div class="write-head">
+        <div>
+          <h1 class="write-title">{{ page_title }}</h1>
+          <p class="write-sub">Write your post in the same premium community tone.</p>
+        </div>
+        <a href="{% url 'community:home' %}" class="detail-back-btn">← Back to List</a>
+      </div>
+
+      <form method="post" enctype="multipart/form-data" class="write-form">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.title.id_for_label }}">Title</label>
+          {{ form.title }}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.content.id_for_label }}">Content</label>
+          {{ form.content }}
+        </div>
+
+        {% if post and post.images.all %}
+        <div class="form-group">
+          <label class="form-label">Current Images</label>
+          <div class="edit-image-grid">
+            {% for image in post.images.all %}
+            <div class="edit-image-card">
+              <img src="{{ image.image.url }}" alt="post image">
+              <label class="edit-image-check">
+                <input type="checkbox" name="delete_image_ids" value="{{ image.id }}">
+                <span>Delete this image</span>
+              </label>
+            </div>
+            {% endfor %}
+          </div>
+
+          <label class="delete-all-images-line">
+            <input type="checkbox" name="delete_all_images" value="true">
+            <span>Delete all current images</span>
+          </label>
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+          <label class="form-label" for="communityImagesInput">Images</label>
+          <input
+            id="communityImagesInput"
+            type="file"
+            name="images"
+            class="community-file-input"
+            multiple
+            accept="image/*"
+          >
+          <p class="write-sub write-sub-small">You can upload multiple images.</p>
+        </div>
+
+        <div class="write-actions">
+          <a href="{% url 'community:home' %}" class="detail-list-btn">Cancel</a>
+          <button type="submit" class="community-write-btn">{{ submit_label }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

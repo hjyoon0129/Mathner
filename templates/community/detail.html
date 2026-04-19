@@ -1,0 +1,165 @@
+﻿{% extends "base_app.html" %}
+{% load static %}
+{% load community_extras %}
+
+{% block title %}{{ post.title }} - Community{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Boogaloo&family=Bubblegum+Sans&family=Cabin+Sketch:wght@400;700&family=Capriola&family=Chewy&family=Coming+Soon&family=Delius+Swash+Caps&family=Dokdo&family=Dongle:wght@400;700&family=Gaegu:wght@400;700&family=Gowun+Batang:wght@400;700&family=Life+Savers:wght@400;700;800&family=Londrina+Shadow&family=Love+Ya+Like+A+Sister&family=Luckiest+Guy&family=McLaren&family=Modak&family=Mouse+Memoirs&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'community/css/community.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="community-page">
+  <div class="community-wrap">
+    <div class="detail-card">
+      <div class="detail-topbar">
+        <a href="{% url 'community:home' %}" class="detail-back-btn">← Back to List</a>
+
+        {% if can_edit_post %}
+        <div class="detail-owner-actions">
+          <a href="{% url 'community:edit' post.pk %}" class="detail-list-btn">Edit</a>
+          <form method="post" action="{% url 'community:delete' post.pk %}" onsubmit="return confirm('Delete this post?');">
+            {% csrf_token %}
+            <button type="submit" class="danger-btn">Delete</button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="detail-header">
+        <div class="detail-badges">
+          {% if post.is_notice %}
+            <span class="notice-badge">Notice</span>
+          {% endif %}
+          {% if post.images.count > 0 %}
+            <span class="row-chip">IMG {{ post.images.count }}</span>
+          {% endif %}
+          <span class="row-chip row-chip-like">
+            <span class="thumb-icon thumb-icon-sm" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M9 10V20H5.5C4.67 20 4 19.33 4 18.5V11.5C4 10.67 4.67 10 5.5 10H9ZM11 20H16.2C17.19 20 18.03 19.28 18.18 18.3L19.1 12.3C19.28 11.14 18.38 10.1 17.2 10.1H14V6.9C14 5.85 13.15 5 12.1 5C11.63 5 11.22 5.27 11.02 5.69L9 10V20H11Z"
+                      stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            {{ post.like_count }}
+          </span>
+          <span class="row-chip">{{ post.views }}</span>
+        </div>
+
+        <h1 class="detail-title">{{ post.title }}</h1>
+
+        <div class="detail-meta">
+          <div class="detail-meta-item">
+            <span class="meta-label">Nickname</span>
+            <span
+              class="nickname-text nickname-strong {{ post.author_font_key_snapshot|font_class }} {{ post.author_effect_key_snapshot|effect_class }}"
+              data-nickname-font-key="{{ post.author_font_key_snapshot }}"
+              data-nickname-effect-key="{{ post.author_effect_key_snapshot }}"
+              data-nickname-scale="{{ post.author_nickname_scale_snapshot }}"
+              data-nickname-letter-spacing="{{ post.author_nickname_letter_spacing_snapshot }}"
+              style="font-size:{{ post.author_nickname_scale_snapshot|mul:16 }}px; letter-spacing:{{ post.author_nickname_letter_spacing_snapshot }}px;"
+            >
+              {{ post.author_nickname_snapshot }}
+            </span>
+          </div>
+          <div class="detail-meta-item">
+            <span class="meta-label">Views</span>
+            <span>{{ post.views }}</span>
+          </div>
+          <div class="detail-meta-item">
+            <span class="meta-label">Likes</span>
+            <span>{{ post.like_count }}</span>
+          </div>
+          <div class="detail-meta-item">
+            <span class="meta-label">Date</span>
+            <span>{{ post.created_at|date:"Y-m-d H:i" }}</span>
+          </div>
+        </div>
+      </div>
+
+      {% if post.images.all %}
+      <div class="detail-gallery">
+        {% for image in post.images.all %}
+        <div class="detail-gallery-item">
+          <img src="{{ image.image.url }}" alt="{{ post.title }}">
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="detail-content">
+        {{ post.content|linebreaksbr }}
+      </div>
+
+      <div class="detail-actions">
+        {% if user.is_authenticated %}
+          <form method="post" action="{% url 'community:like_toggle' post.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="like-btn {% if user_liked_post %}is-liked{% endif %}">
+              <span class="thumb-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M9 10V20H5.5C4.67 20 4 19.33 4 18.5V11.5C4 10.67 4.67 10 5.5 10H9ZM11 20H16.2C17.19 20 18.03 19.28 18.18 18.3L19.1 12.3C19.28 11.14 18.38 10.1 17.2 10.1H14V6.9C14 5.85 13.15 5 12.1 5C11.63 5 11.22 5.27 11.02 5.69L9 10V20H11Z"
+                        stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span>Like</span>
+              <span class="like-count">{{ post.like_count }}</span>
+            </button>
+          </form>
+        {% else %}
+          <a href="{% url 'account_login' %}?next={% url 'community:detail' post.pk %}" class="like-btn">
+            <span class="thumb-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M9 10V20H5.5C4.67 20 4 19.33 4 18.5V11.5C4 10.67 4.67 10 5.5 10H9ZM11 20H16.2C17.19 20 18.03 19.28 18.18 18.3L19.1 12.3C19.28 11.14 18.38 10.1 17.2 10.1H14V6.9C14 5.85 13.15 5 12.1 5C11.63 5 11.22 5.27 11.02 5.69L9 10V20H11Z"
+                      stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <span>Like</span>
+            <span class="like-count">{{ post.like_count }}</span>
+          </a>
+        {% endif %}
+
+        <a href="{% url 'community:home' %}" class="detail-list-btn">List</a>
+      </div>
+    </div>
+
+    <div class="comments-card" id="comments">
+      <div class="comments-head">
+        <h2 class="comments-title">Comments</h2>
+        <button type="button" class="comment-collapse-all-btn" id="toggleAllCommentsBtn">Collapse All</button>
+      </div>
+
+      {% if user.is_authenticated %}
+      <form method="post" action="{% url 'community:comment_create' post.pk %}" class="comment-form comment-form-main">
+        {% csrf_token %}
+        {{ comment_form.content }}
+        <div class="comment-form-actions">
+          <button type="submit" class="community-write-btn comment-submit-btn">Add Comment</button>
+        </div>
+      </form>
+      {% else %}
+      <div class="comment-login-box">
+        <a href="{% url 'account_login' %}?next={% url 'community:detail' post.pk %}" class="detail-list-btn">
+          Sign in to write a comment
+        </a>
+      </div>
+      {% endif %}
+
+      <div class="comments-list">
+        {% for comment in top_level_comments %}
+          {% include "community/_comment_item.html" with comment=comment post=post liked_comment_ids=liked_comment_ids %}
+        {% empty %}
+          <div class="community-empty">No comments yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'community/js/community.js' %}"></script>
+{% endblock %}

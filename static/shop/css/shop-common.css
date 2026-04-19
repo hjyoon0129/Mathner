@@ -530,3 +530,73 @@
     grid-template-columns: 1fr;
   }
 }
+
+html,
+body{
+  margin:0 !important;
+  padding:0 !important;
+  background:#071120 !important;
+}
+
+body{
+  overflow-x:hidden;
+}
+
+:root{
+  --app-header-h:86px;
+  --app-header-gap:0px;
+}
+
+main,
+#content,
+.content,
+.content-wrapper,
+.page-wrapper,
+.site-main,
+.wrap,
+.wrap-compact{
+  margin-top:0 !important;
+  padding-top:0 !important;
+}
+
+.navbar,
+.site-header,
+header.site-header,
+header.navbar{
+  position:fixed !important;
+  top:0 !important;
+  left:0 !important;
+  right:0 !important;
+  margin-top:0 !important;
+  transform:none !important;
+  z-index:10000 !important;
+}
+
+.site-header-wrap,
+.navbar-wrap,
+.header-wrap,
+.header-outer,
+.topbar,
+.top-header{
+  margin-top:0 !important;
+  padding-top:0 !important;
+  top:0 !important;
+}
+
+.shop-page{
+  min-height:100vh !important;
+  margin-top:0 !important;
+  padding:calc(var(--app-header-h) + var(--app-header-gap)) 0 28px !important;
+  color:#fff;
+  overflow-x:hidden;
+  background:
+    radial-gradient(900px 500px at 12% 10%, rgba(122,167,255,.10), transparent 60%),
+    radial-gradient(900px 500px at 88% 8%, rgba(83,222,176,.08), transparent 58%),
+    linear-gradient(180deg, #071120 0%, #06101d 100%) !important;
+}
+
+.shop-wrap{
+  width:min(1380px, calc(100vw - 24px));
+  margin:0 auto !important;
+  padding-top:4px !important;
+}

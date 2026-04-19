@@ -1,0 +1,254 @@
+﻿{% extends "base_app.html" %}
+{% load static %}
+{% load community_extras %}
+
+{% block title %}Community - mathner{% endblock %}
+
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Boogaloo&family=Bubblegum+Sans&family=Cabin+Sketch:wght@400;700&family=Capriola&family=Chewy&family=Coming+Soon&family=Delius+Swash+Caps&family=Dokdo&family=Dongle:wght@400;700&family=Gaegu:wght@400;700&family=Gowun+Batang:wght@400;700&family=Life+Savers:wght@400;700;800&family=Londrina+Shadow&family=Love+Ya+Like+A+Sister&family=Luckiest+Guy&family=McLaren&family=Modak&family=Mouse+Memoirs&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'community/css/community.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="community-page">
+  <div class="community-wrap">
+    <div class="community-head">
+      <div>
+        <h1 class="community-title">Community</h1>
+        <p class="community-sub">Posts, notices, comments, and likes in one board.</p>
+      </div>
+    </div>
+
+    <div class="community-search-box">
+      <form method="get" class="community-search-form" id="communitySearchForm">
+        <input
+          type="text"
+          name="q"
+          value="{{ search_query }}"
+          class="community-search-input"
+          placeholder="Search title, content, nickname..."
+        >
+
+        <input type="hidden" name="sort" id="communitySortInput" value="{{ sort_key|default:'latest' }}">
+
+        <div class="community-sort-dropdown" id="communitySortDropdown">
+          <button
+            type="button"
+            class="community-sort-trigger"
+            id="communitySortTrigger"
+            aria-haspopup="listbox"
+            aria-expanded="false"
+          >
+            <span class="community-sort-trigger-label" id="communitySortLabel">
+              {% if sort_key == 'likes' %}
+                Most Likes
+              {% elif sort_key == 'views' %}
+                Most Views
+              {% elif sort_key == 'popular' %}
+                Popular
+              {% else %}
+                Latest
+              {% endif %}
+            </span>
+            <span class="community-sort-trigger-arrow">▾</span>
+          </button>
+
+          <div class="community-sort-menu" id="communitySortMenu" role="listbox">
+            <button type="button" class="community-sort-option {% if sort_key == 'latest' %}is-active{% endif %}" data-sort-value="latest">Latest</button>
+            <button type="button" class="community-sort-option {% if sort_key == 'likes' %}is-active{% endif %}" data-sort-value="likes">Most Likes</button>
+            <button type="button" class="community-sort-option {% if sort_key == 'views' %}is-active{% endif %}" data-sort-value="views">Most Views</button>
+            <button type="button" class="community-sort-option {% if sort_key == 'popular' %}is-active{% endif %}" data-sort-value="popular">Popular</button>
+          </div>
+        </div>
+
+        <button type="submit" class="community-search-btn">Search</button>
+
+        {% if user.is_authenticated %}
+          <a href="{% url 'community:create' %}" class="community-write-btn community-write-btn-inline">Write Post</a>
+        {% else %}
+          <a href="{% url 'account_login' %}?next={% url 'community:create' %}" class="community-write-btn community-write-btn-inline">Write Post</a>
+        {% endif %}
+      </form>
+    </div>
+
+    {% if notice_posts %}
+    <div class="community-notice-card">
+      <div class="community-notice-card-head">
+        <div class="community-notice-title">📌 Notice</div>
+        <div class="community-notice-sub">Pinned posts from admin</div>
+      </div>
+
+      <div class="community-notice-list">
+        {% for post in notice_posts %}
+        <a href="{% url 'community:detail' post.pk %}" class="community-notice-item">
+          <div class="community-notice-item-left">
+            <span class="notice-badge">Notice</span>
+
+            <div class="community-notice-main">
+              <div class="community-notice-post-title">{{ post.title }}</div>
+
+              <div class="community-notice-meta">
+                <span class="community-writer-inline">
+                  <span
+                    class="nickname-text nickname-strong {{ post.author_font_key_snapshot|font_class }} {{ post.author_effect_key_snapshot|effect_class }}"
+                    data-nickname-font-key="{{ post.author_font_key_snapshot }}"
+                    data-nickname-effect-key="{{ post.author_effect_key_snapshot }}"
+                    data-nickname-scale="{{ post.author_nickname_scale_snapshot }}"
+                    data-nickname-letter-spacing="{{ post.author_nickname_letter_spacing_snapshot }}"
+                    style="font-size:{{ post.author_nickname_scale_snapshot|mul:15 }}px; letter-spacing:{{ post.author_nickname_letter_spacing_snapshot }}px;"
+                  >
+                    {{ post.author_nickname_snapshot }}
+                  </span>
+
+                  {% if post.comment_count > 0 %}
+                    <span class="row-chip">💬 {{ post.comment_count }}</span>
+                  {% endif %}
+                </span>
+
+                <span>·</span>
+                <span>{{ post.created_at|date:"Y-m-d" }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="community-notice-item-right">
+            {% if post.images.count > 0 %}
+              <span class="row-chip">IMG {{ post.images.count }}</span>
+            {% endif %}
+            <span class="row-chip row-chip-like">
+              <span class="thumb-icon thumb-icon-sm" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M9 10V20H5.5C4.67 20 4 19.33 4 18.5V11.5C4 10.67 4.67 10 5.5 10H9ZM11 20H16.2C17.19 20 18.03 19.28 18.18 18.3L19.1 12.3C19.28 11.14 18.38 10.1 17.2 10.1H14V6.9C14 5.85 13.15 5 12.1 5C11.63 5 11.22 5.27 11.02 5.69L9 10V20H11Z"
+                        stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              {{ post.like_count }}
+            </span>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="community-board-box">
+      <div class="community-table-wrap">
+        <table class="community-table">
+          <thead>
+            <tr>
+              <th class="col-num col-head-left">No</th>
+              <th class="col-title col-head-left">Title</th>
+              <th class="col-writer col-head-left">Nickname</th>
+              <th class="col-like col-head-center">Like</th>
+              <th class="col-views col-head-center">Views</th>
+              <th class="col-date col-head-center">Date</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for post in posts %}
+            <tr>
+              <td class="col-num col-cell-left">
+                {{ page_obj.start_index|add:forloop.counter0 }}
+              </td>
+
+              <td class="col-title col-cell-left">
+                <a href="{% url 'community:detail' post.pk %}" class="community-title-link">
+                  <span class="title-main">{{ post.title }}</span>
+
+                  <span class="title-chips">
+                    {% if post.is_notice %}
+                      <span class="notice-badge">Notice</span>
+                    {% endif %}
+                    {% if post.images.count > 0 %}
+                      <span class="row-chip">IMG {{ post.images.count }}</span>
+                    {% endif %}
+                  </span>
+                </a>
+              </td>
+
+              <td class="col-writer col-cell-left">
+                <div class="community-writer-box">
+                  <span
+                    class="nickname-text nickname-strong {{ post.author_font_key_snapshot|font_class }} {{ post.author_effect_key_snapshot|effect_class }}"
+                    data-nickname-font-key="{{ post.author_font_key_snapshot }}"
+                    data-nickname-effect-key="{{ post.author_effect_key_snapshot }}"
+                    data-nickname-scale="{{ post.author_nickname_scale_snapshot }}"
+                    data-nickname-letter-spacing="{{ post.author_nickname_letter_spacing_snapshot }}"
+                    style="font-size:{{ post.author_nickname_scale_snapshot|mul:15 }}px; letter-spacing:{{ post.author_nickname_letter_spacing_snapshot }}px;"
+                  >
+                    {{ post.author_nickname_snapshot }}
+                  </span>
+
+                  {% if post.comment_count > 0 %}
+                    <span class="row-chip">💬 {{ post.comment_count }}</span>
+                  {% endif %}
+                </div>
+              </td>
+
+              <td class="col-like col-cell-center">
+                <div class="community-stat-cell">
+                  <span class="row-chip row-chip-like">
+                    <span class="thumb-icon thumb-icon-sm" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M9 10V20H5.5C4.67 20 4 19.33 4 18.5V11.5C4 10.67 4.67 10 5.5 10H9ZM11 20H16.2C17.19 20 18.03 19.28 18.18 18.3L19.1 12.3C19.28 11.14 18.38 10.1 17.2 10.1H14V6.9C14 5.85 13.15 5 12.1 5C11.63 5 11.22 5.27 11.02 5.69L9 10V20H11Z"
+                              stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </span>
+                    {{ post.like_count }}
+                  </span>
+                </div>
+              </td>
+
+              <td class="col-views col-cell-center">
+                <div class="community-stat-cell">{{ post.views }}</div>
+              </td>
+
+              <td class="col-date col-cell-center">
+                <div class="community-stat-cell">{{ post.created_at|date:"Y-m-d" }}</div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6">
+                <div class="community-empty">No posts yet.</div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if page_obj.paginator.num_pages > 1 %}
+      <div class="community-pagination">
+        {% if page_obj.has_previous %}
+          <a href="?q={{ search_query|urlencode }}&sort={{ sort_key }}&page={{ page_obj.previous_page_number }}" class="page-btn">‹ Prev</a>
+        {% else %}
+          <span class="page-btn is-disabled">‹ Prev</span>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+          {% if num == page_obj.number %}
+            <span class="page-btn is-current">{{ num }}</span>
+          {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+            <a href="?q={{ search_query|urlencode }}&sort={{ sort_key }}&page={{ num }}" class="page-btn">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+          <a href="?q={{ search_query|urlencode }}&sort={{ sort_key }}&page={{ page_obj.next_page_number }}" class="page-btn">Next ›</a>
+        {% else %}
+          <span class="page-btn is-disabled">Next ›</span>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'community/js/community.js' %}"></script>
+{% endblock %}

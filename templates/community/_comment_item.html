@@ -1,0 +1,163 @@
+﻿{% load community_extras %}
+
+<div class="comment-item" id="comment-{{ comment.pk }}">
+  <div class="comment-main">
+    <div class="comment-top">
+      <div class="comment-author-wrap">
+        <span
+          class="nickname-text nickname-strong {{ comment.author_font_key_snapshot|font_class }} {{ comment.author_effect_key_snapshot|effect_class }}"
+          data-nickname-font-key="{{ comment.author_font_key_snapshot }}"
+          data-nickname-effect-key="{{ comment.author_effect_key_snapshot }}"
+          data-nickname-scale="{{ comment.author_nickname_scale_snapshot }}"
+          data-nickname-letter-spacing="{{ comment.author_nickname_letter_spacing_snapshot }}"
+          style="font-size:{{ comment.author_nickname_scale_snapshot|mul:15 }}px; letter-spacing:{{ comment.author_nickname_letter_spacing_snapshot }}px;"
+        >
+          {{ comment.author_nickname_snapshot }}
+        </span>
+        <span class="comment-date">{{ comment.created_at|date:"Y-m-d H:i" }}</span>
+      </div>
+    </div>
+
+    <div class="comment-content">
+      {{ comment.content|linebreaksbr }}
+    </div>
+
+    <div class="comment-actions">
+      {% if user.is_authenticated %}
+        <form method="post" action="{% url 'community:comment_like_toggle' comment.pk %}">
+          {% csrf_token %}
+          <button
+            type="submit"
+            class="comment-action-btn comment-like-btn {% if comment.pk in liked_comment_ids %}is-liked{% endif %}"
+          >
+            <span class="thumb-icon thumb-icon-xs" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M9 10V20H5.5C4.67 20 4 19.33 4 18.5V11.5C4 10.67 4.67 10 5.5 10H9ZM11 20H16.2C17.19 20 18.03 19.28 18.18 18.3L19.1 12.3C19.28 11.14 18.38 10.1 17.2 10.1H14V6.9C14 5.85 13.15 5 12.1 5C11.63 5 11.22 5.27 11.02 5.69L9 10V20H11Z"
+                      stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <span>Like</span>
+            <span class="like-count">{{ comment.like_count }}</span>
+          </button>
+        </form>
+
+        <button
+          type="button"
+          class="comment-action-btn reply-toggle-btn"
+          data-target="reply-form-{{ comment.pk }}"
+        >
+          <span class="comment-inline-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M10 8L6 12L10 16" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M7 12H14C17.314 12 20 14.686 20 18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span>Reply</span>
+        </button>
+
+        {% if user.is_superuser or comment.author_id == user.id %}
+          <button
+            type="button"
+            class="comment-action-btn comment-edit-toggle-btn"
+            data-target="edit-form-{{ comment.pk }}"
+          >
+            <span class="comment-inline-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M4 20H8L18 10C18.53 9.47 18.53 8.53 18 8L16 6C15.47 5.47 14.53 5.47 14 6L4 16V20Z"
+                      stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <span>Edit</span>
+          </button>
+
+          <form method="post" action="{% url 'community:comment_delete' comment.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="comment-action-btn comment-action-btn-danger">
+              <span class="comment-inline-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M5 7H19" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+                  <path d="M9 7V5.8C9 5.36 9.36 5 9.8 5H14.2C14.64 5 15 5.36 15 5.8V7" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+                  <path d="M8 10V17" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+                  <path d="M12 10V17" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+                  <path d="M16 10V17" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+                  <path d="M6 7L6.7 18.2C6.76 19.14 7.54 19.87 8.48 19.87H15.52C16.46 19.87 17.24 19.14 17.3 18.2L18 7"
+                        stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span>Delete</span>
+            </button>
+          </form>
+        {% endif %}
+      {% else %}
+        <a href="{% url 'account_login' %}?next={% url 'community:detail' post.pk %}" class="comment-action-btn">
+          <span class="thumb-icon thumb-icon-xs" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M9 10V20H5.5C4.67 20 4 19.33 4 18.5V11.5C4 10.67 4.67 10 5.5 10H9ZM11 20H16.2C17.19 20 18.03 19.28 18.18 18.3L19.1 12.3C19.28 11.14 18.38 10.1 17.2 10.1H14V6.9C14 5.85 13.15 5 12.1 5C11.63 5 11.22 5.27 11.02 5.69L9 10V20H11Z"
+                    stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span>Like</span>
+          <span class="like-count">{{ comment.like_count }}</span>
+        </a>
+      {% endif %}
+
+      {% if comment.styled_replies %}
+        <button
+          type="button"
+          class="comment-action-btn comment-collapse-btn"
+          data-target="children-{{ comment.pk }}"
+        >
+          <span class="comment-inline-icon comment-collapse-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M8 10L12 14L16 10" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span>Replies</span>
+          <span class="comment-count-badge">{{ comment.styled_replies|length }}</span>
+        </button>
+      {% endif %}
+    </div>
+
+    {% if user.is_authenticated %}
+    <div class="reply-form-box" id="reply-form-{{ comment.pk }}">
+      <form method="post" action="{% url 'community:comment_create' post.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="parent_id" value="{{ comment.pk }}">
+        <textarea
+          name="content"
+          class="comment-textarea"
+          placeholder="Write a reply..."
+          required
+        ></textarea>
+        <div class="comment-form-actions">
+          <button type="submit" class="community-write-btn comment-submit-btn">Add Reply</button>
+        </div>
+      </form>
+    </div>
+
+    {% if user.is_superuser or comment.author_id == user.id %}
+    <div class="reply-form-box" id="edit-form-{{ comment.pk }}">
+      <form method="post" action="{% url 'community:comment_edit' comment.pk %}">
+        {% csrf_token %}
+        <textarea
+          name="content"
+          class="comment-textarea"
+          required
+        >{{ comment.content }}</textarea>
+        <div class="comment-form-actions">
+          <button type="submit" class="community-write-btn comment-submit-btn">Save Edit</button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+    {% endif %}
+  </div>
+
+  {% if comment.styled_replies %}
+  <div class="comment-children" id="children-{{ comment.pk }}">
+    {% for reply in comment.styled_replies %}
+      {% include "community/_comment_item.html" with comment=reply post=post liked_comment_ids=liked_comment_ids %}
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>

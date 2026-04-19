@@ -65,6 +65,8 @@ INSTALLED_APPS = [
     "apps.shop",
     "apps.billing",
     "apps.support",
+    "apps.community",
+
 ]
 
 MIDDLEWARE = [

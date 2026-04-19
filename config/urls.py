@@ -12,4 +12,5 @@ urlpatterns = [
     path("ranking/", include("apps.ranking.urls")),
     path("support/", include("apps.support.urls")),
     path("game/", include("apps.game.urls")),
+    path("community/", include("apps.community.urls")),
 ]

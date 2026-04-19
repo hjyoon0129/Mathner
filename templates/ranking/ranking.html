@@ -5,164 +5,353 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'ranking/css/ranking.css' %}">
+<style>
+  .ranking-game-tab-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:14px;
+  }
+
+  .ranking-game-tab-btn,
+  .ranking-tab-btn{
+    min-height:42px;
+    padding:0 16px;
+    border-radius:14px;
+    border:1px solid rgba(126,168,255,.18);
+    background:#112243;
+    color:#dce8ff;
+    font-size:14px;
+    font-weight:900;
+    cursor:pointer;
+    transition:all .16s ease;
+  }
+
+  .ranking-game-tab-btn:hover,
+  .ranking-tab-btn:hover{
+    transform:translateY(-1px);
+    border-color:rgba(126,168,255,.32);
+  }
+
+  .ranking-game-tab-btn.is-active,
+  .ranking-tab-btn.is-active{
+    background:linear-gradient(135deg, #6f7fff, #53deb0);
+    color:#081120;
+    border-color:transparent;
+  }
+
+  .ranking-tab-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:14px;
+  }
+
+  .ranking-board-head{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+
+  .ranking-board-sub{
+    color:#9fc0ff;
+    font-size:14px;
+    font-weight:800;
+  }
+
+  .ranking-notice{
+    margin-bottom:16px;
+  }
+
+  .ranking-summary-strip{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:10px;
+    margin-bottom:16px;
+  }
+
+  .ranking-summary-card{
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:18px;
+    padding:14px 16px;
+  }
+
+  .ranking-summary-label{
+    color:#93a7cf;
+    font-size:12px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin-bottom:8px;
+  }
+
+  .ranking-summary-value{
+    color:#f4f8ff;
+    font-size:22px;
+    font-weight:1000;
+    line-height:1;
+  }
+
+  .ranking-table td,
+  .ranking-table th{
+    white-space:nowrap;
+  }
+
+  .ranking-table .col-name{
+    white-space:normal;
+  }
+
+  .ranking-row-me{
+    box-shadow:inset 3px 0 0 #67e0cb;
+    background:rgba(103,224,203,.08);
+  }
+
+  @media (max-width: 760px){
+    .ranking-summary-strip{
+      grid-template-columns:1fr;
+    }
+
+    .ranking-game-tab-btn,
+    .ranking-tab-btn{
+      flex:1 1 auto;
+    }
+
+    .ranking-table{
+      min-width:720px;
+    }
+  }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="ranking-page">
-    <div class="ranking-wrap">
-        <section class="ranking-hero-card">
-            <div class="ranking-hero-copy">
-                <h1>Ranking</h1>
-                <p>
-                    Global leaderboard and friend leaderboard based on lifetime total correct answers.
-                </p>
-            </div>
-        </section>
+  <div class="ranking-wrap">
+    <section class="ranking-hero-card">
+      <div class="ranking-hero-copy">
+        <h1>Ranking</h1>
+        <p>
+          Total ranking first, then per-game ranking for Avatar Aura and Math Rain.
+          Each board can be switched between global ranking and friend ranking.
+        </p>
+      </div>
+    </section>
 
-        <section class="ranking-board-card">
-            <div class="ranking-board-head">
-                <h2>Leaderboard</h2>
-                <div class="ranking-board-sub">
-                    Current mode:
-                    <strong id="rankingModeLabel">{{ selected_mode }}</strong>
-                </div>
-            </div>
+    <section class="ranking-board-card">
+      <div class="ranking-board-head">
+        <h2>Leaderboard</h2>
+        <div class="ranking-board-sub">
+          Current game:
+          <strong id="rankingGameLabel">{{ selected_game_label }}</strong>
+        </div>
+      </div>
 
-            <div class="ranking-tab-row">
-                <button type="button" class="ranking-tab-btn is-active" id="tabGlobal">Global Ranking</button>
-                <button type="button" class="ranking-tab-btn" id="tabFriends">Friend Ranking</button>
-            </div>
+      <div class="ranking-game-tab-row" id="rankingGameTabs">
+        {% for game_tab in game_tabs %}
+          <button
+            type="button"
+            class="ranking-game-tab-btn {% if selected_game == game_tab.key %}is-active{% endif %}"
+            data-game="{{ game_tab.key }}"
+          >
+            {{ game_tab.label }}
+          </button>
+        {% endfor %}
+      </div>
 
-            <div class="ranking-notice" id="rankingNotice">
-                Showing all users ranked by lifetime total correct answers.
-            </div>
+      <div class="ranking-tab-row">
+        <button type="button" class="ranking-tab-btn is-active" id="tabGlobal">Global Ranking</button>
+        <button type="button" class="ranking-tab-btn" id="tabFriends">Friend Ranking</button>
+      </div>
 
-            <div class="ranking-table-wrap">
-                <table class="ranking-table">
-                    <thead>
-                        <tr>
-                            <th class="col-rank">Rank</th>
-                            <th class="col-name">Nickname</th>
-                            <th class="col-correct">Total Correct</th>
-                            <th class="col-combo">Best Combo</th>
-                            <th class="col-stars">Stars Earned</th>
-                        </tr>
-                    </thead>
-                    <tbody id="rankingTableBody">
-                        <tr>
-                            <td colspan="5" class="ranking-empty">Loading...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </div>
+      <div class="ranking-summary-strip">
+        <div class="ranking-summary-card">
+          <div class="ranking-summary-label">Board</div>
+          <div class="ranking-summary-value" id="summaryBoard">{{ selected_game_label }}</div>
+        </div>
+        <div class="ranking-summary-card">
+          <div class="ranking-summary-label">Scope</div>
+          <div class="ranking-summary-value" id="summaryScope">Global</div>
+        </div>
+        <div class="ranking-summary-card">
+          <div class="ranking-summary-label">Rows</div>
+          <div class="ranking-summary-value" id="summaryCount">0</div>
+        </div>
+      </div>
+
+      <div class="ranking-notice" id="rankingNotice">
+        Loading ranking data...
+      </div>
+
+      <div class="ranking-table-wrap">
+        <table class="ranking-table">
+          <thead>
+            <tr>
+              <th class="col-rank">Rank</th>
+              <th class="col-name">Nickname</th>
+              <th class="col-correct">Total Correct</th>
+              <th class="col-combo">Best Combo</th>
+              <th class="col-stars">Stars Earned</th>
+            </tr>
+          </thead>
+          <tbody id="rankingTableBody">
+            <tr>
+              <td colspan="5" class="ranking-empty">Loading...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 (function () {
-    const selectedMode = "{{ selected_mode|default:'practice'|escapejs }}";
-    const tabGlobal = document.getElementById("tabGlobal");
-    const tabFriends = document.getElementById("tabFriends");
-    const rankingNotice = document.getElementById("rankingNotice");
-    const rankingTableBody = document.getElementById("rankingTableBody");
+  let selectedGame = "{{ selected_game|default:'total'|escapejs }}";
+  let selectedScope = "global";
 
-    function escapeHtml(value) {
-        return String(value ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
+  const tabGlobal = document.getElementById("tabGlobal");
+  const tabFriends = document.getElementById("tabFriends");
+  const rankingNotice = document.getElementById("rankingNotice");
+  const rankingTableBody = document.getElementById("rankingTableBody");
+  const rankingGameLabel = document.getElementById("rankingGameLabel");
+  const summaryBoard = document.getElementById("summaryBoard");
+  const summaryScope = document.getElementById("summaryScope");
+  const summaryCount = document.getElementById("summaryCount");
+  const gameButtons = Array.from(document.querySelectorAll(".ranking-game-tab-btn"));
 
-    function prettyMode(mode) {
-        const map = {
-            practice: "Practice",
-            classic: "Classic",
-            challenge: "Challenge",
-            avatar_aura: "Avatar Aura",
-            acid_rain: "Acid Rain",
-            tug_of_war: "Tug of War",
-        };
-        return map[mode] || mode;
-    }
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
 
-    function setActiveTab(scope) {
-        tabGlobal.classList.toggle("is-active", scope === "global");
-        tabFriends.classList.toggle("is-active", scope === "friends");
-    }
+  function prettyGame(game) {
+    const map = {
+      total: "Total Ranking",
+      avatar_aura: "Avatar Aura",
+      math_rain: "Math Rain",
+      tug_of_war: "Tug of War",
+    };
+    return map[game] || "Total Ranking";
+  }
 
-    function renderEmpty(message) {
-        rankingTableBody.innerHTML = `
-            <tr>
-                <td colspan="5" class="ranking-empty">${escapeHtml(message)}</td>
-            </tr>
-        `;
-    }
+  function prettyScope(scope) {
+    return scope === "friends" ? "Friends" : "Global";
+  }
 
-    function renderRows(entries) {
-        if (!entries || !entries.length) {
-            renderEmpty("No ranking data yet.");
-            return;
-        }
+  function setActiveScope(scope) {
+    selectedScope = scope;
+    tabGlobal.classList.toggle("is-active", scope === "global");
+    tabFriends.classList.toggle("is-active", scope === "friends");
+    summaryScope.textContent = prettyScope(scope);
+  }
 
-        rankingTableBody.innerHTML = entries.map((item) => `
-            <tr>
-                <td class="col-rank">#${escapeHtml(item.rank)}</td>
-                <td class="col-name">${escapeHtml(item.nickname)}</td>
-                <td class="col-correct">${escapeHtml(item.total_correct)}</td>
-                <td class="col-combo">${escapeHtml(item.best_combo)}</td>
-                <td class="col-stars">${escapeHtml(item.earned_stars)}</td>
-            </tr>
-        `).join("");
-    }
-
-    async function loadBoard(scope) {
-        setActiveTab(scope);
-        renderEmpty("Loading...");
-
-        try {
-            const url = `{% url 'ranking:api_leaderboard' %}?scope=${encodeURIComponent(scope)}&mode=${encodeURIComponent(selectedMode)}`;
-
-            const response = await fetch(url, {
-                credentials: "same-origin",
-                headers: {
-                    "X-Requested-With": "XMLHttpRequest"
-                }
-            });
-
-            const data = await response.json();
-
-            if (!response.ok || !data.ok) {
-                rankingNotice.textContent = data.message || "Failed to load leaderboard.";
-                renderEmpty("No ranking data yet.");
-                return;
-            }
-
-            rankingNotice.textContent =
-                scope === "global"
-                    ? `Showing all users ranked by lifetime total correct answers for ${prettyMode(selectedMode)}.`
-                    : `Showing you and your accepted friends ranked by lifetime total correct answers for ${prettyMode(selectedMode)}.`;
-
-            renderRows(data.entries || []);
-        } catch (error) {
-            rankingNotice.textContent = "Network error.";
-            renderEmpty("No ranking data yet.");
-        }
-    }
-
-    tabGlobal.addEventListener("click", function () {
-        loadBoard("global");
+  function setActiveGame(game) {
+    selectedGame = game;
+    gameButtons.forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.game === game);
     });
+    const label = prettyGame(game);
+    rankingGameLabel.textContent = label;
+    summaryBoard.textContent = label;
 
-    tabFriends.addEventListener("click", function () {
-        loadBoard("friends");
+    const url = new URL(window.location.href);
+    url.searchParams.set("game", game);
+    url.searchParams.delete("mode");
+    window.history.replaceState({}, "", url.toString());
+  }
+
+  function renderEmpty(message) {
+    rankingTableBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="ranking-empty">${escapeHtml(message)}</td>
+      </tr>
+    `;
+    summaryCount.textContent = "0";
+  }
+
+  function renderRows(entries) {
+    if (!entries || !entries.length) {
+      renderEmpty("No ranking data yet.");
+      return;
+    }
+
+    summaryCount.textContent = String(entries.length);
+
+    rankingTableBody.innerHTML = entries.map((item) => {
+      const isMe = item.is_me ? "ranking-row-me" : "";
+      return `
+        <tr class="${isMe}">
+          <td class="col-rank">#${escapeHtml(item.rank)}</td>
+          <td class="col-name">${escapeHtml(item.nickname)}</td>
+          <td class="col-correct">${escapeHtml(item.total_correct)}</td>
+          <td class="col-combo">${escapeHtml(item.best_combo)}</td>
+          <td class="col-stars">${escapeHtml(item.earned_stars)}</td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  async function loadBoard() {
+    renderEmpty("Loading...");
+
+    try {
+      const url = `{% url 'ranking:api_leaderboard' %}?scope=${encodeURIComponent(selectedScope)}&game=${encodeURIComponent(selectedGame)}`;
+
+      const response = await fetch(url, {
+        credentials: "same-origin",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest"
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        rankingNotice.textContent = data.message || "Failed to load leaderboard.";
+        renderEmpty("No ranking data yet.");
+        return;
+      }
+
+      rankingNotice.textContent =
+        selectedScope === "global"
+          ? `Showing all users ranked by lifetime total correct answers for ${prettyGame(selectedGame)}.`
+          : `Showing you and your accepted friends ranked by lifetime total correct answers for ${prettyGame(selectedGame)}.`;
+
+      renderRows(data.entries || []);
+    } catch (error) {
+      rankingNotice.textContent = "Network error.";
+      renderEmpty("No ranking data yet.");
+    }
+  }
+
+  tabGlobal.addEventListener("click", function () {
+    setActiveScope("global");
+    loadBoard();
+  });
+
+  tabFriends.addEventListener("click", function () {
+    setActiveScope("friends");
+    loadBoard();
+  });
+
+  gameButtons.forEach((btn) => {
+    btn.addEventListener("click", function () {
+      setActiveGame(btn.dataset.game);
+      loadBoard();
     });
+  });
 
-    loadBoard("global");
+  setActiveGame(selectedGame);
+  setActiveScope("global");
+  loadBoard();
 })();
 </script>
 {% endblock %}

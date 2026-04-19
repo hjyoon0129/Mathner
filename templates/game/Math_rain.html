@@ -4,7 +4,7 @@
 {% block title %}Math Rain | Mathner{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'game/css/math_rain.css' %}">
+<link rel="stylesheet" href="{% static 'game/css/math_rain.css' %}?v=fit_finish_v6">
 {% endblock %}
 
 {% block content %}
@@ -15,7 +15,7 @@
     <header class="rain-head">
       <div class="brand-box">
         <h1 class="logo">MATH RAIN</h1>
-        <p class="tagline">1 key is consumed when you press Start. Stars are settled when the run ends or you leave.</p>
+        <p class="tagline">1 key is consumed when you press Start. Stars are settled when the run ends, resets, or you leave.</p>
       </div>
     </header>
 
@@ -50,22 +50,11 @@
       <div class="reward-aura"></div>
       <div class="ground"></div>
 
-      <div id="startOverlay" class="overlay show">
-        <div class="overlay-card">
+      <div id="finishFxLayer" class="finish-fx-layer" aria-hidden="true"></div>
+
+      <div id="startOverlay" class="overlay start-overlay show">
+        <div class="overlay-card start-card">
           <h2>Math Rain</h2>
-          <p>Choose an operation and catch the answers before they hit the ground.</p>
-          <div class="rule-list">
-            <div>• 1 key is consumed immediately when you start</div>
-            <div>• Stars are settled when the game ends, resets, or you leave the page</div>
-            <div>• Level 1: one-digit operations</div>
-            <div>• Level 2: mostly level 1 + rare 2-digit / 1-digit</div>
-            <div>• Level 3: level 2 + rare 3-term one-digit</div>
-            <div>• Level 4: level 3 + 2-digit / 2-digit</div>
-            <div>• Bomb correct = -1 heart</div>
-            <div>• Bomb on ground = no effect</div>
-            <div>• Angel correct = clear all current blocks</div>
-            <div>• Angel on ground = -1 heart</div>
-          </div>
           <button id="startOverlayBtn" class="main-btn start-overlay-btn">Start Game</button>
         </div>
       </div>
@@ -74,18 +63,60 @@
         <div id="levelIntroText" class="level-intro-text">LEVEL 1</div>
       </div>
 
-      <div id="gameOverOverlay" class="overlay">
-        <div class="overlay-card">
-          <h2>Game Over</h2>
+      <div id="rewardIntroOverlay" class="overlay reward-intro-overlay">
+        <div class="overlay-card reward-intro-card">
+          <div class="reward-intro-bg"></div>
+          <div id="rewardIntroFx" class="reward-intro-fx" aria-hidden="true"></div>
 
-          <div class="result-grid">
-            <div class="result-item">Cleared <span id="finalCleared">0</span></div>
-            <div class="result-item">Stars <span id="finalStars">0</span></div>
-            <div class="result-item">Level <span id="finalLevel">1</span></div>
-            <div class="result-item">Best <span id="finalHighScore">0</span></div>
+          <div class="reward-intro-badge">STARS EARNED</div>
+
+          <div class="reward-intro-star-wrap">
+            <div class="reward-intro-star-core">★</div>
+            <div class="reward-intro-star-ring reward-intro-star-ring-1"></div>
+            <div class="reward-intro-star-ring reward-intro-star-ring-2"></div>
           </div>
 
-          <button id="restartBtnOverlay" class="main-btn start-overlay-btn">Play Again</button>
+          <div class="reward-intro-amount" id="rewardIntroAmount">+0</div>
+          <div class="reward-intro-text" id="rewardIntroText">Amazing! Your stars have been settled.</div>
+        </div>
+      </div>
+
+      <div id="finishOverlay" class="overlay finish-overlay">
+        <div class="overlay-card finish-card">
+          <div class="finish-back-shine"></div>
+
+          <div class="finish-badge" id="finishBadge">Finish</div>
+          <h2 id="finishTitle">Run Complete</h2>
+          <p id="finishDesc" class="finish-desc hidden"></p>
+
+          <div class="finish-hero-stars" id="finishHeroStars">
+            <div class="finish-star-label">Stars gained</div>
+            <div class="finish-star-value">
+              <span class="finish-star-plus">+</span>
+              <span id="finishStarsBig">0</span>
+              <span class="finish-star-icon">★</span>
+            </div>
+          </div>
+
+          <div class="result-grid finish-result-grid">
+            <div class="result-item">
+              <span class="result-k">Cleared</span>
+              <span id="finalCleared" class="result-v">0</span>
+            </div>
+            <div class="result-item">
+              <span class="result-k">Stars</span>
+              <span id="finalStars" class="result-v">0</span>
+            </div>
+          </div>
+
+          <div class="finish-actions finish-actions-top">
+            <button id="restartBtnOverlay" class="main-btn start-overlay-btn">Play Again</button>
+            <button id="finishCloseBtn" class="secondary-btn finish-close-btn">Close</button>
+          </div>
+
+          <div class="finish-actions finish-actions-bottom">
+            <a id="openRankingBtn" class="main-btn ranking-link-btn" href="/ranking/">Open Ranking</a>
+          </div>
         </div>
       </div>
     </section>
@@ -102,12 +133,6 @@
         />
         <button id="submitBtn" class="submit-btn">Submit</button>
       </div>
-
-      <div class="bottom-meta">
-        <div class="info-chip">Reward <span id="starReward">1</span></div>
-        <div class="info-chip">Op <span id="selectedOp">+</span></div>
-        <div id="message" class="message">Choose an operation and press Start.</div>
-      </div>
     </section>
   </div>
 </div>
@@ -116,5 +141,5 @@
 {% block footer %}{% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'game/js/math_rain.js' %}"></script>
+<script src="{% static 'game/js/math_rain.js' %}?v=fit_finish_v6"></script>
 {% endblock %}
