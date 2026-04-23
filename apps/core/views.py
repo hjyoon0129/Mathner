@@ -8,6 +8,16 @@ from django.views.decorators.http import require_POST
 
 from apps.core.models import UserGameProfile, DEFAULT_DAILY_KEYS
 from apps.avatar.models import UserAvatarProfile
+from django.http import HttpResponse
+
+def robots_txt(request):
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Sitemap: https://mathner.com/sitemap.xml",
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
+
 
 
 ACTIVE_RUN_SESSION_KEY = "active_math_run_consumed"
