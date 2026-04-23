@@ -29,6 +29,7 @@
 .play-page{
   color:var(--play-text);
   min-height:100vh;
+  min-height:100dvh;
   background:
     radial-gradient(1000px 520px at 12% -6%, rgba(122,167,255,.22), transparent 60%),
     radial-gradient(900px 460px at 92% 4%, rgba(65,230,166,.15), transparent 58%),
@@ -135,11 +136,13 @@
   box-shadow:0 18px 38px rgba(77,123,255,.28), inset 0 1px 0 rgba(255,255,255,.16);
 }
 
-.play-page #btnReset.secondary{
+.play-page #btnReset.secondary,
+.play-page #btnMobileReset.secondary{
   border-color:rgba(255,130,164,.20);
 }
 
-.play-page #btnReset.secondary:hover{
+.play-page #btnReset.secondary:hover,
+.play-page #btnMobileReset.secondary:hover{
   border-color:rgba(255,130,164,.34);
 }
 
@@ -398,6 +401,7 @@
 }
 
 .play-page .bar{
+
   margin-top:14px;
   height:10px;
   border-radius:999px;
@@ -505,6 +509,109 @@
   font-size:18px;
   border-radius:20px;
   padding:14px 18px;
+}
+
+/* 모바일 커스텀 숫자패드 */
+.play-page .mobilePadWrap{
+  display:none;
+}
+
+.play-page .mobilePad{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:8px;
+  margin-top:12px;
+  position:relative;
+  z-index:2;
+}
+
+.play-page .mobilePadBtn{
+  min-height:48px;
+  border-radius:16px;
+  border:1px solid rgba(150,190,255,.16);
+  background:linear-gradient(180deg, rgba(18,28,46,.96), rgba(11,18,31,.98));
+  color:#f7fbff;
+  font-size:20px;
+  font-weight:1100;
+  cursor:pointer;
+  box-shadow:0 10px 22px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+.play-page .mobilePadBtn:active{
+  transform:scale(.98);
+}
+
+.play-page .mobilePadBtnUtil{
+  color:#cfe0ff;
+  font-size:18px;
+}
+
+.play-page .mobilePadBtn:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+  transform:none;
+}
+
+.play-page .mobileActionRow{
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr;
+  gap:8px;
+  margin-top:8px;
+  position:relative;
+  z-index:2;
+}
+
+.play-page .mobileActionBtn{
+  width:100%;
+  min-width:0;
+  min-height:44px;
+  height:44px;
+  border-radius:14px;
+  padding:6px 6px;
+  font-size:13px;
+  font-weight:1000;
+  white-space:nowrap;
+}
+
+.play-page #btnMobileStart{
+  grid-column:1 / 2;
+}
+
+.play-page #btnMobileReset{
+  grid-column:2 / 3;
+}
+
+.play-page #btnMobileBackToSetup{
+  grid-column:3 / 4;
+}
+
+.play-page .mobileTimerBtn{
+  border:1px solid var(--play-line);
+  background:#101b2e;
+  color:#dfe9ff;
+  border-radius:14px;
+  min-height:44px;
+  padding:8px 10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:2px;
+  box-shadow:0 10px 22px rgba(0,0,0,.18);
+}
+
+.play-page .mobileActionLabel{
+  font-size:11px;
+  line-height:1;
+  color:#9fb8e8;
+  font-weight:900;
+}
+
+.play-page .mobileActionValue{
+  font-size:16px;
+  line-height:1;
+  color:#ffffff;
+  font-weight:1100;
 }
 
 .play-page .play-hud-strip{
@@ -1031,7 +1138,6 @@
   flex:1 1 auto;
 }
 
-/* result */
 .play-page .resultPanel{
   display:grid;
   grid-template-columns:repeat(3, minmax(0, 1fr));
@@ -1197,7 +1303,6 @@
   word-break:break-word;
 }
 
-/* friend ranking 3 cards: above / me / below */
 .play-page .resultRankNeighbors{
   display:flex;
   flex-direction:column;
@@ -1299,9 +1404,6 @@
   border:1px solid rgba(0,0,0,.10);
 }
 
-
-
-/* hide extra info and keep rank + nickname only */
 .play-page .resultRankNeighborCard .sub,
 .play-page .resultRankNeighborCard small,
 .play-page .resultRankNeighborCard .meta,
@@ -1716,7 +1818,7 @@
   }
 
   .play-page .status-body{
-    gap:10px;
+    gap:8px;
     padding:8px;
   }
 
@@ -1725,21 +1827,34 @@
     border-radius:18px;
   }
 
+  /* 모바일 아바타 살짝 축소 */
   .play-page .status-avatar-canvas{
-    width:min(100%, 238px);
-    height:260px;
-    border-radius:22px;
+    width:min(100%, 208px);
+    height:228px;
+    border-radius:20px;
   }
 
   .play-page .status-avatar-stack{
-    left:7%;
-    top:7%;
-    width:84%;
-    height:86%;
+    left:8%;
+    top:8%;
+    width:80%;
+    height:82%;
+  }
+
+  .play-page .status-avatar-ground-aura{
+    width:160px;
+    height:56px;
+    bottom:12px;
+  }
+
+  .play-page .status-avatar-ground{
+    width:132px;
+    height:20px;
+    bottom:10px;
   }
 
   .play-page .status-avatar-name{
-    font-size:22px;
+    font-size:18px;
     margin-top:2px;
   }
 
@@ -1839,52 +1954,17 @@
     min-width:0;
   }
 
+  /* 모바일에서는 상단 타이머/액션 숨기고 하단 액션 사용 */
   .play-page .gameTop{
-    display:grid;
-    grid-template-columns:repeat(3, minmax(0, 1fr));
-    align-items:stretch;
-    gap:8px;
-  }
-
-  .play-page .timerBox{
-    width:100%;
-    min-width:0;
-    padding:10px 8px;
-    border-radius:14px;
-    gap:6px;
-    justify-content:center;
-  }
-
-  .play-page .timerBox .sub{
     display:none !important;
   }
 
-  .play-page .timerRing{
-    width:16px;
-    height:16px;
-    box-shadow:0 0 0 4px rgba(54,226,163,.10);
-  }
-
-  .play-page .timerText{
-    font-size:13px;
+  .play-page .timerBox{
+    display:none !important;
   }
 
   .play-page .top-actions{
-    grid-column:2 / 4;
-    width:100%;
-    margin-left:0;
-    display:grid;
-    grid-template-columns:repeat(2, minmax(0, 1fr));
-    gap:8px;
-  }
-
-  .play-page .top-actions .btn{
-    width:100%;
-    min-width:0;
-    min-height:44px;
-    border-radius:14px;
-    padding:10px 6px;
-    font-size:13px;
+    display:none !important;
   }
 
   .play-page .bar{
@@ -1907,7 +1987,7 @@
 
   .play-page .answerRow{
     display:grid;
-    grid-template-columns:minmax(0, 1.25fr) minmax(0, .9fr);
+    grid-template-columns:minmax(0, 1.2fr) minmax(0, .8fr);
     gap:8px;
     margin-top:15px;
     align-items:stretch;
@@ -1942,6 +2022,79 @@
     padding:4px 10px;
   }
 
+  .play-page .mobilePadWrap{
+    display:block;
+    margin-top:10px;
+  }
+
+  /* 숫자패드 4열 3줄 */
+  .play-page .mobilePad{
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+    gap:8px;
+    margin-top:10px;
+  }
+
+  .play-page .mobilePadBtn{
+    min-height:48px;
+    border-radius:14px;
+    font-size:20px;
+    padding:0;
+  }
+
+  .play-page .mobilePadBtnUtil{
+    font-size:17px;
+  }
+
+  /* 하단 액션: 초 / 리셋 / 스타트 / 셋팅 */
+  /* 하단 액션: Start(2칸) / Reset / Settings */
+  .play-page .mobileActionRow{
+    display:grid;
+    grid-template-columns:2fr 1fr 1fr;
+    gap:8px;
+    margin-top:8px;
+    position:relative;
+    z-index:2;
+  }
+
+  .play-page .mobileActionBtn{
+    width:100%;
+    min-width:0;
+    min-height:44px;
+    height:44px;
+    border-radius:14px;
+    padding:6px 6px;
+    font-size:13px;
+    font-weight:1000;
+    white-space:nowrap;
+  }
+
+  .play-page #btnMobileStart{
+    grid-column:1 / 2;
+  }
+
+  .play-page #btnMobileReset{
+    grid-column:2 / 3;
+  }
+
+  .play-page #btnMobileBackToSetup{
+    grid-column:3 / 4;
+  }
+
+  .play-page .mobileTimerBtn{
+    height:44px;
+    min-height:44px;
+    padding:4px 6px;
+    gap:1px;
+  }
+
+  .play-page .mobileActionLabel{
+    font-size:10px;
+  }
+
+  .play-page .mobileActionValue{
+    font-size:15px;
+  }
+
   .play-page .play-hud-strip,
   .play-page .feverDock,
   .play-page .msg{
@@ -1968,10 +2121,7 @@
   }
 
   .play-page #btnBackToSetup{
-    width:100%;
-    min-height:48px;
-    border-radius:16px;
-    margin-top:2px;
+    display:none !important;
   }
 
   .play-page .modal{

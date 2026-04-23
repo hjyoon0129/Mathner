@@ -423,6 +423,7 @@ header.navbar{
   display:grid;
   grid-template-columns:1fr;
   gap:10px;
+  align-items:stretch;
 }
 
 .side-tab-btn{
@@ -441,6 +442,19 @@ header.navbar{
   text-decoration:none;
   box-sizing:border-box;
   transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+  vertical-align:middle;
+}
+
+.side-tab-grid .side-tab-btn,
+.side-tab-grid a.side-tab-btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
 }
 
 .side-tab-btn:hover{
@@ -727,7 +741,8 @@ header.navbar{
   }
 
   .avatar-layout,
-  .avatar-layout-room{
+  .avatar-layout-room,
+  .avatar-layout.is-editing{
     display:flex !important;
     flex-direction:column !important;
     gap:12px !important;
@@ -735,48 +750,58 @@ header.navbar{
     padding:0 !important;
   }
 
+  /* 모바일에서는 컬럼을 풀어서 카드 순서를 직접 제어 */
   .avatar-col-main,
   .avatar-col-side{
-    display:flex !important;
-    flex-direction:column !important;
-    gap:12px !important;
+    display:contents !important;
     width:100% !important;
     margin:0 !important;
     padding:0 !important;
     min-width:0 !important;
   }
 
+  /* 순서: 아바타 스태이터스 -> 버튼 -> 내용 -> 방문 */
+  .avatar-hero-card{
+    order:1 !important;
+  }
+
+  .avatar-tab-card{
+    order:2 !important;
+  }
+
+  .avatar-stage-content-card{
+    order:3 !important;
+  }
+
+  .avatar-side-edit{
+    order:3 !important;
+  }
+
+  .utility-card-visit{
+    order:4 !important;
+  }
+
   .avatar-side-stack{
+    display:contents !important;
     position:static !important;
     height:auto !important;
   }
 
-  .avatar-side-edit{
-    display:none !important;
-    width:100% !important;
-    margin:0 !important;
-    padding:0 !important;
-    max-width:none !important;
-  }
-
-  .avatar-layout.is-editing{
-    display:flex !important;
-    flex-direction:column !important;
-    gap:12px !important;
-    align-items:stretch !important;
-  }
-
+  /* 모바일 edit 모드에서도 버튼 유지 */
   .avatar-layout.is-editing .avatar-col-main{
-    display:flex !important;
-    flex-direction:column !important;
+    display:contents !important;
   }
 
   .avatar-layout.is-editing .avatar-col-side{
-    display:none !important;
+    display:contents !important;
   }
 
   .avatar-layout.is-editing .avatar-side-edit{
     display:block !important;
+    width:100% !important;
+    margin:0 !important;
+    padding:0 !important;
+    max-width:none !important;
   }
 
   .avatar-card{
@@ -836,13 +861,30 @@ header.navbar{
   .side-tab-grid{
     grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
     gap:10px !important;
+    align-items:stretch !important;
   }
 
-  .side-tab-btn{
+  .side-tab-btn,
+  .side-tab-grid a.side-tab-btn{
     min-height:48px !important;
     border-radius:16px !important;
     font-size:12px !important;
     padding:10px 10px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    text-align:center !important;
+    line-height:1 !important;
+    vertical-align:middle !important;
+  }
+
+  .avatar-stage-content-card.is-visible{
+    display:block !important;
+    margin-top:0 !important;
+  }
+
+  .avatar-card.avatar-tab-card{
+    margin-bottom:0 !important;
   }
 
   .visit-friend-box .avatar-select{
@@ -853,6 +895,7 @@ header.navbar{
     min-height:48px !important;
   }
 }
+
 /* =========================
    UNIQUE AURA - FULL BODY FLOAT TYPE
 ========================= */
@@ -881,13 +924,11 @@ header.navbar{
   height:92%;
 }
 
-/* 링 제거 */
 .avatar-unique-ring,
 .avatar-unique-ring-alt{
   display:none !important;
 }
 
-/* 중심 후광도 아주 약하게 */
 .avatar-unique-halo{
   position:absolute;
   left:50%;
@@ -901,7 +942,6 @@ header.navbar{
   animation:avatarUniqueBodyGlow 3s ease-in-out infinite;
 }
 
-/* 공통 */
 .avatar-unique-spark,
 .avatar-unique-float{
   position:absolute;
@@ -909,7 +949,6 @@ header.navbar{
   border-radius:50%;
 }
 
-/* 근처에 떠다니는 스파클 */
 .avatar-unique-spark{
   width:10px;
   height:10px;
@@ -937,7 +976,6 @@ header.navbar{
   animation-delay:1.35s;
 }
 
-/* 아래서 위로 올라가는 메인 파티클 */
 .avatar-unique-float{
   width:8px;
   height:8px;
@@ -961,7 +999,6 @@ header.navbar{
   animation-delay:2s;
 }
 
-/* 전신 전체에 흩뿌려지는 파티클 레이어 */
 .avatar-unique-aura::before,
 .avatar-unique-aura::after{
   content:"";
@@ -980,7 +1017,6 @@ header.navbar{
   animation:avatarParticleCloudB 5s ease-in-out infinite;
 }
 
-/* gold */
 .avatar-unique-aura--gold .avatar-unique-halo{
   background:
     radial-gradient(ellipse at center,
@@ -1046,7 +1082,6 @@ header.navbar{
     16% 60%;
 }
 
-/* holy */
 .avatar-unique-aura--holy .avatar-unique-halo{
   background:
     radial-gradient(ellipse at center,
@@ -1089,7 +1124,6 @@ header.navbar{
     18% 78%;
 }
 
-/* fire */
 .avatar-unique-aura--fire .avatar-unique-halo{
   background:
     radial-gradient(ellipse at center,
@@ -1132,7 +1166,6 @@ header.navbar{
     18% 82%;
 }
 
-/* ice */
 .avatar-unique-aura--ice .avatar-unique-halo{
   background:
     radial-gradient(ellipse at center,
@@ -1175,7 +1208,6 @@ header.navbar{
     18% 80%;
 }
 
-/* shadow */
 .avatar-unique-aura--shadow .avatar-unique-halo{
   background:
     radial-gradient(ellipse at center,
@@ -1219,7 +1251,6 @@ header.navbar{
     18% 82%;
 }
 
-/* rainbow */
 .avatar-unique-aura--rainbow .avatar-unique-halo{
   background:
     radial-gradient(ellipse at center,
@@ -1352,6 +1383,7 @@ header.navbar{
     transform:translateY(-42px);
   }
 }
+
 .avatar-unique-aura--robe{
   position:absolute;
   inset:0;

@@ -93,6 +93,14 @@ document.addEventListener("DOMContentLoaded", function () {
     return item?.room_url || `${friendAvatarBase}${username}/`;
   }
 
+  function getFriendshipStatus(item) {
+    return String(item?.friendship_status || "none").trim();
+  }
+
+  function getFriendshipDirection(item) {
+    return String(item?.friendship_direction || "none").trim();
+  }
+
   async function fetchJson(url) {
     try {
       const res = await fetch(url, {
@@ -174,7 +182,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     items.forEach((item) => {
       const displayName = getDisplayName(item);
-      const username = getUsername(item);
       const roomUrl = getRoomUrl(item);
 
       const card = document.createElement("div");
@@ -193,8 +200,8 @@ document.addEventListener("DOMContentLoaded", function () {
         </div>
         <div class="friend-request-actions">
           <a href="${roomUrl}" class="social-btn social-btn-secondary">Visit</a>
-          <button type="button" class="social-btn social-btn-primary friend-accept-btn" data-id="${item.id}" data-username="${escapeHtml(username)}">Accept</button>
-          <button type="button" class="social-btn social-btn-secondary friend-reject-btn" data-id="${item.id}" data-username="${escapeHtml(username)}">Reject</button>
+          <button type="button" class="social-btn social-btn-primary friend-accept-btn" data-id="${item.id}">Accept</button>
+          <button type="button" class="social-btn social-btn-secondary friend-reject-btn" data-id="${item.id}">Reject</button>
         </div>
       `;
       wrap.appendChild(card);
@@ -275,15 +282,19 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function buildFriendActionHtml(item, username) {
-    const isFriend = item.friendship_status === "accepted";
-    const isPending = item.friendship_status === "pending";
+    const status = getFriendshipStatus(item);
+    const direction = getFriendshipDirection(item);
 
-    if (isFriend) {
+    if (status === "accepted") {
       return `<span class="mini-pill is-warm">Friend</span>`;
     }
 
-    if (isPending) {
+    if (status === "pending" && direction === "outgoing") {
       return `<button type="button" class="social-btn social-btn-secondary directory-add-friend-btn is-pending" data-username="${escapeHtml(username)}">Cancel</button>`;
+    }
+
+    if (status === "pending" && direction === "incoming") {
+      return `<button type="button" class="social-btn social-btn-primary directory-add-friend-btn is-incoming" data-username="${escapeHtml(username)}">Accept</button>`;
     }
 
     return `<button type="button" class="social-btn social-btn-secondary directory-add-friend-btn" data-username="${escapeHtml(username)}">Add Friend</button>`;
@@ -351,7 +362,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const wrap = document.getElementById("roomDirectoryList");
     if (!socialRoomListUrl) return;
 
-    currentSearchQuery = query || "";
+    currentSearchQuery = (query || "").trim();
 
     if (!force && roomDirectoryLoaded && currentSearchQuery === "") return;
 
@@ -359,7 +370,11 @@ document.addEventListener("DOMContentLoaded", function () {
       wrap.innerHTML = `<div class="empty-text">Loading list...</div>`;
     }
 
-    const result = await fetchJson(socialRoomListUrl);
+    const url = currentSearchQuery
+      ? `${socialRoomListUrl}?q=${encodeURIComponent(currentSearchQuery)}`
+      : socialRoomListUrl;
+
+    const result = await fetchJson(url);
     if (!result.ok) {
       if (wrap) {
         wrap.innerHTML = `<div class="empty-text">${escapeHtml(result.error || "Failed to load users.")}</div>`;
@@ -367,18 +382,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    let rooms = result.rooms || [];
-
-    if (currentSearchQuery) {
-      const q = currentSearchQuery.toLowerCase();
-      rooms = rooms.filter((item) => {
-        const displayName = String(getDisplayName(item)).toLowerCase();
-        const username = String(getUsername(item)).toLowerCase();
-        return displayName.includes(q) || username.includes(q);
-      });
-    }
-
-    renderRoomDirectory(rooms);
+    renderRoomDirectory(result.rooms || []);
 
     if (currentSearchQuery === "") {
       roomDirectoryLoaded = true;

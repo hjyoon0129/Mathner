@@ -5,6 +5,7 @@ from collections import OrderedDict
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_GET, require_POST
@@ -12,6 +13,7 @@ from django.views.decorators.http import require_GET, require_POST
 from apps.avatar.models import RoomItemPlacement, UserAvatarProfile, UserRoomProfile
 from apps.core.models import UserGameProfile
 from apps.shop.models import UserFontPreference, UserOwnedItem, UserOwnedEffect
+from apps.social.models import Friendship
 
 
 User = get_user_model()
@@ -586,6 +588,43 @@ def _group_owned_effects(user):
     return list(grouped.values())
 
 
+def _friendship_state_between(me, target_user):
+    if not me or not getattr(me, "is_authenticated", False) or not target_user or me.id == target_user.id:
+        return {
+            "friendship_id": "",
+            "friendship_status": "none",
+            "friendship_direction": "none",
+        }
+
+    friendship = (
+        Friendship.objects
+        .filter(
+            Q(from_user=me, to_user=target_user) |
+            Q(from_user=target_user, to_user=me)
+        )
+        .order_by("-updated_at", "-id")
+        .first()
+    )
+
+    if not friendship:
+        return {
+            "friendship_id": "",
+            "friendship_status": "none",
+            "friendship_direction": "none",
+        }
+
+    if friendship.status == Friendship.STATUS_ACCEPTED:
+        direction = "none"
+    else:
+        direction = "outgoing" if friendship.from_user_id == me.id else "incoming"
+
+    return {
+        "friendship_id": friendship.id,
+        "friendship_status": friendship.status,
+        "friendship_direction": direction,
+    }
+
+
 def _build_room_context(room_owner, request_user=None):
     avatar_profile = _get_avatar_profile(room_owner)
     room_profile = _get_room_profile(room_owner)
@@ -610,6 +649,8 @@ def _build_room_context(room_owner, request_user=None):
     inventory_items = _group_owned_items(room_owner) if is_owner else []
     owned_effect_items = _group_owned_effects(room_owner) if is_owner else []
 
+    friendship_info = _friendship_state_between(request_user, room_owner)
+
     return {
         "room_owner": room_owner,
         "room_owner_name": _get_display_name(room_owner),
@@ -630,6 +671,10 @@ def _build_room_context(room_owner, request_user=None):
         "font_pref_json": json.dumps(owner_font_pref, ensure_ascii=False),
         "room_owner_font_pref_json": json.dumps(owner_font_pref, ensure_ascii=False),
         "viewer_font_pref_json": json.dumps(viewer_font_pref, ensure_ascii=False),
+
+        "friendship_id": friendship_info["friendship_id"],
+        "friendship_status": friendship_info["friendship_status"],
+        "friendship_direction": friendship_info["friendship_direction"],
     }
 
 

@@ -136,14 +136,39 @@
                                 <input
                                     id="answerInput"
                                     class="answerInput"
-                                    type="number"
+                                    type="text"
                                     inputmode="numeric"
-                                    pattern="[0-9-]*"
+                                    pattern="[0-9]*"
                                     placeholder="Type your answer"
                                     autocomplete="off"
                                     disabled
                                 >
                                 <button class="btn submitBtn" id="btnSubmit" type="button" disabled>Submit</button>
+                            </div>
+
+                            <div class="mobilePadWrap" id="mobilePadWrap" aria-hidden="true">
+                                <div class="mobilePad" id="mobilePad">
+                                    <button type="button" class="mobilePadBtn" data-pad="1">1</button>
+                                    <button type="button" class="mobilePadBtn" data-pad="2">2</button>
+                                    <button type="button" class="mobilePadBtn" data-pad="3">3</button>
+                                    <button type="button" class="mobilePadBtn mobilePadBtnUtil" data-pad="back">⌫</button>
+
+                                    <button type="button" class="mobilePadBtn" data-pad="4">4</button>
+                                    <button type="button" class="mobilePadBtn" data-pad="5">5</button>
+                                    <button type="button" class="mobilePadBtn" data-pad="6">6</button>
+                                    <button type="button" class="mobilePadBtn mobilePadBtnUtil" data-pad="clear">C</button>
+
+                                    <button type="button" class="mobilePadBtn" data-pad="7">7</button>
+                                    <button type="button" class="mobilePadBtn" data-pad="8">8</button>
+                                    <button type="button" class="mobilePadBtn" data-pad="9">9</button>
+                                    <button type="button" class="mobilePadBtn" data-pad="0">0</button>
+                                </div>
+
+                                <div class="mobileActionRow">
+                                    <button class="btn mobileActionBtn mobileStartWide" id="btnMobileStart" type="button">Start</button>
+                                    <button class="btn secondary mobileActionBtn" id="btnMobileReset" type="button">Reset</button>
+                                    <button class="btn secondary mobileActionBtn" id="btnMobileBackToSetup" type="button">Settings</button>
+                                </div>
                             </div>
 
                             <div class="play-hud-strip">
@@ -381,5 +406,5 @@
     username: "{{ username|default:''|escapejs }}"
   };
 </script>
-<script src="{% static 'game/js/aura_play.js' %}?v=20260410_ranking_mode_fix_1"></script>
+<script src="{% static 'game/js/aura_play.js' %}?v=20260419_mobilepad_2"></script>
 {% endblock %}

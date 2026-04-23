@@ -74,12 +74,20 @@ const navKeyCount = document.getElementById("navKeyCount");
 
 const timerRing = document.getElementById("timerRing");
 const timeLeftEl = document.getElementById("timeLeft");
+const mobileTimeLeftEl = document.getElementById("mobileTimeLeft");
 const playDesc = document.getElementById("playDesc");
 const mathText = document.getElementById("mathText");
 const answerInput = document.getElementById("answerInput");
 const btnSubmit = document.getElementById("btnSubmit");
 const btnStart = document.getElementById("btnStart");
 const btnReset = document.getElementById("btnReset");
+
+const btnMobileStart = document.getElementById("btnMobileStart");
+const btnMobileReset = document.getElementById("btnMobileReset");
+const btnMobileBackToSetup = document.getElementById("btnMobileBackToSetup");
+
+const mobilePadWrap = document.getElementById("mobilePadWrap");
+const mobilePad = document.getElementById("mobilePad");
 
 const scoreEl = document.getElementById("score");
 const correctEl = document.getElementById("correct");
@@ -138,6 +146,7 @@ let finalizing = false;
 let leavingInProgress = false;
 let runStartedOnServer = false;
 let runSaved = false;
+let activeRunIsGuest = false;
 
 let questionA = 0;
 let questionB = 0;
@@ -181,6 +190,10 @@ let rankBelowValueEl = null;
 
 function isMobilePlayUI() {
   return window.matchMedia("(max-width: 640px)").matches;
+}
+
+function isAuthenticatedUser() {
+  return Boolean(PAGE_CFG.isAuthenticated);
 }
 
 function clamp(n, min, max) {
@@ -252,6 +265,23 @@ function renderTopStatus() {
   if (statKeys) statKeys.textContent = keys;
   if (navStarCount) navStarCount.textContent = stars;
   if (navKeyCount) navKeyCount.textContent = keys;
+}
+
+function syncStartButtons() {
+  const disabled = Boolean(btnStart?.disabled);
+
+  if (btnMobileStart) {
+    btnMobileStart.disabled = disabled;
+    btnMobileStart.textContent = btnStart ? btnStart.textContent : "Start";
+  }
+}
+
+function syncResetButtons() {
+  const disabled = Boolean(btnReset?.disabled);
+
+  if (btnMobileReset) {
+    btnMobileReset.disabled = disabled;
+  }
 }
 
 function clearLandingTimer() {
@@ -548,17 +578,25 @@ function goPlayScreen() {
   renderRight();
   renderTopStatus();
   syncRankingLinks();
+  updateMobileInputMode();
 }
 
 function updateTimerUI() {
   const total = 60;
   const safeTimeLeft = clamp(Number(timeLeft) || 0, 0, total);
-  const pct = clamp(safeTimeLeft / total, 0, 1);
-  const deg = Math.floor(pct * 360);
+  const pct = clamp((safeTimeLeft / total) * 100, 0, 100);
+  const deg = Math.floor((safeTimeLeft / total) * 360);
 
   if (timeLeftEl) timeLeftEl.textContent = String(safeTimeLeft);
+  if (mobileTimeLeftEl) mobileTimeLeftEl.textContent = String(safeTimeLeft);
+
   if (timerRing) {
-    timerRing.style.background = `conic-gradient(var(--play-good, #36e2a3) ${deg}deg, rgba(255,255,255,.15) 0deg)`;
+    timerRing.style.background =
+      `conic-gradient(var(--play-good, #36e2a3) ${deg}deg, rgba(255,255,255,.15) 0deg)`;
+  }
+
+  if (progressFill) {
+    progressFill.style.width = `${pct}%`;
   }
 }
 
@@ -644,6 +682,22 @@ function resetRankResultUI() {
   if (rankBelowValueEl) rankBelowValueEl.textContent = "-";
 }
 
+function updateMobileInputMode() {
+  if (!answerInput) return;
+
+  if (isMobilePlayUI()) {
+    answerInput.readOnly = true;
+    answerInput.setAttribute("readonly", "readonly");
+    answerInput.setAttribute("inputmode", "none");
+    if (mobilePadWrap) mobilePadWrap.setAttribute("aria-hidden", "false");
+  } else {
+    answerInput.readOnly = false;
+    answerInput.removeAttribute("readonly");
+    answerInput.setAttribute("inputmode", "numeric");
+    if (mobilePadWrap) mobilePadWrap.setAttribute("aria-hidden", "true");
+  }
+}
+
 function resetGameUI() {
   score = 0;
   correct = 0;
@@ -656,7 +710,10 @@ function resetGameUI() {
 
   runStartedOnServer = false;
   runSaved = false;
+  activeRunIsGuest = false;
   running = false;
+  finalizing = false;
+  leavingInProgress = false;
 
   if (timerId) {
     clearInterval(timerId);
@@ -679,15 +736,25 @@ function resetGameUI() {
   }
 
   if (btnSubmit) btnSubmit.disabled = true;
+
   if (btnStart) {
     btnStart.disabled = false;
     btnStart.textContent = "Start";
   }
 
+  if (btnReset) {
+    btnReset.disabled = false;
+  }
+
+  syncStartButtons();
+  syncResetButtons();
+
   setMessage("Press start 🙂");
   updateTimerUI();
   stopAuraCompletely();
   updateFeverUI();
+  updateMobileInputMode();
+  updateMobilePadState();
 }
 
 function weightedRandomOperation() {
@@ -874,8 +941,14 @@ function nextQuestion() {
 
   if (answerInput) {
     answerInput.value = "";
-    answerInput.focus();
+    if (!isMobilePlayUI()) {
+      answerInput.focus();
+    } else {
+      answerInput.blur();
+    }
   }
+
+  updateMobilePadState();
 }
 
 function getFeverStarBonus(comboCount) {
@@ -998,7 +1071,7 @@ function buildFinalizePayload(reason) {
 }
 
 async function recordRankingRun() {
-  if (!PAGE_CFG.isAuthenticated || !PAGE_CFG.rankingRecordUrl) return;
+  if (!isAuthenticatedUser() || !PAGE_CFG.rankingRecordUrl) return;
 
   try {
     await fetch(PAGE_CFG.rankingRecordUrl, {
@@ -1027,7 +1100,7 @@ async function recordRankingRun() {
 async function loadFriendNearbyRank() {
   resetRankResultUI();
 
-  if (!PAGE_CFG.isAuthenticated) {
+  if (!isAuthenticatedUser()) {
     if (rMyFriendRank) rMyFriendRank.textContent = "Login required";
     setMyScoreDisplay("-");
     if (rankAboveValueEl) rankAboveValueEl.textContent = "Friend ranking is available after login.";
@@ -1146,31 +1219,15 @@ async function startRunOnServer() {
   renderTopStatus();
 }
 
-async function startGame() {
-  if (running || finalizing) return;
+function startLocalGuestRun() {
+  remainingKeys = Math.max(0, remainingKeys - 1);
+  activeRunIsGuest = true;
+  runStartedOnServer = false;
+  runSaved = false;
+  renderTopStatus();
+}
 
-  if (remainingKeys <= 0) {
-    setMessage("No keys left today.", "bad");
-    openKeyExhaustedModal();
-    return;
-  }
-
-  if (btnStart) {
-    btnStart.disabled = true;
-    btnStart.textContent = "Starting...";
-  }
-
-  try {
-    await startRunOnServer();
-  } catch (error) {
-    setMessage(error.message || "Failed to start run.", "bad");
-    if (btnStart) {
-      btnStart.disabled = false;
-      btnStart.textContent = "Start";
-    }
-    return;
-  }
-
+function applyRunStartedUI() {
   running = true;
   leavingInProgress = false;
   runSaved = false;
@@ -1193,16 +1250,33 @@ async function startGame() {
   if (comboCountEl) comboCountEl.textContent = "0";
   if (progressFill) progressFill.style.width = "0%";
 
-  if (answerInput) answerInput.disabled = false;
+  if (answerInput) {
+    answerInput.disabled = false;
+    answerInput.value = "";
+  }
+
   if (btnSubmit) btnSubmit.disabled = false;
+
   if (btnStart) {
     btnStart.disabled = true;
     btnStart.textContent = "Running";
   }
 
+  if (btnReset) {
+    btnReset.disabled = false;
+  }
+
+  syncStartButtons();
+  syncResetButtons();
+
   updateTimerUI();
   updateFeverUI();
-  setMessage("Game started! Build combo to awaken the wind aura.");
+
+  const startMsg = activeRunIsGuest
+    ? "Game started! Guest mode is running with local key usage."
+    : "Game started! Build combo to awaken the wind aura.";
+
+  setMessage(startMsg);
   nextQuestion();
 
   if (timerId) clearInterval(timerId);
@@ -1215,6 +1289,44 @@ async function startGame() {
       finalizeRun("timeout");
     }
   }, 1000);
+
+  updateMobilePadState();
+}
+
+async function startGame() {
+  if (running || finalizing) return;
+
+  if (remainingKeys <= 0) {
+    setMessage("No keys left today.", "bad");
+    openKeyExhaustedModal();
+    return;
+  }
+
+  if (btnStart) {
+    btnStart.disabled = true;
+    btnStart.textContent = isAuthenticatedUser() ? "Starting..." : "Running";
+  }
+  syncStartButtons();
+
+  if (isAuthenticatedUser()) {
+    activeRunIsGuest = false;
+
+    try {
+      await startRunOnServer();
+    } catch (error) {
+      setMessage(error.message || "Failed to start run.", "bad");
+      if (btnStart) {
+        btnStart.disabled = false;
+        btnStart.textContent = "Start";
+      }
+      syncStartButtons();
+      return;
+    }
+  } else {
+    startLocalGuestRun();
+  }
+
+  applyRunStartedUI();
 }
 
 function submitAnswer() {
@@ -1223,7 +1335,7 @@ function submitAnswer() {
   const val = answerInput.value.trim();
   if (val === "") {
     setMessage("Type an answer 🙂");
-    answerInput.focus();
+    if (!isMobilePlayUI()) answerInput.focus();
     return;
   }
 
@@ -1262,18 +1374,117 @@ function submitAnswer() {
   if (earnedStarsEl) earnedStarsEl.textContent = String(earnedStars);
   if (comboCountEl) comboCountEl.textContent = String(combo);
 
-  const pct = clamp((asked / goal) * 100, 0, 100);
-  if (progressFill) progressFill.style.width = `${pct}%`;
+
 
   updateFeverUI();
 
   if (running) nextQuestion();
 }
 
+function appendAnswerDigit(digit) {
+  if (!answerInput || answerInput.disabled || !running) return;
+  if (String(answerInput.value).length >= 4) return;
+  answerInput.value = `${answerInput.value}${digit}`;
+  updateMobilePadState();
+}
+
+function backspaceAnswerDigit() {
+  if (!answerInput || answerInput.disabled || !running) return;
+  answerInput.value = String(answerInput.value).slice(0, -1);
+  updateMobilePadState();
+}
+
+function clearAnswerDigits() {
+  if (!answerInput || answerInput.disabled || !running) return;
+  answerInput.value = "";
+  updateMobilePadState();
+}
+
+function updateMobilePadState() {
+  if (!mobilePad) return;
+
+  const disabled = !running || finalizing || !answerInput || answerInput.disabled;
+  mobilePad.querySelectorAll("[data-pad]").forEach((btn) => {
+    btn.disabled = disabled;
+  });
+}
+
+function bindMobilePad() {
+  if (!mobilePad) return;
+
+  mobilePad.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-pad]");
+    if (!btn) return;
+
+    const key = btn.getAttribute("data-pad");
+    if (!key) return;
+
+    if (key === "clear") {
+      clearAnswerDigits();
+      return;
+    }
+
+    if (key === "back") {
+      backspaceAnswerDigit();
+      return;
+    }
+
+    appendAnswerDigit(key);
+  });
+
+  if (answerInput) {
+    answerInput.addEventListener("click", (e) => {
+      if (isMobilePlayUI()) {
+        e.preventDefault();
+        answerInput.blur();
+      }
+    });
+
+    answerInput.addEventListener("focus", () => {
+      if (isMobilePlayUI()) {
+        answerInput.blur();
+      }
+    });
+  }
+}
+
+function openResultModal(reason) {
+  const total = correct + wrong;
+  const acc = total === 0 ? 0 : Math.round((correct / total) * 100);
+
+  resetRankResultUI();
+
+  if (rCorrect) rCorrect.textContent = String(correct);
+  if (rWrong) rWrong.textContent = String(wrong);
+  if (rAcc) rAcc.textContent = `${acc}%`;
+  if (rStars) rStars.textContent = String(earnedStars);
+  if (rCombo) rCombo.textContent = String(bestCombo);
+  if (rMode) rMode.textContent = getModeConfig().label;
+
+  if (activeRunIsGuest) {
+    if (rText) {
+      if (reason === "reset") rText.textContent = `Guest run reset. ${earnedStars} stars shown for this run.`;
+      else if (reason === "leave") rText.textContent = `Guest run ended because you left the game.`;
+      else if (reason === "timeout") rText.textContent = `Time is up. Guest run finished.`;
+      else rText.textContent = `Guest run ended.`;
+    }
+    if (rMyFriendRank) rMyFriendRank.textContent = "Login required";
+    setMyScoreDisplay("-");
+    if (rankAboveValueEl) rankAboveValueEl.textContent = "Friend ranking is available after login.";
+    if (rankMeValueEl) rankMeValueEl.textContent = "-";
+    if (rankBelowValueEl) rankBelowValueEl.textContent = "Friend ranking is available after login.";
+  }
+
+  showRewardOverlay(earnedStars, `${earnedStars} stars earned this run`);
+  setTimeout(() => {
+    if (modal) modal.classList.add("on");
+  }, 260);
+}
+
 async function finalizeRun(reason, options = {}) {
   const { silent = false, navigateTo = null, onDone = null } = options;
 
-  if (finalizing || !runStartedOnServer || runSaved) {
+  if (finalizing) {
     if (typeof onDone === "function") onDone();
     if (navigateTo) window.location.href = navigateTo;
     return;
@@ -1293,87 +1504,94 @@ async function finalizeRun(reason, options = {}) {
 
   if (answerInput) answerInput.disabled = true;
   if (btnSubmit) btnSubmit.disabled = true;
+
   if (btnStart) {
     btnStart.disabled = false;
     btnStart.textContent = "Start";
   }
-  if (btnReset) btnReset.disabled = true;
 
-  const total = correct + wrong;
-  const acc = total === 0 ? 0 : Math.round((correct / total) * 100);
+  if (btnReset) {
+    btnReset.disabled = true;
+  }
+
+  syncStartButtons();
+  syncResetButtons();
+  updateMobilePadState();
 
   try {
-    const response = await fetch(PAGE_CFG.finalizeRunUrl, {
-      method: "POST",
-      credentials: "same-origin",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
-        "X-Requested-With": "XMLHttpRequest",
-      },
-      body: JSON.stringify(buildFinalizePayload(reason)),
-      keepalive: reason === "leave",
-    });
+    if (isAuthenticatedUser() && runStartedOnServer && !runSaved) {
+      const response = await fetch(PAGE_CFG.finalizeRunUrl, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        body: JSON.stringify(buildFinalizePayload(reason)),
+        keepalive: reason === "leave",
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok || !data.ok) {
-      if (!silent) setMessage(data.message || data.error || "Failed to save run result.", "bad");
-      finalizing = false;
-      if (btnReset) btnReset.disabled = false;
-      if (typeof onDone === "function") onDone();
-      if (navigateTo) window.location.href = navigateTo;
-      return;
-    }
-
-    runSaved = true;
-    runStartedOnServer = false;
-
-    totalStars = Number(data.total_stars ?? totalStars);
-    remainingKeys = Number(data.remaining_keys ?? remainingKeys);
-    renderTopStatus();
-
-    if (!silent) {
-      await recordRankingRun();
-      await loadFriendNearbyRank();
-
-      if (rCorrect) rCorrect.textContent = String(correct);
-      if (rWrong) rWrong.textContent = String(wrong);
-      if (rAcc) rAcc.textContent = `${acc}%`;
-      if (rStars) rStars.textContent = String(earnedStars);
-      if (rCombo) rCombo.textContent = String(bestCombo);
-      if (rMode) rMode.textContent = getModeConfig().label;
-
-      if (reason === "reset") {
-        if (rText) rText.textContent = `Run reset. ${earnedStars} stars saved. 1 key was used.`;
-      } else if (reason === "leave") {
-        if (rText) rText.textContent = `Run ended because you left the game. ${earnedStars} stars saved.`;
-      } else if (reason === "timeout") {
-        if (rText) rText.textContent = `Time is up. ${earnedStars} stars saved.`;
-      } else {
-        if (rText) rText.textContent = `Run ended. ${earnedStars} stars saved.`;
+      if (!response.ok || !data.ok) {
+        if (!silent) setMessage(data.message || data.error || "Failed to save run result.", "bad");
+        finalizing = false;
+        if (btnReset) btnReset.disabled = false;
+        syncResetButtons();
+        updateMobilePadState();
+        if (typeof onDone === "function") onDone();
+        if (navigateTo) window.location.href = navigateTo;
+        return;
       }
 
-      showRewardOverlay(earnedStars, `${earnedStars} stars earned this run`);
-      setTimeout(() => {
-        if (modal) modal.classList.add("on");
-      }, 260);
+      runSaved = true;
+      runStartedOnServer = false;
 
-      resetGameUI();
-      syncRankingLinks();
+      totalStars = Number(data.total_stars ?? totalStars);
+      remainingKeys = Number(data.remaining_keys ?? remainingKeys);
+      renderTopStatus();
+
+      if (!silent) {
+        await recordRankingRun();
+        await loadFriendNearbyRank();
+
+        if (rText) {
+          if (reason === "reset") rText.textContent = `Run reset. ${earnedStars} stars saved. 1 key was used.`;
+          else if (reason === "leave") rText.textContent = `Run ended because you left the game. ${earnedStars} stars saved.`;
+          else if (reason === "timeout") rText.textContent = `Time is up. ${earnedStars} stars saved.`;
+          else rText.textContent = `Run ended. ${earnedStars} stars saved.`;
+        }
+
+        openResultModal(reason);
+      }
+    } else {
+      if (!silent) {
+        openResultModal(reason);
+      }
+      runSaved = true;
+      runStartedOnServer = false;
     }
+
+    resetGameUI();
+    renderTopStatus();
+    syncRankingLinks();
   } catch (error) {
     if (!silent) setMessage("Network error while saving run.", "bad");
   } finally {
     finalizing = false;
     if (btnReset) btnReset.disabled = false;
+    syncResetButtons();
+    updateMobilePadState();
     if (typeof onDone === "function") onDone();
     if (navigateTo) window.location.href = navigateTo;
   }
 }
 
 function finalizeRunOnUnload() {
+  if (!isAuthenticatedUser()) return;
   if (!runStartedOnServer || runSaved || leavingInProgress) return;
+
   leavingInProgress = true;
   running = false;
 
@@ -1439,7 +1657,7 @@ function getNavigationTarget(el) {
 }
 
 async function leaveCurrentRunIfNeeded(callback) {
-  if (runStartedOnServer && !runSaved && !finalizing) {
+  if (running && !finalizing) {
     await finalizeRun("leave", {
       silent: true,
       onDone: callback,
@@ -1454,13 +1672,23 @@ function bindLeaveProtection() {
     const navEl = e.target.closest("a, button");
     if (!navEl) return;
 
-    if (navEl.id === "btnStart" || navEl.id === "btnSubmit" || navEl.id === "btnReset") return;
+    if (
+      navEl.id === "btnStart" ||
+      navEl.id === "btnSubmit" ||
+      navEl.id === "btnReset" ||
+      navEl.id === "btnMobileStart" ||
+      navEl.id === "btnMobileReset" ||
+      navEl.id === "btnMobileBackToSetup"
+    ) {
+      return;
+    }
+
     if (!isNavigationElement(navEl)) return;
 
     const targetUrl = getNavigationTarget(navEl);
     if (!targetUrl) return;
 
-    if (runStartedOnServer && !runSaved && !finalizing) {
+    if (running && !finalizing) {
       e.preventDefault();
       e.stopPropagation();
       await finalizeRun("leave", { silent: true, navigateTo: targetUrl });
@@ -1631,6 +1859,11 @@ function applyMobilePlayTweaks() {
   renderSetupScreen();
   renderRight();
   syncRankingLinks();
+  updateMobileInputMode();
+  updateMobilePadState();
+  syncStartButtons();
+  syncResetButtons();
+  updateTimerUI();
 }
 
 if (btnBackToModes) {
@@ -1658,13 +1891,34 @@ if (btnBackToSetup) {
   });
 }
 
+if (btnMobileBackToSetup) {
+  btnMobileBackToSetup.addEventListener("click", async () => {
+    await leaveCurrentRunIfNeeded(() => {
+      if (leftTitle) leftTitle.textContent = "Choose Mode";
+      if (leftSub) leftSub.textContent = "";
+      syncRankingLinks();
+      show(screenSetup);
+    });
+  });
+}
+
 if (btnStart) btnStart.addEventListener("click", startGame);
+if (btnMobileStart) btnMobileStart.addEventListener("click", startGame);
+
+function handleResetClick() {
+  if (running) {
+    finalizeRun("reset");
+  } else {
+    resetGameUI();
+  }
+}
 
 if (btnReset) {
-  btnReset.addEventListener("click", () => {
-    if (runStartedOnServer) finalizeRun("reset");
-    else resetGameUI();
-  });
+  btnReset.addEventListener("click", handleResetClick);
+}
+
+if (btnMobileReset) {
+  btnMobileReset.addEventListener("click", handleResetClick);
 }
 
 if (btnSubmit) btnSubmit.addEventListener("click", submitAnswer);
@@ -1715,7 +1969,13 @@ function init() {
   syncRankingLinks();
   show(screenSelect);
   bindLeaveProtection();
+  bindMobilePad();
   applyMobilePlayTweaks();
+  updateMobileInputMode();
+  updateMobilePadState();
+  updateTimerUI();
+  syncStartButtons();
+  syncResetButtons();
 
   window.addEventListener("resize", applyMobilePlayTweaks);
 }

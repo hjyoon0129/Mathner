@@ -15,6 +15,11 @@ const restartBtnOverlay = document.getElementById("restartBtnOverlay");
 const finishCloseBtn = document.getElementById("finishCloseBtn");
 const openRankingBtn = document.getElementById("openRankingBtn");
 
+const mobilePadWrap = document.getElementById("mobilePadWrap");
+const mobilePad = document.getElementById("mobilePad");
+const mobileStartBtn = document.getElementById("mobileStartBtn");
+const mobileResetBtn = document.getElementById("mobileResetBtn");
+
 const startOverlay = document.getElementById("startOverlay");
 const finishOverlay = document.getElementById("finishOverlay");
 const finishFxLayer = document.getElementById("finishFxLayer");
@@ -35,12 +40,16 @@ const finalStarsEl = document.getElementById("finalStars");
 const levelIntroEl = document.getElementById("levelIntro");
 const levelIntroTextEl = document.getElementById("levelIntroText");
 
+const noKeyOverlay = document.getElementById("noKeyOverlay");
+const goPricingBtn = document.getElementById("goPricingBtn");
+const playLaterBtn = document.getElementById("playLaterBtn");
+
 const opButtons = document.querySelectorAll(".op-btn");
 
 const navStarCountEl = document.getElementById("navStarCount");
 const navKeyCountEl = document.getElementById("navKeyCount");
 
-const HIGH_SCORE_KEY = "math_rain_high_score_v17";
+const HIGH_SCORE_KEY = "math_rain_high_score_v20_mobile_2btn_nokey";
 
 let selectedOp = "+";
 
@@ -69,6 +78,10 @@ let finalizing = false;
 let rankingRecorded = false;
 let finishFxTimer = null;
 let rewardIntroTimer = null;
+
+function isMobileUI() {
+  return window.matchMedia("(max-width: 640px)").matches;
+}
 
 function getInitialNavValue(el, fallback) {
   const fromNav = Number((el?.textContent || "").trim());
@@ -105,6 +118,10 @@ function getRankingUrl() {
   );
 }
 
+function getPricingUrl() {
+  return PAGE_CFG.pricingUrl || "/#pricing";
+}
+
 function saveHighScore() {
   if (cleared > highScore) {
     highScore = cleared;
@@ -137,6 +154,9 @@ function syncNavResources() {
 function updateUI() {
   renderHearts();
   syncNavResources();
+  syncMobileButtons();
+  updateMobileInputMode();
+  updateMobilePadState();
 }
 
 function resetLocalRunState() {
@@ -510,7 +530,7 @@ function submitAnswer() {
   const item = equations.find((eq) => eq.answer === value);
   if (!item) {
     answerInput.value = "";
-    answerInput.focus();
+    if (!isMobileUI()) answerInput.focus();
     return;
   }
 
@@ -519,7 +539,8 @@ function submitAnswer() {
   else handleCorrectNormal(item);
 
   answerInput.value = "";
-  answerInput.focus();
+  if (!isMobileUI()) answerInput.focus();
+  updateMobilePadState();
 }
 
 function handleGroundHit(item) {
@@ -589,6 +610,17 @@ function clearAllEquationsNow() {
   equations = [];
 }
 
+function openNoKeyOverlay() {
+  if (goPricingBtn) {
+    goPricingBtn.setAttribute("href", getPricingUrl());
+  }
+  if (noKeyOverlay) noKeyOverlay.classList.add("show");
+}
+
+function closeNoKeyOverlay() {
+  if (noKeyOverlay) noKeyOverlay.classList.remove("show");
+}
+
 async function startRunOnServer() {
   if (!PAGE_CFG.startRunUrl) return;
 
@@ -608,7 +640,9 @@ async function startRunOnServer() {
 
   const data = await response.json();
   if (!response.ok || !data.ok) {
-    throw new Error(data.message || data.error || "Failed to start run.");
+    const err = new Error(data.message || data.error || "Failed to start run.");
+    err.code = data.error_code || "";
+    throw err;
   }
 
   runStartedOnServer = true;
@@ -888,6 +922,7 @@ async function finalizeRun(reason, options = {}) {
 async function startGame() {
   if (gameRunning) return;
 
+  closeNoKeyOverlay();
   clearInterval(spawnTimer);
   cancelAnimationFrame(animationId);
   clearAllEquationsNow();
@@ -900,10 +935,27 @@ async function startGame() {
     try {
       await startRunOnServer();
     } catch (error) {
+      const msg = String(error?.message || "").toLowerCase();
+      const code = String(error?.code || "").toUpperCase();
+
+      if (
+        code === "NO_KEYS" ||
+        msg.includes("no key") ||
+        msg.includes("no keys") ||
+        msg.includes("key") ||
+        msg.includes("remaining") ||
+        msg.includes("used all")
+      ) {
+        openNoKeyOverlay();
+      }
+
       return;
     }
   } else {
-    if (remainingKeys <= 0) return;
+    if (remainingKeys <= 0) {
+      openNoKeyOverlay();
+      return;
+    }
     remainingKeys -= 1;
     syncNavResources();
   }
@@ -929,7 +981,7 @@ async function startGame() {
 
   updateUI();
   answerInput.value = "";
-  answerInput.focus();
+  if (!isMobileUI()) answerInput.focus();
 
   showLevelIntro(1, () => {
     if (!gameRunning) return;
@@ -941,10 +993,6 @@ async function startGame() {
 }
 
 async function resetGame() {
-  /* important fix:
-     when game is running, do NOT wipe local values immediately.
-     finalize first so stars / reward intro / result modal can use current run data.
-  */
   if (gameRunning && runStartedOnServer && !runSaved) {
     await finalizeRun("reset", { silent: false });
     return;
@@ -954,6 +1002,8 @@ async function resetGame() {
   cancelAnimationFrame(animationId);
   clearAllEquationsNow();
   closeRewardIntroOverlay();
+  closeFinishOverlay();
+  closeNoKeyOverlay();
 
   resetLocalRunState();
   setOperationButtonsDisabled(false);
@@ -1002,28 +1052,143 @@ function bindLeaveSettlement() {
   });
 }
 
+function updateMobileInputMode() {
+  if (!answerInput) return;
+
+  if (isMobileUI()) {
+    answerInput.readOnly = true;
+    answerInput.setAttribute("readonly", "readonly");
+    answerInput.setAttribute("inputmode", "none");
+    if (mobilePadWrap) mobilePadWrap.setAttribute("aria-hidden", "false");
+  } else {
+    answerInput.readOnly = false;
+    answerInput.removeAttribute("readonly");
+    answerInput.setAttribute("inputmode", "numeric");
+    if (mobilePadWrap) mobilePadWrap.setAttribute("aria-hidden", "true");
+  }
+}
+
+function syncMobileButtons() {
+  if (mobileStartBtn) {
+    mobileStartBtn.disabled = Boolean(startBtn?.disabled);
+    mobileStartBtn.textContent = startBtn ? startBtn.textContent : "Start";
+  }
+
+  if (mobileResetBtn) {
+    mobileResetBtn.disabled = Boolean(resetBtn?.disabled);
+  }
+}
+
+function updateMobilePadState() {
+  if (!mobilePad) return;
+
+  const disabled = !gameRunning || finalizing || !answerInput || answerInput.disabled;
+  mobilePad.querySelectorAll("[data-pad]").forEach((btn) => {
+    btn.disabled = disabled;
+  });
+}
+
+function appendAnswerDigit(digit) {
+  if (!answerInput || answerInput.disabled || !gameRunning) return;
+  if (String(answerInput.value).length >= 4) return;
+  answerInput.value = `${answerInput.value}${digit}`;
+  updateMobilePadState();
+}
+
+function backspaceAnswerDigit() {
+  if (!answerInput || answerInput.disabled || !gameRunning) return;
+  answerInput.value = String(answerInput.value).slice(0, -1);
+  updateMobilePadState();
+}
+
+function clearAnswerDigits() {
+  if (!answerInput || answerInput.disabled || !gameRunning) return;
+  answerInput.value = "";
+  updateMobilePadState();
+}
+
+function bindMobilePad() {
+  if (!mobilePad) return;
+
+  mobilePad.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-pad]");
+    if (!btn) return;
+
+    const key = btn.getAttribute("data-pad");
+    if (!key) return;
+
+    if (key === "clear") {
+      clearAnswerDigits();
+      return;
+    }
+
+    if (key === "back") {
+      backspaceAnswerDigit();
+      return;
+    }
+
+    appendAnswerDigit(key);
+  });
+
+  if (answerInput) {
+    answerInput.addEventListener("click", (e) => {
+      if (isMobileUI()) {
+        e.preventDefault();
+        answerInput.blur();
+      }
+    });
+
+    answerInput.addEventListener("focus", () => {
+      if (isMobileUI()) {
+        answerInput.blur();
+      }
+    });
+  }
+}
+
 opButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
     setOperation(btn.dataset.op);
   });
 });
 
-submitBtn.addEventListener("click", submitAnswer);
+if (submitBtn) {
+  submitBtn.addEventListener("click", submitAnswer);
+}
 
-answerInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") submitAnswer();
-});
+if (answerInput) {
+  answerInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") submitAnswer();
+  });
+}
 
-startBtn.addEventListener("click", startGame);
-startOverlayBtn.addEventListener("click", startGame);
+if (startBtn) {
+  startBtn.addEventListener("click", startGame);
+}
 
-restartBtnOverlay.addEventListener("click", () => {
-  closeFinishOverlay();
-  closeRewardIntroOverlay();
-  startGame();
-});
+if (startOverlayBtn) {
+  startOverlayBtn.addEventListener("click", startGame);
+}
 
-resetBtn.addEventListener("click", resetGame);
+if (mobileStartBtn) {
+  mobileStartBtn.addEventListener("click", startGame);
+}
+
+if (restartBtnOverlay) {
+  restartBtnOverlay.addEventListener("click", () => {
+    closeFinishOverlay();
+    closeRewardIntroOverlay();
+    startGame();
+  });
+}
+
+if (resetBtn) {
+  resetBtn.addEventListener("click", resetGame);
+}
+
+if (mobileResetBtn) {
+  mobileResetBtn.addEventListener("click", resetGame);
+}
 
 if (finishCloseBtn) {
   finishCloseBtn.addEventListener("click", () => {
@@ -1031,11 +1196,28 @@ if (finishCloseBtn) {
   });
 }
 
+if (playLaterBtn) {
+  playLaterBtn.addEventListener("click", () => {
+    closeNoKeyOverlay();
+  });
+}
+
+if (goPricingBtn) {
+  goPricingBtn.setAttribute("href", getPricingUrl());
+}
+
 if (openRankingBtn) {
   openRankingBtn.setAttribute("href", getRankingUrl());
 }
 
+window.addEventListener("resize", () => {
+  updateMobileInputMode();
+  syncMobileButtons();
+  updateMobilePadState();
+});
+
 setOperationButtonsDisabled(false);
 setOperation("+");
 updateUI();
+bindMobilePad();
 bindLeaveSettlement();

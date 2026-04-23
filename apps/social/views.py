@@ -1,6 +1,6 @@
 from datetime import datetime
 import json
-
+import hashlib
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.cache import cache
@@ -160,8 +160,9 @@ def _get_or_create_room(user):
     return room
 
 
-def _room_directory_cache_key(user_id):
-    return f"social:room_directory:{user_id}"
+def _room_directory_cache_key(user_id, query=""):
+    q = str(query or "").strip().lower()
+    return f"social:room_directory:{user_id}:{q}"
 
 
 def _get_request_data(request):
@@ -176,11 +177,54 @@ def _get_request_data(request):
 
     return request.POST
 
+def _get_client_ip(request):
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    if x_forwarded_for:
+        return x_forwarded_for.split(",")[0].strip()
+
+    return (
+        request.META.get("HTTP_CF_CONNECTING_IP")
+        or request.META.get("HTTP_X_REAL_IP")
+        or request.META.get("REMOTE_ADDR")
+        or ""
+    ).strip()
+
+
+def _daily_visit_identity(request):
+    if request.user.is_authenticated:
+        return {
+            "viewer_id": request.user.id,
+            "guest_token": "",
+        }
+
+    ip = _get_client_ip(request)
+    user_agent = (request.META.get("HTTP_USER_AGENT") or "").strip()
+    raw = f"{ip}|{user_agent}"
+    guest_token = hashlib.sha256(raw.encode("utf-8")).hexdigest() if raw else ""
+
+    return {
+        "viewer_id": None,
+        "guest_token": guest_token,
+    }
+
+
+
+
+
+
+
+
 
 def _invalidate_friend_caches(*user_ids):
     for user_id in set(filter(None, user_ids)):
         cache.delete(friend_list_key(user_id))
+
+        # 검색 유무 상관없이 room_directory 캐시 무효화
+        # 키를 prefix로 지우는 기능이 없다면 대표키 몇 개만 지우는 것보다
+        # 전체 패턴 삭제가 낫지만 기본 cache backend 호환성 위해 안전하게 최소 처리
         cache.delete(_room_directory_cache_key(user_id))
+        for q in ("",):
+            cache.delete(_room_directory_cache_key(user_id, q))
 
 
 def _get_friend_users(user):
@@ -215,6 +259,58 @@ def _get_friend_users(user):
 
     friend_users.sort(key=lambda u: ((u.username or "").lower(), u.id))
     return friend_users
+
+
+def _normalize_directory_query(raw_query):
+    return str(raw_query or "").strip()
+
+
+def _directory_friendship_map(me, target_user_ids):
+    if not target_user_ids:
+        return {}
+
+    rows = (
+        Friendship.objects
+        .filter(
+            Q(from_user=me, to_user_id__in=target_user_ids) |
+            Q(to_user=me, from_user_id__in=target_user_ids)
+        )
+        .only("id", "from_user_id", "to_user_id", "status", "created_at", "updated_at")
+        .order_by("-updated_at", "-created_at", "-id")
+    )
+
+    data = {}
+    for row in rows:
+        other_user_id = row.to_user_id if row.from_user_id == me.id else row.from_user_id
+        if other_user_id in data:
+            continue
+
+        direction = "outgoing" if row.from_user_id == me.id else "incoming"
+        data[other_user_id] = {
+            "friendship_id": row.id,
+            "friendship_status": row.status,
+            "friendship_direction": direction,
+        }
+
+    return data
+
+
+def _serialize_directory_user(user, nickname_map, font_pref_map, friendship_map):
+    pref = font_pref_map.get(user.id, {})
+    relation = friendship_map.get(user.id, {})
+
+    return {
+        "username": user.username,
+        "display_name": _display_name(user, nickname_map),
+        "room_url": f"/avatar/room/{user.username}/",
+        "friendship_id": relation.get("friendship_id"),
+        "friendship_status": relation.get("friendship_status", "none"),
+        "friendship_direction": relation.get("friendship_direction", "none"),
+        "nickname_font_key": pref.get("nickname_font_key", ""),
+        "nickname_effect_key": pref.get("nickname_effect_key", "none"),
+        "nickname_scale": pref.get("nickname_scale", 1.0),
+        "nickname_letter_spacing": pref.get("nickname_letter_spacing", 0.0),
+    }
 
 
 def _sync_room_today_visits(room):
@@ -400,31 +496,40 @@ def friend_list(request):
 @require_GET
 @login_required
 def room_directory(request):
-    cache_key = _room_directory_cache_key(request.user.id)
+    query = _normalize_directory_query(request.GET.get("q", ""))
+    cache_key = _room_directory_cache_key(request.user.id, query)
     cached = cache.get(cache_key)
     if cached is not None:
         return JsonResponse({"ok": True, "rooms": cached})
 
-    users = _get_friend_users(request.user)
+    users_qs = (
+        User.objects
+        .filter(is_active=True)
+        .exclude(id=request.user.id)
+        .only("id", "username", "first_name")
+        .order_by("username", "id")
+    )
+
+    if query:
+        users_qs = users_qs.filter(
+            Q(username__icontains=query) |
+            Q(first_name__icontains=query) |
+            Q(usergameprofile__nickname__icontains=query)
+        )
+
+    users = list(users_qs[:200])
     user_ids = [u.id for u in users]
+
     nickname_map = _nickname_map(user_ids)
     font_pref_map = _font_pref_map(user_ids)
+    friendship_map = _directory_friendship_map(request.user, user_ids)
 
-    rooms = []
-    for user in users:
-        pref = font_pref_map.get(user.id, {})
-        rooms.append({
-            "username": user.username,
-            "display_name": _display_name(user, nickname_map),
-            "room_url": f"/avatar/room/{user.username}/",
-            "friendship_status": Friendship.STATUS_ACCEPTED,
-            "nickname_font_key": pref.get("nickname_font_key", ""),
-            "nickname_effect_key": pref.get("nickname_effect_key", "none"),
-            "nickname_scale": pref.get("nickname_scale", 1.0),
-            "nickname_letter_spacing": pref.get("nickname_letter_spacing", 0.0),
-        })
+    rooms = [
+        _serialize_directory_user(user, nickname_map, font_pref_map, friendship_map)
+        for user in users
+    ]
 
-    cache.set(cache_key, rooms, timeout=60)
+    cache.set(cache_key, rooms, timeout=30)
     return JsonResponse({"ok": True, "rooms": rooms})
 
 
@@ -445,6 +550,12 @@ def friend_request_toggle(request, username):
         from_user=target,
         to_user=request.user,
     ).first()
+
+    if reverse_existing and reverse_existing.status == Friendship.STATUS_PENDING:
+        reverse_existing.status = Friendship.STATUS_ACCEPTED
+        reverse_existing.save(update_fields=["status", "updated_at"])
+        _invalidate_friend_caches(request.user.id, target.id)
+        return JsonResponse({"ok": True, "action": "accepted"})
 
     if reverse_existing and reverse_existing.status == Friendship.STATUS_ACCEPTED:
         return JsonResponse({"ok": True, "action": "already_friends"})
@@ -588,11 +699,38 @@ def room_visit_api(request, username):
     room = _sync_room_today_visits(room)
     today = timezone.localdate()
 
-    Room.objects.filter(id=room.id).update(
-        today_visits=F("today_visits") + 1,
-        total_visits=F("total_visits") + 1,
-        last_visit_date=today,
-    )
+    identity = _daily_visit_identity(request)
+    viewer_id = identity["viewer_id"]
+    guest_token = identity["guest_token"]
+
+    visit_exists = False
+
+    if viewer_id:
+        visit_exists = RoomVisit.objects.filter(
+            room_id=room.id,
+            viewer_id=viewer_id,
+            visited_on=today,
+        ).exists()
+    elif guest_token:
+        visit_exists = RoomVisit.objects.filter(
+            room_id=room.id,
+            guest_token=guest_token,
+            visited_on=today,
+        ).exists()
+
+    if not visit_exists:
+        RoomVisit.objects.create(
+            room_id=room.id,
+            viewer_id=viewer_id,
+            guest_token=guest_token,
+            visited_on=today,
+        )
+        Room.objects.filter(id=room.id).update(
+            today_visits=F("today_visits") + 1,
+            total_visits=F("total_visits") + 1,
+            last_visit_date=today,
+        )
+
     room.refresh_from_db(fields=["today_visits", "total_visits", "like_count", "last_visit_date"])
     cache.delete(room_stats_key(username))
 
@@ -604,8 +742,11 @@ def room_visit_api(request, username):
         **_base_room_stats_payload(room),
         "liked_by_me": liked_by_me,
     }
-    return JsonResponse({"ok": True, "stats": stats})
-
+    return JsonResponse({
+        "ok": True,
+        "counted": not visit_exists,
+        "stats": stats,
+    })
 
 @require_GET
 def guestbook_list_api(request, username):

@@ -4,7 +4,7 @@
 {% block title %}Math Rain | Mathner{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'game/css/math_rain.css' %}?v=fit_finish_v6">
+<link rel="stylesheet" href="{% static 'game/css/math_rain.css' %}?v=mobile_pad_2btn_nokey_v1">
 {% endblock %}
 
 {% block content %}
@@ -15,7 +15,9 @@
     <header class="rain-head">
       <div class="brand-box">
         <h1 class="logo">MATH RAIN</h1>
-        <p class="tagline">1 key is consumed when you press Start. Stars are settled when the run ends, resets, or you leave.</p>
+        <p class="tagline">
+          1 key is consumed when you press Start. Stars are settled when the run ends, resets, or you leave.
+        </p>
       </div>
     </header>
 
@@ -39,8 +41,8 @@
       </div>
 
       <div class="button-panel">
-        <button id="startBtn" class="main-btn">Start</button>
-        <button id="resetBtn" class="secondary-btn">Reset</button>
+        <button id="startBtn" class="main-btn" type="button">Start</button>
+        <button id="resetBtn" class="secondary-btn" type="button">Reset</button>
       </div>
     </section>
 
@@ -55,7 +57,7 @@
       <div id="startOverlay" class="overlay start-overlay show">
         <div class="overlay-card start-card">
           <h2>Math Rain</h2>
-          <button id="startOverlayBtn" class="main-btn start-overlay-btn">Start Game</button>
+          <button id="startOverlayBtn" class="main-btn start-overlay-btn" type="button">Start Game</button>
         </div>
       </div>
 
@@ -110,12 +112,27 @@
           </div>
 
           <div class="finish-actions finish-actions-top">
-            <button id="restartBtnOverlay" class="main-btn start-overlay-btn">Play Again</button>
-            <button id="finishCloseBtn" class="secondary-btn finish-close-btn">Close</button>
+            <button id="restartBtnOverlay" class="main-btn start-overlay-btn" type="button">Play Again</button>
+            <button id="finishCloseBtn" class="secondary-btn finish-close-btn" type="button">Close</button>
           </div>
 
           <div class="finish-actions finish-actions-bottom">
             <a id="openRankingBtn" class="main-btn ranking-link-btn" href="/ranking/">Open Ranking</a>
+          </div>
+        </div>
+      </div>
+
+      <div id="noKeyOverlay" class="overlay finish-overlay">
+        <div class="overlay-card finish-card no-key-card">
+          <div class="finish-back-shine"></div>
+
+          <div class="finish-badge">No Keys</div>
+          <h2>No Keys Left</h2>
+          <p>You have used all of today’s free keys. You can upgrade to continue, or come back later.</p>
+
+          <div class="finish-actions finish-actions-top">
+            <a id="goPricingBtn" class="main-btn" href="/#pricing">View Pricing</a>
+            <button id="playLaterBtn" class="secondary-btn" type="button">Maybe Later</button>
           </div>
         </div>
       </div>
@@ -126,12 +143,37 @@
         <input
           id="answerInput"
           class="answer-input"
-          type="number"
+          type="text"
           inputmode="numeric"
+          pattern="[0-9]*"
           placeholder="Type answer"
           autocomplete="off"
         />
-        <button id="submitBtn" class="submit-btn">Submit</button>
+        <button id="submitBtn" class="submit-btn" type="button">Submit</button>
+      </div>
+
+      <div class="mobile-pad-wrap" id="mobilePadWrap" aria-hidden="true">
+        <div class="mobile-pad" id="mobilePad">
+          <button type="button" class="mobile-pad-btn" data-pad="1">1</button>
+          <button type="button" class="mobile-pad-btn" data-pad="2">2</button>
+          <button type="button" class="mobile-pad-btn" data-pad="3">3</button>
+          <button type="button" class="mobile-pad-btn mobile-pad-btn-util" data-pad="back">⌫</button>
+
+          <button type="button" class="mobile-pad-btn" data-pad="4">4</button>
+          <button type="button" class="mobile-pad-btn" data-pad="5">5</button>
+          <button type="button" class="mobile-pad-btn" data-pad="6">6</button>
+          <button type="button" class="mobile-pad-btn mobile-pad-btn-util" data-pad="clear">C</button>
+
+          <button type="button" class="mobile-pad-btn" data-pad="7">7</button>
+          <button type="button" class="mobile-pad-btn" data-pad="8">8</button>
+          <button type="button" class="mobile-pad-btn" data-pad="9">9</button>
+          <button type="button" class="mobile-pad-btn" data-pad="0">0</button>
+        </div>
+
+        <div class="mobile-action-row">
+          <button id="mobileStartBtn" class="main-btn mobile-action-btn" type="button">Start</button>
+          <button id="mobileResetBtn" class="secondary-btn mobile-action-btn" type="button">Reset</button>
+        </div>
       </div>
     </section>
   </div>
@@ -141,5 +183,5 @@
 {% block footer %}{% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'game/js/math_rain.js' %}?v=fit_finish_v6"></script>
+<script src="{% static 'game/js/math_rain.js' %}?v=mobile_pad_2btn_nokey_v1"></script>
 {% endblock %}

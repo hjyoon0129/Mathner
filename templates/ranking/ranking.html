@@ -11,6 +11,7 @@
     flex-wrap:wrap;
     gap:10px;
     margin-bottom:14px;
+    padding:14px 16px 0;
   }
 
   .ranking-game-tab-btn,
@@ -44,7 +45,8 @@
     display:flex;
     flex-wrap:wrap;
     gap:10px;
-    margin-bottom:14px;
+    padding:14px 16px 0;
+    margin-bottom:0;
   }
 
   .ranking-board-head{
@@ -69,7 +71,7 @@
     display:grid;
     grid-template-columns:repeat(3, minmax(0, 1fr));
     gap:10px;
-    margin-bottom:16px;
+    margin:16px 16px 0;
   }
 
   .ranking-summary-card{
@@ -77,6 +79,7 @@
     border:1px solid rgba(255,255,255,.08);
     border-radius:18px;
     padding:14px 16px;
+    min-width:0;
   }
 
   .ranking-summary-label{
@@ -92,19 +95,14 @@
     color:#f4f8ff;
     font-size:22px;
     font-weight:1000;
-    line-height:1;
-  }
-
-  .ranking-table td,
-  .ranking-table th{
+    line-height:1.1;
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
     white-space:nowrap;
   }
 
-  .ranking-table .col-name{
-    white-space:normal;
-  }
-
-  .ranking-row-me{
+  .ranking-row-me td{
     box-shadow:inset 3px 0 0 #67e0cb;
     background:rgba(103,224,203,.08);
   }
@@ -114,13 +112,19 @@
       grid-template-columns:1fr;
     }
 
-    .ranking-game-tab-btn,
-    .ranking-tab-btn{
-      flex:1 1 auto;
+    .ranking-game-tab-row{
+      padding:12px 14px 0;
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0, 1fr));
+      gap:8px;
     }
 
-    .ranking-table{
-      min-width:720px;
+    .ranking-game-tab-btn,
+    .ranking-tab-btn{
+      min-width:0;
+      width:100%;
+      padding:0 8px;
+      font-size:13px;
     }
   }
 </style>
@@ -186,13 +190,20 @@
 
       <div class="ranking-table-wrap">
         <table class="ranking-table">
+          <colgroup>
+            <col class="col-rank">
+            <col class="col-name">
+            <col class="col-correct">
+            <col class="col-combo">
+            <col class="col-stars">
+          </colgroup>
           <thead>
             <tr>
-              <th class="col-rank">Rank</th>
-              <th class="col-name">Nickname</th>
-              <th class="col-correct">Total Correct</th>
-              <th class="col-combo">Best Combo</th>
-              <th class="col-stars">Stars Earned</th>
+              <th scope="col" class="col-rank">Rank</th>
+              <th scope="col" class="col-name">Nickname</th>
+              <th scope="col" class="col-correct">Total Correct</th>
+              <th scope="col" class="col-combo">Best Combo</th>
+              <th scope="col" class="col-stars">Stars Earned</th>
             </tr>
           </thead>
           <tbody id="rankingTableBody">
@@ -258,6 +269,7 @@
     gameButtons.forEach((btn) => {
       btn.classList.toggle("is-active", btn.dataset.game === game);
     });
+
     const label = prettyGame(game);
     rankingGameLabel.textContent = label;
     summaryBoard.textContent = label;

@@ -118,6 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     socialFriendListUrl: ds.socialFriendListUrl || "",
     socialFriendRequestUrlBase: ds.socialFriendRequestUrlBase || "/social/api/friends/request/",
+    socialFriendRespondUrlBase: ds.socialFriendRespondUrlBase || "/social/api/friends/respond/",
     socialRoomStatsUrlBase: ds.socialRoomStatsUrlBase || "/social/api/rooms/",
     socialRoomVisitUrlBase: ds.socialRoomVisitUrlBase || "/social/api/rooms/",
     socialRoomLikeUrlBase: ds.socialRoomLikeUrlBase || "/social/api/rooms/",
@@ -297,6 +298,10 @@ document.addEventListener("DOMContentLoaded", () => {
     diaryMonthPromise: null,
     diaryDatePromise: null,
     roomVisitPromise: null,
+
+    friendshipStatus: String(ds.friendshipStatus || "none").trim(),
+    friendshipDirection: String(ds.friendshipDirection || "none").trim(),
+    friendshipId: String(ds.friendshipId || "").trim(),
 
     hasRecordedVisitThisPage: false,
 
@@ -1516,6 +1521,75 @@ document.addEventListener("DOMContentLoaded", () => {
     setActiveEditSubtab(state.activeEditSubtab || "avatar");
   }
 
+  function normalizeFriendshipAction(action) {
+    return String(action || "").trim().toLowerCase();
+  }
+
+  function setFriendshipState(status = "none", direction = "none", friendshipId = "") {
+    state.friendshipStatus = String(status || "none").trim();
+    state.friendshipDirection = String(direction || "none").trim();
+    state.friendshipId = String(friendshipId || "").trim();
+
+    const btn = els.sendFriendRequestBtn;
+    if (!btn) return;
+
+    btn.dataset.friendshipStatus = state.friendshipStatus;
+    btn.dataset.friendshipDirection = state.friendshipDirection;
+    btn.dataset.friendshipId = state.friendshipId;
+
+    btn.disabled = false;
+    btn.classList.remove("avatar-btn-primary", "avatar-btn-secondary");
+
+    if (state.friendshipStatus === "accepted") {
+      btn.textContent = "Friend";
+      btn.disabled = true;
+      btn.classList.add("avatar-btn-secondary");
+      return;
+    }
+
+    if (state.friendshipStatus === "pending" && state.friendshipDirection === "outgoing") {
+      btn.textContent = "Cancel";
+      btn.classList.add("avatar-btn-secondary");
+      return;
+    }
+
+    if (state.friendshipStatus === "pending" && state.friendshipDirection === "incoming") {
+      btn.textContent = "Accept";
+      btn.classList.add("avatar-btn-primary");
+      return;
+    }
+
+    btn.textContent = "Add Friend";
+    btn.classList.add("avatar-btn-primary");
+  }
+
+  function applyFriendRequestActionResult(result) {
+    const action = normalizeFriendshipAction(result?.action);
+
+    if (action === "accepted" || action === "already_friends") {
+      setFriendshipState("accepted", "none", result?.friendship_id || "");
+      return;
+    }
+
+    if (action === "sent") {
+      setFriendshipState("pending", "outgoing", result?.friendship_id || "");
+      return;
+    }
+
+    if (action === "canceled" || action === "rejected") {
+      setFriendshipState("none", "none", "");
+      return;
+    }
+
+    if (result?.friendship_status) {
+      setFriendshipState(
+        result.friendship_status,
+        result.friendship_direction || "none",
+        result.friendship_id || ""
+      );
+    }
+  }
+
   function setActiveSideTab(tabName) {
     $$(".side-tab-btn[data-tab-target]").forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.tabTarget === tabName);
@@ -2077,9 +2151,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-
-
-
   async function saveFontPreference() {
     if (!isOwner || !API.avatarSaveFontUrl) return;
 
@@ -2091,7 +2162,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const selectedItem = itemByItemId(state.selectedFontItemId);
 
-    // 현재 페이지 위치 기억
     const currentFontPage = state.fontPage;
     const currentEffectPage = state.effectPage;
 
@@ -2132,8 +2202,6 @@ document.addEventListener("DOMContentLoaded", () => {
           ...(result.font_pref || {}),
         };
         state.ownerFontPref = { ...state.viewerFontPref };
-
-        // 적용 후에도 현재 선택 상태 유지
         state.selectedFontItemId = selectedItem ? Number(selectedItem.item_id) : null;
       }
 
@@ -2149,13 +2217,10 @@ document.addEventListener("DOMContentLoaded", () => {
         els.fontEffectSelect.value = state.viewerFontPref.nickname_effect_key || "none";
       }
 
-      // 기억해둔 페이지 복원
       state.fontPage = currentFontPage;
       state.effectPage = currentEffectPage;
 
       applyCurrentFontPreferenceToEditors();
-
-      // 첫 페이지로 안 돌아가게 preservePage 사용
       renderFontInventory({ preservePage: true });
       renderEffectInventory({ preservePage: true });
       updateFontEffectCarousels();
@@ -2169,10 +2234,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   }
-
-
-
-
 
   function openConfirmModal() {
     return new Promise((resolve) => {
@@ -2241,12 +2302,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!username || !API.socialRoomVisitUrlBase) return null;
     if (!force && state.hasRecordedVisitThisPage) return null;
 
-    const result = await postJson(buildUrl(API.socialRoomVisitUrlBase, username, "/visit/"), {});
-    if (result.ok) {
-      state.hasRecordedVisitThisPage = true;
-      if (result.stats) setRoomStats(result.stats);
-    }
-    return result;
+    return withPending("roomVisitPromise", async () => {
+      const result = await postJson(buildUrl(API.socialRoomVisitUrlBase, username, "/visit/"), {});
+
+      if (result.ok) {
+        state.hasRecordedVisitThisPage = true;
+        if (result.stats) setRoomStats(result.stats);
+      }
+
+      return result;
+    }, force);
   }
 
   function buildUrl(base, username, suffix = "") {
@@ -2400,19 +2465,20 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   window.switchRightEditPanel = (panelName) => {
-    if (panelName === "font") {
-      setActiveSideTab("edit");
-      updateMainPanels("edit");
-      showAvatarEditPanel("font");
-      return;
-    }
-
     setActiveSideTab("edit");
     updateMainPanels("edit");
-    showAvatarEditPanel("avatar");
+    showAvatarEditPanel(panelName === "font" ? "font" : "avatar");
+
+    const avatarEditBtn = $("openAvatarEditBtn");
+    const fontEditBtn = $("openFontEditBtn");
+
+    avatarEditBtn?.classList.toggle("active", panelName !== "font");
+    fontEditBtn?.classList.toggle("active", panelName === "font");
   };
 
   window.closeRightEditPanels = async () => {
+    $("openAvatarEditBtn")?.classList.remove("active");
+    $("openFontEditBtn")?.classList.remove("active");
     closeEditMode();
     await activateMainTab("avatar");
   };
@@ -2760,15 +2826,49 @@ document.addEventListener("DOMContentLoaded", () => {
 
     els.sendFriendRequestBtn?.addEventListener("click", async () => {
       closeNamePopover();
+
+      const btn = els.sendFriendRequestBtn;
       const username = ownerUsername();
-      const result = await postJson(`${API.socialFriendRequestUrlBase}${username}/`, {});
-      if (!result.ok) {
-        alert(result.error || "Failed to update friend request.");
+      if (!btn || !username) return;
+
+      if (state.friendshipStatus === "accepted") {
         return;
       }
 
-      if (result.action === "sent") els.sendFriendRequestBtn.textContent = "Cancel Request";
-      else if (result.action === "canceled") els.sendFriendRequestBtn.textContent = "Add Friend";
+      btn.disabled = true;
+
+      try {
+        if (state.friendshipStatus === "pending" && state.friendshipDirection === "incoming" && state.friendshipId) {
+          const result = await postJson(
+            `${API.socialFriendRespondUrlBase}${state.friendshipId}/`,
+            { action: "accept" }
+          );
+
+          if (!result.ok) {
+            alert(result.error || "Failed to accept friend request.");
+            return;
+          }
+
+          applyFriendRequestActionResult({ action: "accepted", ...result });
+          state.friendOptionsLoaded = false;
+          await loadFriendSelectOptions(true);
+          return;
+        }
+
+        const result = await postJson(`${API.socialFriendRequestUrlBase}${username}/`, {});
+        if (!result.ok) {
+          alert(result.error || "Failed to update friend request.");
+          return;
+        }
+
+        applyFriendRequestActionResult(result);
+        state.friendOptionsLoaded = false;
+        await loadFriendSelectOptions(true);
+      } finally {
+        if (state.friendshipStatus !== "accepted") {
+          btn.disabled = false;
+        }
+      }
     });
 
     els.guestbookSubmitBtn?.addEventListener("click", async () => {
@@ -2917,6 +3017,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderCalendar();
     setActiveEditSubtab("avatar");
     renderAll();
+    setFriendshipState(state.friendshipStatus, state.friendshipDirection, state.friendshipId);
     bindStaticEvents();
     await activateMainTab("avatar");
     await loadFriendSelectOptions();
