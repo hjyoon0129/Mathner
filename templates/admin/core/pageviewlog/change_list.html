@@ -1,0 +1,62 @@
+﻿{% extends "admin/change_list.html" %}
+
+{% block content %}
+
+<h1 style="margin-bottom:24px;">Page View Summary</h1>
+
+<div style="display:flex; gap:16px; margin:20px 0 28px; flex-wrap:wrap;">
+  <div style="min-width:150px; padding:18px; background:#1f2933; border-radius:10px;">
+    <strong>Today Views</strong><br>
+    <span style="font-size:28px;">{{ daily_total }}</span>
+  </div>
+
+  <div style="min-width:150px; padding:18px; background:#1f2933; border-radius:10px;">
+    <strong>Last 7 Days</strong><br>
+    <span style="font-size:28px;">{{ weekly_total }}</span>
+  </div>
+
+  <div style="min-width:150px; padding:18px; background:#1f2933; border-radius:10px;">
+    <strong>This Month</strong><br>
+    <span style="font-size:28px;">{{ monthly_total }}</span>
+  </div>
+
+  <div style="min-width:150px; padding:18px; background:#1f2933; border-radius:10px;">
+    <strong>Total Views</strong><br>
+    <span style="font-size:28px;">{{ total_count }}</span>
+  </div>
+</div>
+
+<h2 style="margin-top:10px;">Page Views by Path</h2>
+
+<table style="width:900px; max-width:100%; margin-top:12px; margin-bottom:40px;">
+  <thead>
+    <tr>
+      <th style="padding:10px; width:45%;">Path</th>
+      <th style="padding:10px;">Today</th>
+      <th style="padding:10px;">Last 7 Days</th>
+      <th style="padding:10px;">This Month</th>
+      <th style="padding:10px;">Total</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in page_rows %}
+    <tr>
+      <td style="padding:10px; font-weight:700;">{{ row.path }}</td>
+      <td style="padding:10px;">{{ row.today_count }}</td>
+      <td style="padding:10px;">{{ row.weekly_count }}</td>
+      <td style="padding:10px;">{{ row.monthly_count }}</td>
+      <td style="padding:10px; font-weight:700;">{{ row.total_count }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="5" style="padding:10px;">No page view data yet.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2 style="margin-top:30px;">Raw Page View Logs</h2>
+
+{{ block.super }}
+
+{% endblock %}

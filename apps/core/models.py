@@ -3,6 +3,43 @@ from datetime import timedelta
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.db import models
+from django.utils import timezone
+
+class PageViewLog(models.Model):
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    user_agent = models.TextField(blank=True, null=True)
+    path = models.CharField(max_length=500)
+    visit_date = models.DateField(default=timezone.localdate)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["path"]),
+            models.Index(fields=["visit_date"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.path} - {self.visit_date}"
+
+class VisitorLog(models.Model):
+    ip_address = models.GenericIPAddressField()
+    user_agent = models.TextField(blank=True, null=True)
+    path = models.CharField(max_length=500, blank=True, null=True)
+    visit_date = models.DateField(default=timezone.localdate)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("ip_address", "visit_date")
+        indexes = [
+            models.Index(fields=["visit_date"]),
+            models.Index(fields=["ip_address"]),
+        ]
+
+    def __str__(self):
+        return f"{self.ip_address} - {self.visit_date}"
+
 
 
 DEFAULT_DAILY_KEYS = 3

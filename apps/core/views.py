@@ -9,6 +9,39 @@ from django.views.decorators.http import require_POST
 from apps.core.models import UserGameProfile, DEFAULT_DAILY_KEYS
 from apps.avatar.models import UserAvatarProfile
 from django.http import HttpResponse
+from datetime import timedelta
+from django.shortcuts import render
+from django.utils import timezone
+from .models import VisitorLog
+
+def visitor_stats(request):
+    today = timezone.localdate()
+
+    daily_count = VisitorLog.objects.filter(
+        visit_date=today
+    ).count()
+
+    weekly_count = VisitorLog.objects.filter(
+        visit_date__gte=today - timedelta(days=6),
+        visit_date__lte=today
+    ).count()
+
+    monthly_count = VisitorLog.objects.filter(
+        visit_date__year=today.year,
+        visit_date__month=today.month
+    ).count()
+
+    total_count = VisitorLog.objects.count()
+
+    context = {
+        "daily_count": daily_count,
+        "weekly_count": weekly_count,
+        "monthly_count": monthly_count,
+        "total_count": total_count,
+    }
+
+    return render(request, "core/visitor_stats.html", context)
+
 
 def robots_txt(request):
     lines = [

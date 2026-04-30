@@ -1,8 +1,111 @@
+from datetime import timedelta
+
 from django.contrib import admin, messages
-from django.db.models import F
+from django.db.models import F, Count, Q
 from django.utils import timezone
 
-from .models import UserGameProfile, DEFAULT_DAILY_KEYS
+from .models import UserGameProfile, DEFAULT_DAILY_KEYS, VisitorLog, PageViewLog
+
+
+@admin.register(VisitorLog)
+class VisitorLogAdmin(admin.ModelAdmin):
+    list_display = ("visit_date", "ip_address", "created_at")
+    list_filter = ("visit_date",)
+    search_fields = ("ip_address", "user_agent")
+    ordering = ("-visit_date", "-created_at")
+    change_list_template = "admin/core/visitorlog/change_list.html"
+
+    def changelist_view(self, request, extra_context=None):
+        today = timezone.localdate()
+        week_start = today - timedelta(days=6)
+
+        daily_count = VisitorLog.objects.filter(visit_date=today).count()
+        weekly_count = VisitorLog.objects.filter(
+            visit_date__gte=week_start,
+            visit_date__lte=today,
+        ).count()
+        monthly_count = VisitorLog.objects.filter(
+            visit_date__year=today.year,
+            visit_date__month=today.month,
+        ).count()
+        total_count = VisitorLog.objects.count()
+
+        daily_rows = (
+            VisitorLog.objects
+            .values("visit_date")
+            .annotate(count=Count("id"))
+            .order_by("-visit_date")[:90]
+        )
+
+        extra_context = extra_context or {}
+        extra_context.update({
+            "daily_count": daily_count,
+            "weekly_count": weekly_count,
+            "monthly_count": monthly_count,
+            "total_count": total_count,
+            "daily_rows": daily_rows,
+        })
+
+        return super().changelist_view(request, extra_context=extra_context)
+
+
+@admin.register(PageViewLog)
+class PageViewLogAdmin(admin.ModelAdmin):
+    list_display = ("path", "ip_address", "visit_date", "created_at")
+    list_filter = ("visit_date", "path")
+    search_fields = ("path", "ip_address", "user_agent")
+    ordering = ("-created_at",)
+    change_list_template = "admin/core/pageviewlog/change_list.html"
+
+    def changelist_view(self, request, extra_context=None):
+        today = timezone.localdate()
+        week_start = today - timedelta(days=6)
+
+        page_rows = (
+            PageViewLog.objects
+            .values("path")
+            .annotate(
+                today_count=Count("id", filter=Q(visit_date=today)),
+                weekly_count=Count(
+                    "id",
+                    filter=Q(
+                        visit_date__gte=week_start,
+                        visit_date__lte=today,
+                    ),
+                ),
+                monthly_count=Count(
+                    "id",
+                    filter=Q(
+                        visit_date__year=today.year,
+                        visit_date__month=today.month,
+                    ),
+                ),
+                total_count=Count("id"),
+            )
+            .order_by("-total_count", "path")[:100]
+        )
+
+        daily_total = PageViewLog.objects.filter(visit_date=today).count()
+        weekly_total = PageViewLog.objects.filter(
+            visit_date__gte=week_start,
+            visit_date__lte=today,
+        ).count()
+        monthly_total = PageViewLog.objects.filter(
+            visit_date__year=today.year,
+            visit_date__month=today.month,
+        ).count()
+        total_count = PageViewLog.objects.count()
+
+        extra_context = extra_context or {}
+        extra_context.update({
+            "daily_total": daily_total,
+            "weekly_total": weekly_total,
+            "monthly_total": monthly_total,
+            "total_count": total_count,
+            "page_rows": page_rows,
+        })
+
+        return super().changelist_view(request, extra_context=extra_context)
 
 
 @admin.action(description="선택한 유저 별 0으로 리셋")
