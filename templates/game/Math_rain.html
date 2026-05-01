@@ -183,5 +183,47 @@
 {% block footer %}{% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'game/js/math_rain.js' %}?v=mobile_pad_2btn_nokey_v1"></script>
+
+<script>
+  window.MATHNER_GAME_EVENT_CONFIG = {
+    trackEventUrl: "{% url 'core:track_game_event' %}",
+    gameName: "math_rain"
+  };
+
+  (function () {
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+      return '';
+    }
+
+    window.trackMathnerEvent = window.trackMathnerEvent || function (eventType, extra) {
+      const cfg = window.MATHNER_GAME_EVENT_CONFIG || {};
+      if (!cfg.trackEventUrl) return;
+      fetch(cfg.trackEventUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(Object.assign({
+          event_type: eventType,
+          game_name: cfg.gameName || 'math_rain',
+          source: 'math_rain_html',
+          page: window.location.pathname
+        }, extra || {})),
+        keepalive: true
+      }).catch(function () {});
+    };
+
+    document.addEventListener('click', function (event) {
+      const loginLink = event.target.closest('a[href*="/accounts/"]');
+      if (loginLink) {
+        window.trackMathnerEvent('login_click', { reason: 'login_link_click' });
+      }
+    });
+  })();
+</script>
+<script src="{% static 'game/js/math_rain.js' %}?v=20260501_eventlog_1"></script>
 {% endblock %}

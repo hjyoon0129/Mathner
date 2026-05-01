@@ -3,8 +3,6 @@ from datetime import timedelta
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
-from django.db import models
-from django.utils import timezone
 
 class PageViewLog(models.Model):
     ip_address = models.GenericIPAddressField(blank=True, null=True)
@@ -40,6 +38,56 @@ class VisitorLog(models.Model):
     def __str__(self):
         return f"{self.ip_address} - {self.visit_date}"
 
+
+
+class GameEventLog(models.Model):
+    EVENT_GAME_START = "game_start"
+    EVENT_GAME_FINISH = "game_finish"
+    EVENT_LOGIN_CLICK = "login_click"
+    EVENT_SIGNUP = "signup"
+
+    EVENT_CHOICES = [
+        (EVENT_GAME_START, "Game Start"),
+        (EVENT_GAME_FINISH, "Game Finish"),
+        (EVENT_LOGIN_CLICK, "Login Click"),
+        (EVENT_SIGNUP, "Signup"),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="game_event_logs",
+    )
+    event_type = models.CharField(max_length=50, choices=EVENT_CHOICES)
+    game_name = models.CharField(max_length=50, blank=True, default="")
+
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    user_agent = models.TextField(blank=True, null=True)
+    path = models.CharField(max_length=500, blank=True, default="")
+    session_key = models.CharField(max_length=80, blank=True, default="")
+
+    score = models.PositiveIntegerField(default=0)
+    correct = models.PositiveIntegerField(default=0)
+    gained_stars = models.PositiveIntegerField(default=0)
+    reason = models.CharField(max_length=100, blank=True, default="")
+    meta = models.JSONField(default=dict, blank=True)
+
+    event_date = models.DateField(default=timezone.localdate)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=["event_type"]),
+            models.Index(fields=["game_name"]),
+            models.Index(fields=["event_date"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.event_type} / {self.game_name or '-'} / {self.event_date}"
 
 
 DEFAULT_DAILY_KEYS = 3

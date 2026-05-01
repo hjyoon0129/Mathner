@@ -26,6 +26,89 @@
   </div>
 </div>
 
+<h2 style="margin-top:10px;">Real Visitor Check</h2>
+
+<div style="display:flex; gap:16px; margin:14px 0 28px; flex-wrap:wrap;">
+  <div style="min-width:170px; padding:18px; background:#123524; border-radius:10px;">
+    <strong>Maybe Human</strong><br>
+    <span style="font-size:28px;">{{ maybe_human_count }}</span>
+  </div>
+
+  <div style="min-width:170px; padding:18px; background:#3a3215; border-radius:10px;">
+    <strong>Bot</strong><br>
+    <span style="font-size:28px;">{{ bot_count }}</span>
+  </div>
+
+  <div style="min-width:170px; padding:18px; background:#3a1822; border-radius:10px;">
+    <strong>Suspicious</strong><br>
+    <span style="font-size:28px;">{{ suspicious_count }}</span>
+  </div>
+</div>
+
+<p style="margin:0 0 28px; color:#bbb;">
+  VisitorLog는 IP 기준 방문자 로그라서 PageViewLog보다 단순합니다.
+  실제 사용자는 Maybe Human 중에서도 게임 시작/완료 같은 행동이 있는 사람으로 보는 게 더 정확합니다.
+</p>
+
+<div style="display:flex; gap:24px; flex-wrap:wrap; margin-bottom:38px;">
+
+  <div style="min-width:380px;">
+    <h2>Visitor Type</h2>
+
+    <table style="width:380px; max-width:100%; margin-top:12px;">
+      <thead>
+        <tr>
+          <th style="padding:10px;">Type</th>
+          <th style="padding:10px;">Count</th>
+          <th style="padding:10px;">Percent</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in type_rows %}
+        <tr>
+          <td style="padding:10px; font-weight:700;">{{ row.label }}</td>
+          <td style="padding:10px; font-weight:700;">{{ row.count }}</td>
+          <td style="padding:10px; font-weight:700;">{{ row.percent }}%</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="3" style="padding:10px;">No visitor type data.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div style="min-width:420px;">
+    <h2>Country Summary</h2>
+    <p style="margin:4px 0 10px; color:#bbb;">
+      GeoLite2 DB가 없으면 Unknown으로 표시됩니다. 지금 단계에서는 참고용입니다.
+    </p>
+
+    <table style="width:420px; max-width:100%; margin-top:12px;">
+      <thead>
+        <tr>
+          <th style="padding:10px;">Country</th>
+          <th style="padding:10px;">Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in country_rows %}
+        <tr>
+          <td style="padding:10px; font-weight:700;">{{ row.country }}</td>
+          <td style="padding:10px; font-weight:700;">{{ row.count }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="2" style="padding:10px;">No country data.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
 <h2>Daily Unique Visitors</h2>
 
 <table style="width:520px; max-width:100%; margin-top:12px;">
@@ -48,5 +131,7 @@
     {% endfor %}
   </tbody>
 </table>
+
+<br><br>
 
 {% endblock %}

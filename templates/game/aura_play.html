@@ -397,6 +397,8 @@
     initialKeys: Number("{{ remaining_keys|default_if_none:0 }}"),
     startRunUrl: "{% url 'core:start_game_run' %}",
     finalizeRunUrl: "{% url 'core:save_game_result' %}",
+    trackEventUrl: "{% url 'core:track_game_event' %}",
+    gameName: "aura",
     rankingRecordUrl: "{% url 'ranking:api_record_score' %}",
     friendNearbyRankUrlBase: "{% url 'ranking:api_friend_nearby_rank' %}",
     rankingHomeUrlBase: "{% url 'ranking:home' %}",
@@ -406,5 +408,43 @@
     username: "{{ username|default:''|escapejs }}"
   };
 </script>
-<script src="{% static 'game/js/aura_play.js' %}?v=20260419_mobilepad_2"></script>
+
+<script>
+(function () {
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return '';
+  }
+
+  window.trackMathnerEvent = function (eventType, extra) {
+    const cfg = window.PLAY_PAGE_CONFIG || {};
+    if (!cfg.trackEventUrl) return;
+
+    fetch(cfg.trackEventUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify(Object.assign({
+        event_type: eventType,
+        game_name: cfg.gameName || 'aura',
+        source: 'aura_play_html',
+        page: window.location.pathname
+      }, extra || {})),
+      keepalive: true
+    }).catch(function () {});
+  };
+
+  document.addEventListener('click', function (event) {
+    const loginLink = event.target.closest('a[href*="/accounts/"]');
+    if (loginLink) {
+      window.trackMathnerEvent('login_click', { reason: 'login_link_click' });
+    }
+  });
+})();
+</script>
+<script src="{% static 'game/js/aura_play.js' %}?v=20260501_eventlog_1"></script>
 {% endblock %}

@@ -10,6 +10,7 @@ urlpatterns = [
 
     path("start-game-run/", views.start_game_run, name="start_game_run"),
     path("save-game-result/", views.save_game_result, name="save_game_result"),
+    path("track-game-event/", views.track_game_event, name="track_game_event"),
 
     path("privacy/", views.privacy_view, name="privacy"),
     path("terms/", views.terms_view, name="terms"),

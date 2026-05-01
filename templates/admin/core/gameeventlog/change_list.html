@@ -1,0 +1,133 @@
+﻿{% extends "admin/change_list.html" %}
+
+{% block content %}
+
+<h1 style="margin-bottom:24px;">Game Conversion Dashboard</h1>
+
+<div style="display:flex; gap:16px; flex-wrap:wrap; margin:20px 0 28px;">
+  <div style="min-width:150px; padding:18px; background:#1f2933; border-radius:10px;">
+    <strong>Today Page Views</strong><br>
+    <span style="font-size:28px;">{{ today_page_views }}</span>
+  </div>
+
+  <div style="min-width:150px; padding:18px; background:#123524; border-radius:10px;">
+    <strong>Game Starts</strong><br>
+    <span style="font-size:28px;">{{ today_game_start }}</span>
+  </div>
+
+  <div style="min-width:150px; padding:18px; background:#16324a; border-radius:10px;">
+    <strong>Game Finishes</strong><br>
+    <span style="font-size:28px;">{{ today_game_finish }}</span>
+  </div>
+
+  <div style="min-width:150px; padding:18px; background:#3a3215; border-radius:10px;">
+    <strong>Login Clicks</strong><br>
+    <span style="font-size:28px;">{{ today_login_click }}</span>
+  </div>
+</div>
+
+<h2>Weekly Event Summary</h2>
+
+<div style="display:flex; gap:16px; flex-wrap:wrap; margin:14px 0 28px;">
+  <div style="min-width:150px; padding:18px; background:#123524; border-radius:10px;">
+    <strong>7 Days Starts</strong><br>
+    <span style="font-size:28px;">{{ weekly_game_start }}</span>
+  </div>
+
+  <div style="min-width:150px; padding:18px; background:#16324a; border-radius:10px;">
+    <strong>7 Days Finishes</strong><br>
+    <span style="font-size:28px;">{{ weekly_game_finish }}</span>
+  </div>
+
+  <div style="min-width:150px; padding:18px; background:#3a3215; border-radius:10px;">
+    <strong>7 Days Login Clicks</strong><br>
+    <span style="font-size:28px;">{{ weekly_login_click }}</span>
+  </div>
+</div>
+
+<h2>Today Conversion</h2>
+
+<table style="width:760px; max-width:100%; margin:12px 0 34px;">
+  <thead>
+    <tr>
+      <th style="padding:10px;">Step</th>
+      <th style="padding:10px;">Rate</th>
+      <th style="padding:10px;">Meaning</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding:10px; font-weight:700;">Visit → Start</td>
+      <td style="padding:10px; font-weight:700;">{{ start_rate }}%</td>
+      <td style="padding:10px;">방문자가 실제 게임 시작까지 갔는지</td>
+    </tr>
+    <tr>
+      <td style="padding:10px; font-weight:700;">Start → Finish</td>
+      <td style="padding:10px; font-weight:700;">{{ finish_rate }}%</td>
+      <td style="padding:10px;">시작한 사람이 끝까지 플레이했는지</td>
+    </tr>
+    <tr>
+      <td style="padding:10px; font-weight:700;">Finish → Login Click</td>
+      <td style="padding:10px; font-weight:700;">{{ login_rate }}%</td>
+      <td style="padding:10px;">완료 후 로그인 관심이 생겼는지</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Today Events by Game</h2>
+
+<table style="width:820px; max-width:100%; margin:12px 0 34px;">
+  <thead>
+    <tr>
+      <th style="padding:10px;">Game</th>
+      <th style="padding:10px;">Start</th>
+      <th style="padding:10px;">Finish</th>
+      <th style="padding:10px;">Login Click</th>
+      <th style="padding:10px;">Finish Rate</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in game_rows %}
+    <tr>
+      <td style="padding:10px; font-weight:700;">{{ row.game_name }}</td>
+      <td style="padding:10px;">{{ row.start_count }}</td>
+      <td style="padding:10px;">{{ row.finish_count }}</td>
+      <td style="padding:10px;">{{ row.login_count }}</td>
+      <td style="padding:10px; font-weight:700;">{{ row.finish_rate }}%</td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="5" style="padding:10px;">No game event data yet.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2>Today Event Type Summary</h2>
+
+<table style="width:420px; max-width:100%; margin:12px 0 34px;">
+  <thead>
+    <tr>
+      <th style="padding:10px;">Event Type</th>
+      <th style="padding:10px;">Count</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in event_rows %}
+    <tr>
+      <td style="padding:10px; font-weight:700;">{{ row.event_type }}</td>
+      <td style="padding:10px; font-weight:700;">{{ row.count }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="2" style="padding:10px;">No events today.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2 style="margin-top:30px;">Raw Game Event Logs</h2>
+
+{{ block.super }}
+
+{% endblock %}

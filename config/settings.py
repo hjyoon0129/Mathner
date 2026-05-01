@@ -29,7 +29,7 @@ ALLOWED_HOSTS = [
     host.strip()
     for host in os.getenv(
         "ALLOWED_HOSTS",
-        "127.0.0.1,localhost"
+        "127.0.0.1,localhost,mathner.com,www.mathner.com"
     ).split(",")
     if host.strip()
 ]
@@ -39,7 +39,6 @@ ALLOWED_HOSTS = [
 # Application definition
 # =========================
 INSTALLED_APPS = [
-    # Django 기본
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -47,14 +46,13 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
-    'django.contrib.sitemaps',
-    # allauth
+    "django.contrib.sitemaps",
+
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
 
-    # Project apps
     "apps.core.apps.CoreConfig",
     "apps.accounts",
     "apps.game",
@@ -66,12 +64,11 @@ INSTALLED_APPS = [
     "apps.billing",
     "apps.support",
     "apps.community",
-
 ]
 
 MIDDLEWARE = [
-    "apps.core.middleware.VisitorTrackingMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "apps.core.middleware.VisitorTrackingMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -105,7 +102,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 
 # =========================
-# Database (Neon / PostgreSQL)
+# Database
 # =========================
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
@@ -115,7 +112,7 @@ DATABASES = {
     "default": dj_database_url.parse(
         DATABASE_URL,
         conn_max_age=600,
-        ssl_require=True,
+        ssl_require=not DEBUG,
     )
 }
 
@@ -219,11 +216,24 @@ SOCIALACCOUNT_PROVIDERS = {
 # Session / Cookie
 # =========================
 ACCOUNT_SESSION_REMEMBER = None
-SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 days
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 30
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
-SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "False").lower() == "true"
-CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "False").lower() == "true"
+SESSION_COOKIE_SECURE = os.getenv(
+    "SESSION_COOKIE_SECURE",
+    "False" if DEBUG else "True"
+).lower() == "true"
+
+CSRF_COOKIE_SECURE = os.getenv(
+    "CSRF_COOKIE_SECURE",
+    "False" if DEBUG else "True"
+).lower() == "true"
+
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False
+
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
 
 
 # =========================
@@ -231,20 +241,54 @@ CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "False").lower() == "true"
 # =========================
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
-    for origin in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
+    for origin in os.getenv(
+        "CSRF_TRUSTED_ORIGINS",
+        "https://mathner.com,https://www.mathner.com"
+    ).split(",")
     if origin.strip()
 ]
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False").lower() == "true"
 
-SECURE_BROWSER_XSS_FILTER = True
+SECURE_SSL_REDIRECT = os.getenv(
+    "SECURE_SSL_REDIRECT",
+    "False" if DEBUG else "True"
+).lower() == "true"
+
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 
-SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "0"))
-SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv("SECURE_HSTS_INCLUDE_SUBDOMAINS", "False").lower() == "true"
-SECURE_HSTS_PRELOAD = os.getenv("SECURE_HSTS_PRELOAD", "False").lower() == "true"
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
+
+SECURE_HSTS_SECONDS = int(
+    os.getenv(
+        "SECURE_HSTS_SECONDS",
+        "0" if DEBUG else "31536000"
+    )
+)
+
+SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv(
+    "SECURE_HSTS_INCLUDE_SUBDOMAINS",
+    "False" if DEBUG else "True"
+).lower() == "true"
+
+SECURE_HSTS_PRELOAD = os.getenv(
+    "SECURE_HSTS_PRELOAD",
+    "False" if DEBUG else "True"
+).lower() == "true"
+
+
+# =========================
+# Admin security helper
+# =========================
+ADMIN_URL = os.getenv("ADMIN_URL", "admin/")
+
+
+# =========================
+# GeoIP optional
+# =========================
+GEOIP_PATH = BASE_DIR / "geoip"
 
 
 # =========================
@@ -264,8 +308,9 @@ LOGGING = {
     "disable_existing_loggers": False,
 }
 
+
 # =========================
-# Redis Cache (with fallback)
+# Redis Cache
 # =========================
 USE_REDIS = os.getenv("USE_REDIS", "False").lower() == "true"
 
@@ -280,7 +325,6 @@ if USE_REDIS:
         }
     }
 else:
-    # 로컬 개발용 (Redis 없어도 동작)
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -289,7 +333,7 @@ else:
 
 
 # =========================
-# Celery (with fallback)
+# Celery
 # =========================
 if USE_REDIS:
     CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://127.0.0.1:6379/2")
@@ -300,5 +344,4 @@ if USE_REDIS:
     CELERY_RESULT_SERIALIZER = "json"
     CELERY_TIMEZONE = TIME_ZONE
 else:
-    # 로컬에서는 Celery 안써도 되게
     CELERY_TASK_ALWAYS_EAGER = True

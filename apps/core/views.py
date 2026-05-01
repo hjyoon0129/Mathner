@@ -1,36 +1,89 @@
 import json
 import re
+from datetime import timedelta
 
 from django.db import transaction
-from django.http import JsonResponse
-from django.shortcuts import render
-from django.views.decorators.http import require_POST
-
-from apps.core.models import UserGameProfile, DEFAULT_DAILY_KEYS
-from apps.avatar.models import UserAvatarProfile
-from django.http import HttpResponse
-from datetime import timedelta
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
-from .models import VisitorLog
+from django.views.decorators.http import require_POST
+
+from apps.avatar.models import UserAvatarProfile
+from apps.core.models import (
+    UserGameProfile,
+    DEFAULT_DAILY_KEYS,
+    GameEventLog,
+    VisitorLog,
+)
+
+
+def _get_client_ip(request):
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    if x_forwarded_for:
+        return x_forwarded_for.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR", "")
+
+
+def _ensure_session_key(request):
+    if not request.session.session_key:
+        request.session.save()
+    return request.session.session_key or ""
+
+
+def _safe_game_name(value):
+    value = (value or "").strip().lower()
+    allowed = {"aura", "math_rain", "rain", "unknown"}
+    if value not in allowed:
+        return "unknown"
+    if value == "rain":
+        return "math_rain"
+    return value
+
+
+def _create_game_event_log(
+    request,
+    event_type,
+    game_name="unknown",
+    score=0,
+    correct=0,
+    gained_stars=0,
+    reason="",
+    meta=None,
+):
+    if event_type not in dict(GameEventLog.EVENT_CHOICES):
+        return None
+
+    try:
+        return GameEventLog.objects.create(
+            user=request.user if request.user.is_authenticated else None,
+            event_type=event_type,
+            game_name=_safe_game_name(game_name),
+            ip_address=_get_client_ip(request) or None,
+            user_agent=request.META.get("HTTP_USER_AGENT", ""),
+            path=request.path[:500],
+            session_key=_ensure_session_key(request),
+            score=max(0, int(score or 0)),
+            correct=max(0, int(correct or 0)),
+            gained_stars=max(0, int(gained_stars or 0)),
+            reason=(reason or "")[:100],
+            meta=meta or {},
+        )
+    except Exception:
+        return None
+
 
 def visitor_stats(request):
     today = timezone.localdate()
 
-    daily_count = VisitorLog.objects.filter(
-        visit_date=today
-    ).count()
-
+    daily_count = VisitorLog.objects.filter(visit_date=today).count()
     weekly_count = VisitorLog.objects.filter(
         visit_date__gte=today - timedelta(days=6),
-        visit_date__lte=today
+        visit_date__lte=today,
     ).count()
-
     monthly_count = VisitorLog.objects.filter(
         visit_date__year=today.year,
-        visit_date__month=today.month
+        visit_date__month=today.month,
     ).count()
-
     total_count = VisitorLog.objects.count()
 
     context = {
@@ -50,7 +103,6 @@ def robots_txt(request):
         "Sitemap: https://mathner.com/sitemap.xml",
     ]
     return HttpResponse("\n".join(lines), content_type="text/plain")
-
 
 
 ACTIVE_RUN_SESSION_KEY = "active_math_run_consumed"
@@ -83,7 +135,6 @@ def _get_profile(request):
 
 
 def _today_str():
-    from django.utils import timezone
     return timezone.localdate().isoformat()
 
 
@@ -291,6 +342,7 @@ def _build_game_page_context(request, play_avatar_enabled=False):
         total_correct = _profile_int(profile, "total_correct")
         username = _get_username(request.user)
         my_nickname = profile.get_display_name()
+
         play_avatar_data = _build_play_avatar_data(request) if play_avatar_enabled else {
             "enabled": False,
             "gender": "male",
@@ -351,8 +403,26 @@ def play_view(request):
     return render(request, "game/aura_play.html", context)
 
 
+def _get_game_name_from_request(request, fallback="aura"):
+    value = ""
+
+    try:
+        if request.content_type and "application/json" in request.content_type:
+            data = json.loads(request.body.decode("utf-8") or "{}")
+            value = data.get("game_name", "")
+    except Exception:
+        value = ""
+
+    if not value:
+        value = request.POST.get("game_name", "")
+
+    return _safe_game_name(value or fallback)
+
+
 @require_POST
 def start_game_run(request):
+    game_name = _get_game_name_from_request(request, fallback="aura")
+
     if request.user.is_authenticated:
         with transaction.atomic():
             profile, _ = UserGameProfile.objects.select_for_update().get_or_create(user=request.user)
@@ -399,6 +469,13 @@ def start_game_run(request):
             request.session.modified = True
             profile.refresh_from_db()
             request._cached_game_profile = profile
+
+        _create_game_event_log(
+            request,
+            event_type=GameEventLog.EVENT_GAME_START,
+            game_name=game_name,
+            reason="start_game_run",
+        )
 
         return JsonResponse(
             {
@@ -447,6 +524,13 @@ def start_game_run(request):
     request.session[ACTIVE_RUN_SESSION_KEY] = True
     request.session.modified = True
 
+    _create_game_event_log(
+        request,
+        event_type=GameEventLog.EVENT_GAME_START,
+        game_name=game_name,
+        reason="start_game_run",
+    )
+
     return JsonResponse(
         {
             "ok": True,
@@ -471,6 +555,7 @@ def save_game_result(request):
     score = max(0, int(data.get("score", 0) or 0))
     correct = max(0, int(data.get("correct", data.get("correct_count", 0)) or 0))
     reason = data.get("reason", "")
+    game_name = _safe_game_name(data.get("game_name", "aura"))
 
     if request.user.is_authenticated:
         with transaction.atomic():
@@ -516,6 +601,16 @@ def save_game_result(request):
             request.session.modified = True
             profile.refresh_from_db()
             request._cached_game_profile = profile
+
+        _create_game_event_log(
+            request,
+            event_type=GameEventLog.EVENT_GAME_FINISH,
+            game_name=game_name,
+            score=score,
+            correct=correct,
+            gained_stars=gained_stars,
+            reason=reason or "save_game_result",
+        )
 
         return JsonResponse(
             {
@@ -566,6 +661,16 @@ def save_game_result(request):
     request.session[ACTIVE_RUN_SESSION_KEY] = False
     request.session.modified = True
 
+    _create_game_event_log(
+        request,
+        event_type=GameEventLog.EVENT_GAME_FINISH,
+        game_name=game_name,
+        score=score,
+        correct=correct,
+        gained_stars=gained_stars,
+        reason=reason or "save_game_result",
+    )
+
     return JsonResponse(
         {
             "ok": True,
@@ -577,6 +682,36 @@ def save_game_result(request):
             "reason": reason,
         }
     )
+
+
+@require_POST
+def track_game_event(request):
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except (json.JSONDecodeError, TypeError, ValueError):
+        data = request.POST
+
+    event_type = data.get("event_type", "")
+    game_name = data.get("game_name", "unknown")
+
+    if event_type not in dict(GameEventLog.EVENT_CHOICES):
+        return JsonResponse({"ok": False, "error": "Invalid event_type"}, status=400)
+
+    log = _create_game_event_log(
+        request,
+        event_type=event_type,
+        game_name=game_name,
+        score=data.get("score", 0),
+        correct=data.get("correct", data.get("correct_count", 0)),
+        gained_stars=data.get("gained_stars", data.get("earned_stars", 0)),
+        reason=data.get("reason", "manual"),
+        meta={
+            "source": data.get("source", "client"),
+            "page": data.get("page", ""),
+        },
+    )
+
+    return JsonResponse({"ok": True, "id": log.id if log else None})
 
 
 def privacy_view(request):

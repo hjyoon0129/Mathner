@@ -26,6 +26,118 @@
   </div>
 </div>
 
+<h2 style="margin-top:10px;">Real Traffic Check</h2>
+
+<div style="display:flex; gap:16px; margin:14px 0 28px; flex-wrap:wrap;">
+  <div style="min-width:170px; padding:18px; background:#123524; border-radius:10px;">
+    <strong>Maybe Human Today</strong><br>
+    <span style="font-size:28px;">{{ maybe_human_today }}</span>
+  </div>
+
+  <div style="min-width:170px; padding:18px; background:#3a3215; border-radius:10px;">
+    <strong>Bot Today</strong><br>
+    <span style="font-size:28px;">{{ bot_today }}</span>
+  </div>
+
+  <div style="min-width:170px; padding:18px; background:#3a1822; border-radius:10px;">
+    <strong>Suspicious Today</strong><br>
+    <span style="font-size:28px;">{{ suspicious_today }}</span>
+  </div>
+</div>
+
+<p style="margin:0 0 28px; color:#bbb;">
+  Maybe Human은 확정 사용자가 아니라, 봇/공격 패턴에 걸리지 않은 접속입니다.
+  실제 유저 판단은 게임 시작, 게임 완료, 로그인 클릭 같은 행동 로그를 추가해야 더 정확해집니다.
+</p>
+
+<div style="display:flex; gap:24px; flex-wrap:wrap; margin-bottom:38px;">
+
+  <div style="min-width:380px;">
+    <h2>Traffic Type</h2>
+
+    <table style="width:380px; max-width:100%; margin-top:12px;">
+      <thead>
+        <tr>
+          <th style="padding:10px;">Type</th>
+          <th style="padding:10px;">Count</th>
+          <th style="padding:10px;">Percent</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in type_rows %}
+        <tr>
+          <td style="padding:10px; font-weight:700;">{{ row.label }}</td>
+          <td style="padding:10px; font-weight:700;">{{ row.count }}</td>
+          <td style="padding:10px; font-weight:700;">{{ row.percent }}%</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="3" style="padding:10px;">No traffic type data.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div style="min-width:420px;">
+    <h2>Country Summary</h2>
+    <p style="margin:4px 0 10px; color:#bbb;">
+      GeoLite2 DB가 없으면 Unknown으로 표시됩니다. 지금 단계에서는 참고용입니다.
+    </p>
+
+    <table style="width:420px; max-width:100%; margin-top:12px;">
+      <thead>
+        <tr>
+          <th style="padding:10px;">Country</th>
+          <th style="padding:10px;">Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in country_rows %}
+        <tr>
+          <td style="padding:10px; font-weight:700;">{{ row.country }}</td>
+          <td style="padding:10px; font-weight:700;">{{ row.count }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="2" style="padding:10px;">No country data.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<h2 style="margin-top:10px;">Page Type Breakdown</h2>
+
+<table style="width:900px; max-width:100%; margin-top:12px; margin-bottom:40px;">
+  <thead>
+    <tr>
+      <th style="padding:10px; width:42%;">Path</th>
+      <th style="padding:10px;">Maybe Human</th>
+      <th style="padding:10px;">Bot</th>
+      <th style="padding:10px;">Suspicious</th>
+      <th style="padding:10px;">Total</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in page_type_rows %}
+    <tr>
+      <td style="padding:10px; font-weight:700;">{{ row.path }}</td>
+      <td style="padding:10px; color:#82f0aa; font-weight:700;">{{ row.maybe_human }}</td>
+      <td style="padding:10px; color:#ffd36a; font-weight:700;">{{ row.bot }}</td>
+      <td style="padding:10px; color:#ff7a90; font-weight:700;">{{ row.suspicious }}</td>
+      <td style="padding:10px; font-weight:700;">{{ row.total }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="5" style="padding:10px;">No page type data yet.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
 <h2 style="margin-top:10px;">Page Views by Path</h2>
 
 <table style="width:900px; max-width:100%; margin-top:12px; margin-bottom:40px;">
