@@ -1,5 +1,4 @@
 ﻿{% load static %}
-{% load socialaccount %}
 {% url 'core:app_home' as mathner_app_home_url %}
 {% url 'core:landing' as mathner_landing_url %}
 {% url 'account_login' as mathner_login_url %}
@@ -221,7 +220,7 @@
       --line: #E6D8C8;
       --shadow: rgba(255, 143, 0, 0.18);
       --container: min(1180px, calc(100% - 28px));
-      --header-height: 78px;
+      --header-height: 82px;
 
       --font-main: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto,
         'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR',
@@ -296,7 +295,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 14px;
+      gap: 18px;
     }
 
     .brand {
@@ -305,22 +304,22 @@
       gap: 12px;
       flex: 0 0 auto;
       color: var(--orange);
-      font-size: 27px;
-      font-weight: 900;
+      font-size: 30px;
+      font-weight: 950;
       white-space: nowrap;
       text-shadow: 1px 1px 0 #fff;
     }
 
     .brand-logo {
-      width: 50px;
-      height: 50px;
+      width: 54px;
+      height: 54px;
       border-radius: 18px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       background: linear-gradient(135deg, var(--yellow), var(--orange));
       color: #fff;
-      font-size: 34px;
+      font-size: 36px;
       font-weight: 950;
       line-height: 1;
       box-shadow: 0 6px 0 rgba(214, 125, 0, 0.55);
@@ -331,21 +330,21 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 10px;
       flex: 1 1 auto;
       min-width: 0;
     }
 
     .main-nav a {
-      min-height: 46px;
-      padding: 0 15px;
+      min-height: 50px;
+      padding: 0 18px;
       border-radius: 999px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       color: #5C4D44;
-      font-size: 16px;
-      font-weight: 850;
+      font-size: 19px;
+      font-weight: 900;
       white-space: nowrap;
       transition: background 0.16s ease, color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
     }
@@ -366,44 +365,18 @@
       position: relative;
     }
 
-    .nav-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      min-height: 46px;
-      padding: 8px 16px;
-      border-radius: 999px;
-      border: 3px solid var(--yellow);
-      background: #fff;
-      color: var(--text);
-      font-size: 17px;
-      font-weight: 900;
-      white-space: nowrap;
-      box-shadow: 0 4px 0 rgba(255, 203, 60, 0.38);
-    }
-
-    .nav-status-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .nav-status-item span:first-child {
-      font-size: 20px;
-    }
-
     .btn-3d {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 48px;
-      padding: 12px 22px;
+      min-height: 50px;
+      padding: 12px 24px;
       border-radius: 20px;
       border: 0;
       cursor: pointer;
       color: #fff;
-      font-size: 17px;
-      font-weight: 900;
+      font-size: 18px;
+      font-weight: 950;
       letter-spacing: -0.25px;
       white-space: nowrap;
       text-align: center;
@@ -453,71 +426,14 @@
       transform: translateY(-1px);
     }
 
-    .nav-user-menu {
-      position: relative;
-      flex: 0 0 auto;
-    }
-
-    .nav-user-trigger {
-      min-height: 48px;
-      padding: 10px 18px;
-      border: 3px solid var(--line);
-      border-radius: 20px;
-      background: #fff;
-      color: var(--text);
-      font-size: 17px;
-      font-weight: 900;
-      cursor: pointer;
-      box-shadow: 0 4px 0 #D6C8B8;
-      white-space: nowrap;
-    }
-
-    .nav-user-dropdown {
-      position: absolute;
-      top: calc(100% + 10px);
-      right: 0;
-      min-width: 225px;
-      display: none;
-      background: #fff;
-      border: 4px solid var(--yellow);
-      border-radius: 24px;
-      box-shadow: 0 18px 36px rgba(0,0,0,0.12);
-      overflow: hidden;
-      padding: 8px 0;
-    }
-
-    .nav-user-dropdown.open {
-      display: block;
-    }
-
-    .nav-user-dropdown a,
-    .nav-dropdown-btn {
-      display: block;
-      width: 100%;
-      padding: 14px 20px;
-      text-align: left;
-      background: #fff;
-      border: 0;
-      color: var(--text);
-      font-size: 16px;
-      font-weight: 800;
-      cursor: pointer;
-    }
-
-    .nav-user-dropdown a:hover,
-    .nav-dropdown-btn:hover {
-      background: #FFF8E7;
-      color: var(--orange);
-    }
-
     .mobile-menu-trigger {
-      width: 46px;
-      height: 46px;
+      width: 48px;
+      height: 48px;
       border: 3px solid var(--yellow);
       border-radius: 16px;
       background: #fff;
       color: var(--orange);
-      font-size: 23px;
+      font-size: 24px;
       font-weight: 950;
       cursor: pointer;
       box-shadow: 0 4px 0 rgba(255, 203, 60, 0.38);
@@ -559,8 +475,8 @@
       border-bottom: 2px dashed #eee;
       background: #fff;
       color: var(--text);
-      font-size: 19px;
-      font-weight: 900;
+      font-size: 20px;
+      font-weight: 950;
       text-align: center;
       cursor: pointer;
     }
@@ -579,7 +495,7 @@
       border-radius: 17px;
       background: var(--orange);
       color: #fff;
-      font-size: 19px;
+      font-size: 20px;
       font-weight: 950;
       cursor: pointer;
     }
@@ -1532,16 +1448,12 @@
 
     @media (max-width: 1080px) {
       .main-nav {
-        gap: 4px;
+        gap: 5px;
       }
 
       .main-nav a {
-        padding: 0 11px;
-        font-size: 15px;
-      }
-
-      .nav-chip {
-        padding: 8px 13px;
+        padding: 0 12px;
+        font-size: 17px;
       }
     }
 
@@ -1563,7 +1475,6 @@
       }
 
       .main-nav,
-      .nav-user-menu,
       .nav-actions > .btn-3d {
         display: none !important;
       }
@@ -1574,7 +1485,7 @@
 
       .brand {
         gap: 8px;
-        font-size: 22px;
+        font-size: 23px;
       }
 
       .brand-logo {
@@ -1589,24 +1500,11 @@
         gap: 8px;
       }
 
-      .nav-chip {
-        min-height: 42px;
-        padding: 6px 10px;
-        gap: 8px;
-        font-size: 16px;
-        border-width: 3px;
-        box-shadow: 0 3px 0 rgba(255, 203, 60, 0.38);
-      }
-
-      .nav-status-item span:first-child {
-        font-size: 18px;
-      }
-
       .mobile-menu-trigger {
-        width: 42px;
-        height: 42px;
+        width: 44px;
+        height: 44px;
         border-radius: 15px;
-        font-size: 22px;
+        font-size: 23px;
       }
 
       .hero {
@@ -1745,18 +1643,13 @@
       }
 
       .brand {
-        font-size: 20px;
+        font-size: 21px;
       }
 
       .brand-logo {
         width: 42px;
         height: 42px;
         font-size: 29px;
-      }
-
-      .nav-chip {
-        font-size: 15px;
-        padding: 6px 9px;
       }
 
       .hero h1 {
@@ -1799,10 +1692,6 @@
         display: none;
       }
 
-      .nav-chip {
-        gap: 6px;
-      }
-
       .hero h1 {
         font-size: 35px;
       }
@@ -1819,57 +1708,15 @@
       </a>
 
       <nav class="main-nav" aria-label="매스너 소개 페이지 메뉴">
-        <a href="#intro">소개</a>
+
         <a href="#games">게임</a>
         <a href="#avatar">아바타 꾸미기</a>
         <a href="#guestbook">방명록</a>
         <a href="#pricing">이용요금</a>
-
-        {% if user.is_authenticated %}
-          <a href="{% url 'ranking:home' %}">랭킹</a>
-        {% else %}
-          <a href="{% url 'account_login' %}?next={% url 'ranking:home' %}">랭킹</a>
-        {% endif %}
+        <a href="{% url 'ranking:home' %}">랭킹</a>
       </nav>
 
       <div class="nav-actions">
-        <div class="nav-chip" aria-label="내 별과 열쇠">
-          <span class="nav-status-item">
-            <span>⭐</span>
-            <span id="navStarCount">{{ nav_star_count|default_if_none:0 }}</span>
-          </span>
-          <span class="nav-status-item">
-            <span>🔑</span>
-            <span id="navKeyCount">{{ nav_key_count|default_if_none:0 }}</span>
-          </span>
-        </div>
-
-        {% if user.is_authenticated %}
-          <div class="nav-user-menu">
-            <button type="button" class="nav-user-trigger" id="navUserTrigger" aria-expanded="false">
-              🙂 {{ my_nickname|default:user.username|default:"친구" }} ▾
-            </button>
-
-            <div class="nav-user-dropdown" id="navUserDropdown">
-              <a href="{{ mathner_app_home_url }}">🎮 게임하기</a>
-              <a href="{% url 'avatar:my_room' %}">👕 내 아바타 방</a>
-              <a href="{% url 'social:hub' %}">👥 친구들</a>
-              <a href="{% url 'community:home' %}">🎪 놀이터</a>
-              <a href="{% url 'ranking:home' %}">🏆 랭킹 보기</a>
-              <a href="/shop/">🛍️ 상점 가기</a>
-              <a href="#pricing">🎟️ 이용요금</a>
-
-              <form method="post" action="{% url 'account_logout' %}">
-                {% csrf_token %}
-                <button type="submit" class="nav-dropdown-btn">👋 로그아웃</button>
-              </form>
-            </div>
-          </div>
-        {% else %}
-          <a href="{% url 'account_login' %}?next={{ mathner_app_home_url|urlencode }}" class="btn-3d btn-outline">G 로그인</a>
-          <a href="{% url 'account_login' %}?next={{ mathner_app_home_url|urlencode }}" class="btn-3d btn-solid">시작하기</a>
-        {% endif %}
-
         <button type="button" class="mobile-only mobile-menu-trigger" id="mobileMenuTrigger" aria-expanded="false" aria-controls="mobileMenuDrawer">
           ☰
         </button>
@@ -1885,20 +1732,21 @@
         <a href="#avatar">👕 아바타 꾸미기</a>
         <a href="#guestbook">💬 방명록</a>
         <a href="#pricing">🎟️ 이용요금</a>
+        <a href="{% url 'ranking:home' %}">🏆 랭킹</a>
 
         {% if user.is_authenticated %}
           <a href="{{ mathner_app_home_url }}">🚀 게임하기</a>
           <a href="{% url 'avatar:my_room' %}">👕 내 아바타</a>
           <a href="{% url 'social:hub' %}">👥 친구들</a>
           <a href="{% url 'community:home' %}">🎪 놀이터</a>
-          <a href="{% url 'ranking:home' %}">🏆 랭킹</a>
           <a href="/shop/">🛍️ 상점</a>
           <form method="post" action="{% url 'account_logout' %}">
             {% csrf_token %}
             <button type="submit">👋 로그아웃</button>
           </form>
         {% else %}
-          <a href="{% url 'account_login' %}?next={{ mathner_app_home_url|urlencode }}">G 구글로 시작하기</a>
+          <a href="{% url 'account_login' %}?next={{ mathner_app_home_url|urlencode }}">🔐 로그인</a>
+          <a href="{{ mathner_app_home_url }}">🚀 시작하기</a>
           <a href="{% url 'account_login' %}?next={% url 'avatar:my_room' %}">👕 로그인하고 아바타 만들기</a>
           <a href="{% url 'account_login' %}?next={% url 'social:hub' %}">👥 친구 방 놀러가기</a>
           <a href="{% url 'community:home' %}">🎪 놀이터 보기</a>
@@ -1940,7 +1788,7 @@
             <a href="{{ mathner_app_home_url }}" class="btn-3d btn-solid">🚀 지금 게임하기</a>
             <a href="{% url 'avatar:my_room' %}" class="btn-3d btn-mint">👕 아바타 꾸미기</a>
           {% else %}
-            <a href="{% url 'account_login' %}?next={{ mathner_app_home_url|urlencode }}" class="btn-3d btn-solid">🚀 무료로 시작하기</a>
+            <a href="{{ mathner_app_home_url }}" class="btn-3d btn-solid">🚀 시작하기</a>
             <a href="{% url 'account_login' %}?next={% url 'avatar:my_room' %}" class="btn-3d btn-mint">👕 아바타 만들기</a>
           {% endif %}
         </div>
@@ -2048,11 +1896,7 @@
             </div>
 
             <div class="game-actions">
-              {% if user.is_authenticated %}
-                <a href="{% url 'core:play' %}?mode=avatar-aura" class="btn-3d btn-pink">시작하기</a>
-              {% else %}
-                <a href="{% url 'account_login' %}?next={% url 'core:play' %}?mode=avatar-aura" class="btn-3d btn-pink">로그인 후 시작</a>
-              {% endif %}
+              <a href="{% url 'core:play' %}?mode=avatar-aura" class="btn-3d btn-pink">시작하기</a>
               <a href="{% url 'ranking:home' %}?mode=practice" class="btn-3d btn-light">랭킹 보기</a>
             </div>
           </article>
@@ -2070,11 +1914,7 @@
             </div>
 
             <div class="game-actions">
-              {% if user.is_authenticated %}
-                <a href="{% url 'game:math_rain' %}" class="btn-3d btn-purple">도전하기</a>
-              {% else %}
-                <a href="{% url 'account_login' %}?next={% url 'game:math_rain' %}" class="btn-3d btn-purple">로그인 후 도전</a>
-              {% endif %}
+              <a href="{% url 'game:math_rain' %}" class="btn-3d btn-purple">도전하기</a>
               <a href="{% url 'ranking:home' %}?mode=math_rain" class="btn-3d btn-light">랭킹 보기</a>
             </div>
           </article>
@@ -2243,7 +2083,7 @@
           {% if user.is_authenticated %}
             <a href="{{ mathner_app_home_url }}" class="btn-3d btn-light">현재 플랜으로 시작</a>
           {% else %}
-            <a href="{% url 'account_login' %}?next={{ mathner_app_home_url|urlencode }}" class="btn-3d btn-light">무료로 시작</a>
+            <a href="{{ mathner_app_home_url }}" class="btn-3d btn-light">시작하기</a>
           {% endif %}
         </article>
 
@@ -2346,7 +2186,7 @@
         {% if user.is_authenticated %}
           <a href="{{ mathner_app_home_url }}" class="btn-3d">게임 시작</a>
         {% else %}
-          <a href="{% url 'account_login' %}?next={{ mathner_app_home_url|urlencode }}" class="btn-3d">무료로 시작</a>
+          <a href="{{ mathner_app_home_url }}" class="btn-3d">시작하기</a>
         {% endif %}
       </div>
     </section>
@@ -2414,24 +2254,6 @@
 
         mobileMenuDrawer.querySelectorAll("a").forEach(function (link) {
           link.addEventListener("click", closeMobileMenu);
-        });
-      }
-
-      const navUserTrigger = document.getElementById("navUserTrigger");
-      const navUserDropdown = document.getElementById("navUserDropdown");
-
-      if (navUserTrigger && navUserDropdown) {
-        navUserTrigger.addEventListener("click", function (event) {
-          event.stopPropagation();
-          const opened = navUserDropdown.classList.toggle("open");
-          navUserTrigger.setAttribute("aria-expanded", opened ? "true" : "false");
-        });
-
-        document.addEventListener("click", function (event) {
-          if (!navUserTrigger.contains(event.target) && !navUserDropdown.contains(event.target)) {
-            navUserDropdown.classList.remove("open");
-            navUserTrigger.setAttribute("aria-expanded", "false");
-          }
         });
       }
 

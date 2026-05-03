@@ -10,6 +10,10 @@ class Profile(models.Model):
     )
     nickname = models.CharField(max_length=20, unique=True, null=True, blank=True)
     stars = models.PositiveIntegerField(default=0)
+
+    # 아이디/PIN 가입 시 PIN 복구용 보호자 이메일
+    recovery_email = models.EmailField(blank=True, default="")
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

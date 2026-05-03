@@ -1,7 +1,5 @@
 ﻿{% load static %}
-{% load socialaccount %}
 {% url 'core:app_home' as mathner_app_home_url %}
-{% url 'account_login' as mathner_login_url %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -10,13 +8,16 @@
 
   <title>{% block title %}Mathner(매스너) - 초등 수학 게임, 사칙연산 연습 웹앱{% endblock %}</title>
 
-  <meta name="description" content="{% block meta_description %}Mathner(매스너)는 초등학생이 덧셈, 뺄셈, 곱셈, 나눗셈을 게임처럼 연습하는 사칙연산 수학 웹앱입니다. 매쓰너, 초등 수학 게임, 연산 연습 사이트를 찾는 부모님과 아이들을 위한 아바타 성장형 수학 게임입니다.{% endblock %}">
+  <meta name="description" content="{% block meta_description %}Mathner(매스너)는 초등학생이 사칙연산을 게임처럼 연습하고 아바타를 꾸미는 수학 웹앱입니다.{% endblock %}">
   <meta name="keywords" content="Mathner, 매스너, 매쓰너, 초등 수학 게임, 초등학생 수학 게임, 사칙연산 게임, 덧셈 게임, 뺄셈 게임, 곱셈 게임, 나눗셈 게임, 연산 연습, 초등 연산, 수학 웹앱, 아바타 수학 게임, 매스 레인, Math Rain">
   <meta name="robots" content="index, follow, max-image-preview:large">
   <meta name="author" content="Mathner">
   <meta name="application-name" content="Mathner(매스너)">
   <meta name="theme-color" content="#FFCB3C">
-  <meta name="naver-site-verification" content="">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Mathner">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="naver-site-verification" content="8f7830b2c8bb1102c956f99fba739e8acacd6415">
   <meta name="google-site-verification" content="">
 
   <link rel="canonical" href="https://www.mathner.com/">
@@ -27,7 +28,7 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Mathner(매스너)">
   <meta property="og:title" content="{% block og_title %}Mathner(매스너) - 초등 수학 게임, 사칙연산 연습{% endblock %}">
-  <meta property="og:description" content="{% block og_description %}매스너(Mathner)는 초등학생이 사칙연산을 게임처럼 풀고, 별을 모아 아바타를 꾸미는 초등 수학 게임 웹앱입니다. 매쓰너로 검색해도 찾을 수 있어요.{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}초등 사칙연산을 게임처럼 풀고 별로 아바타를 꾸미는 Mathner(매스너).{% endblock %}">
   <meta property="og:url" content="https://www.mathner.com/">
   <meta property="og:image" content="https://www.mathner.com{% static 'img/landing/avatar.png' %}">
   <meta property="og:image:alt" content="Mathner 매스너 초등 수학 게임 아바타">
@@ -45,12 +46,7 @@
         "@type": "Organization",
         "@id": "https://www.mathner.com/#organization",
         "name": "Mathner",
-        "alternateName": [
-          "매스너",
-          "매쓰너",
-          "Mathner Math",
-          "Mathner Game"
-        ],
+        "alternateName": ["매스너", "매쓰너", "Mathner Math", "Mathner Game"],
         "url": "https://www.mathner.com/",
         "logo": "https://www.mathner.com{% static 'img/landing/avatar.png' %}",
         "description": "Mathner(매스너)는 초등학생을 위한 사칙연산 수학 게임 웹앱입니다."
@@ -60,15 +56,8 @@
         "@id": "https://www.mathner.com/#website",
         "url": "https://www.mathner.com/",
         "name": "Mathner(매스너)",
-        "alternateName": [
-          "매스너",
-          "매쓰너",
-          "초등 수학 게임 매스너",
-          "사칙연산 게임 매스너"
-        ],
-        "publisher": {
-          "@id": "https://www.mathner.com/#organization"
-        },
+        "alternateName": ["매스너", "매쓰너", "초등 수학 게임 매스너", "사칙연산 게임 매스너"],
+        "publisher": {"@id": "https://www.mathner.com/#organization"},
         "inLanguage": "ko-KR",
         "description": "Mathner(매스너)는 초등학생이 사칙연산을 게임처럼 연습하는 아바타 성장형 수학 웹앱입니다."
       },
@@ -76,34 +65,14 @@
         "@type": "WebApplication",
         "@id": "https://www.mathner.com/#webapp",
         "name": "Mathner(매스너)",
-        "alternateName": [
-          "매스너",
-          "매쓰너",
-          "Mathner"
-        ],
+        "alternateName": ["매스너", "매쓰너", "Mathner"],
         "url": "https://www.mathner.com/",
         "applicationCategory": "EducationalApplication",
         "operatingSystem": "Web",
         "inLanguage": "ko-KR",
         "description": "초등학생이 덧셈, 뺄셈, 곱셈, 나눗셈을 게임처럼 연습하는 사칙연산 수학 게임 웹앱입니다.",
-        "keywords": [
-          "Mathner",
-          "매스너",
-          "매쓰너",
-          "초등 수학 게임",
-          "초등학생 수학 게임",
-          "사칙연산 게임",
-          "연산 연습",
-          "덧셈 게임",
-          "뺄셈 게임",
-          "곱셈 게임",
-          "나눗셈 게임",
-          "아바타 수학 게임",
-          "매스 레인"
-        ],
-        "publisher": {
-          "@id": "https://www.mathner.com/#organization"
-        },
+        "keywords": ["Mathner", "매스너", "매쓰너", "초등 수학 게임", "초등학생 수학 게임", "사칙연산 게임", "연산 연습", "덧셈 게임", "뺄셈 게임", "곱셈 게임", "나눗셈 게임", "아바타 수학 게임", "매스 레인"],
+        "publisher": {"@id": "https://www.mathner.com/#organization"},
         "offers": {
           "@type": "Offer",
           "price": "0",
@@ -115,12 +84,15 @@
   }
   </script>
 
-  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+  <script defer src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js"></script>
 
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
+
   {% if user.is_authenticated %}
     <link rel="stylesheet" href="{% static 'css/nickname_modal.css' %}">
   {% endif %}
+
   {% block extra_css %}{% endblock %}
 
   <style>
@@ -134,15 +106,12 @@
       --brand-pink: #FF6B81;
       --brand-purple: #4834D4;
       --soft-border: #E2D9D1;
-      --shadow-color: rgba(255, 143, 0, 0.2);
       --container: min(1200px, calc(100% - 24px));
       --header-height: 80px;
       --main-font: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     html,
     body {
@@ -196,7 +165,6 @@
       border-bottom: 4px solid var(--brand-yellow);
       box-shadow: 0 4px 15px rgba(0,0,0,0.05);
       overflow: visible;
-      font-family: var(--main-font);
     }
 
     .nav-wrap {
@@ -208,7 +176,6 @@
       justify-content: space-between;
       gap: 14px;
       overflow: visible;
-      font-family: var(--main-font);
     }
 
     .brand {
@@ -223,7 +190,6 @@
       text-shadow: 1px 1px 0px white;
       white-space: nowrap;
       min-width: 0;
-      font-family: var(--main-font);
     }
 
     .brand-logo {
@@ -241,7 +207,6 @@
       box-shadow: 0 6px 0 rgba(255, 143, 0, 0.5);
       transform: translateY(-2px);
       flex: 0 0 auto;
-      font-family: var(--main-font);
     }
 
     .main-nav {
@@ -252,7 +217,6 @@
       margin-left: 12px;
       flex: 1 1 auto;
       min-width: 0;
-      font-family: var(--main-font);
     }
 
     .main-nav a {
@@ -267,13 +231,8 @@
       font-weight: 800;
       letter-spacing: -0.3px;
       background: transparent;
-      transition:
-        background 0.18s ease,
-        color 0.18s ease,
-        box-shadow 0.18s ease,
-        transform 0.18s ease;
+      transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
       white-space: nowrap;
-      font-family: var(--main-font);
     }
 
     .main-nav a:hover {
@@ -292,7 +251,6 @@
       min-width: 0;
       position: relative;
       overflow: visible;
-      font-family: var(--main-font);
     }
 
     .nav-chip {
@@ -311,7 +269,6 @@
       white-space: nowrap;
       box-shadow: 0 4px 0 rgba(255, 203, 60, 0.4);
       flex: 0 0 auto;
-      font-family: var(--main-font);
     }
 
     .nav-status-item {
@@ -319,7 +276,6 @@
       align-items: center;
       gap: 4px;
       white-space: nowrap;
-      font-family: var(--main-font);
     }
 
     .nav-status-item span:first-child {
@@ -339,13 +295,9 @@
       letter-spacing: -0.3px;
       border: none;
       cursor: pointer;
-      transition:
-        transform 0.1s ease,
-        box-shadow 0.1s ease,
-        opacity 0.1s ease;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.1s ease;
       white-space: nowrap;
       color: white;
-      font-family: var(--main-font);
       text-align: center;
     }
 
@@ -363,21 +315,193 @@
       transform: translateY(-1px);
     }
 
-    .btn-outline {
-      background: #fff;
-      color: var(--brand-orange);
-      border: 3px solid var(--brand-orange);
-      box-shadow: 0 6px 0 #D67D00;
+
+    .btn-share-nav {
+      background: #11B981;
+      box-shadow: 0 6px 0 #0A8D63;
+      padding: 12px 18px;
+      gap: 6px;
     }
 
-    .btn-outline:hover {
+    .btn-share-nav:hover {
       transform: translateY(-1px);
+    }
+
+    .share-modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 16000;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.58);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .share-modal-backdrop.is-open {
+      display: flex;
+    }
+
+    .share-modal-card {
+      position: relative;
+      width: min(480px, 100%);
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      padding: 24px;
+      border: 5px solid var(--brand-yellow);
+      border-radius: 30px;
+      background: #fff;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.24);
+    }
+
+    .share-modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 40px;
+      height: 40px;
+      border: 0;
+      border-radius: 14px;
+      background: #FFF3C7;
+      color: var(--brand-orange);
+      font-size: 22px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .share-modal-title {
+      margin: 0 42px 8px 0;
+      color: var(--brand-orange);
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+
+    .share-modal-desc {
+      margin: 0 0 18px;
+      color: #6B5A4E;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.5;
+      word-break: keep-all;
+    }
+
+    .share-link-box {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .share-link-input {
+      flex: 1;
+      min-width: 0;
+      height: 48px;
+      padding: 0 14px;
+      border: 3px solid #E2D9D1;
+      border-radius: 16px;
+      background: #FFF8E7;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 800;
+      outline: none;
+    }
+
+    .share-mini-copy {
+      min-width: 86px;
+      height: 48px;
+      border: 0;
+      border-radius: 16px;
+      background: var(--brand-orange);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #D67D00;
+    }
+
+    .share-option-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .share-option-btn {
+      min-height: 78px;
+      padding: 12px 10px;
+      border: 3px solid #E2D9D1;
+      border-radius: 20px;
+      background: #fff;
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: -0.2px;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #E2D9D1;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.15s ease, background 0.15s ease;
+      word-break: keep-all;
+    }
+
+    .share-option-btn span {
+      display: block;
+      margin-top: 3px;
+      color: #8A7A70;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .share-option-btn:hover {
+      border-color: var(--brand-yellow);
+      background: #FFFDF4;
+      transform: translateY(-1px);
+    }
+
+    .share-option-btn:active {
+      transform: translateY(5px);
+      box-shadow: 0 0 0 transparent;
+    }
+
+
+    .share-install-guide {
+      display: none;
+      margin: 14px 0 0;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: #FFF8E7;
+      border: 2px solid #FFE08A;
+      color: #6B5A4E;
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.55;
+      word-break: keep-all;
+    }
+
+    .share-install-guide.is-open {
+      display: block;
+    }
+
+    .share-toast {
+      display: none;
+      margin: 14px 0 0;
+      padding: 11px 13px;
+      border-radius: 16px;
+      background: #EFFFF7;
+      color: #08784F;
+      font-size: 14px;
+      font-weight: 900;
+      text-align: center;
+      word-break: keep-all;
+    }
+
+    .share-toast.is-open {
+      display: block;
     }
 
     .nav-user-menu {
       position: relative;
       flex: 0 0 auto;
-      font-family: var(--main-font);
     }
 
     .nav-user-trigger {
@@ -387,7 +511,6 @@
       border-radius: 20px;
       background: #fff;
       color: var(--text);
-      font-family: var(--main-font);
       font-size: 18px;
       font-weight: 800;
       letter-spacing: -0.3px;
@@ -413,7 +536,6 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.1);
       overflow: hidden;
       padding: 8px 0;
-      font-family: var(--main-font);
     }
 
     .nav-user-dropdown.open {
@@ -429,7 +551,6 @@
       background: #fff;
       border: none;
       color: var(--text);
-      font-family: var(--main-font);
       font-size: 16px;
       font-weight: 700;
       letter-spacing: -0.2px;
@@ -446,7 +567,6 @@
       width: var(--container);
       margin: 0 auto;
       padding: 40px 0 60px;
-      font-family: var(--main-font);
     }
 
     .game-first-title {
@@ -456,13 +576,8 @@
       letter-spacing: -0.6px;
       color: var(--brand-orange);
       margin: 0 0 14px;
-      text-shadow:
-        2px 2px 0px #fff,
-        -1px -1px 0 #fff,
-        1px -1px 0 #fff,
-        -1px 1px 0 #fff;
+      text-shadow: 2px 2px 0px #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
       line-height: 1.15;
-      font-family: var(--main-font);
     }
 
     .seo-intro-card {
@@ -479,7 +594,6 @@
       text-align: center;
       box-shadow: 0 5px 0 rgba(255, 203, 60, 0.18);
       word-break: keep-all;
-      font-family: var(--main-font);
     }
 
     .seo-intro-card strong {
@@ -526,7 +640,6 @@
       flex-direction: column;
       align-items: center;
       min-width: 0;
-      font-family: var(--main-font);
     }
 
     .avatar-title {
@@ -539,7 +652,6 @@
       padding: 8px 20px;
       border-radius: 999px;
       white-space: nowrap;
-      font-family: var(--main-font);
     }
 
     .avatar-stage {
@@ -581,7 +693,6 @@
       color: #666;
       margin: 0 0 20px;
       line-height: 1.4;
-      font-family: var(--main-font);
     }
 
     .btn-avatar {
@@ -600,7 +711,6 @@
       justify-content: center;
       transition: all 0.1s;
       text-align: center;
-      font-family: var(--main-font);
     }
 
     .btn-avatar:active {
@@ -617,7 +727,6 @@
       box-shadow: 0 12px 0 rgba(255, 203, 60, 0.3);
       overflow: visible;
       min-width: 0;
-      font-family: var(--main-font);
     }
 
     .carousel-track-wrap {
@@ -653,13 +762,8 @@
       position: relative;
       padding: 24px;
       cursor: pointer;
-      transition:
-        border-color 0.18s ease,
-        box-shadow 0.18s ease,
-        background 0.18s ease,
-        transform 0.18s ease;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, transform 0.18s ease;
       overflow: hidden;
-      font-family: var(--main-font);
     }
 
     .game-card:hover {
@@ -680,7 +784,6 @@
       letter-spacing: -0.2px;
       margin-bottom: 10px;
       white-space: nowrap;
-      font-family: var(--main-font);
     }
 
     .badge-blue {
@@ -695,7 +798,6 @@
       color: var(--text);
       line-height: 1.12;
       word-break: keep-all;
-      font-family: var(--main-font);
     }
 
     .game-card p {
@@ -707,7 +809,6 @@
       line-height: 1.4;
       min-height: 45px;
       word-break: keep-all;
-      font-family: var(--main-font);
     }
 
     .game-points {
@@ -725,7 +826,6 @@
       font-weight: 800;
       letter-spacing: -0.2px;
       white-space: nowrap;
-      font-family: var(--main-font);
     }
 
     .game-inline-media {
@@ -735,8 +835,7 @@
       border-radius: 20px;
       overflow: hidden;
       border: 3px solid #E2D9D1;
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.94), rgba(255,248,231,0.94));
+      background: linear-gradient(135deg, rgba(255,255,255,0.94), rgba(255,248,231,0.94));
       position: relative;
       display: flex;
       align-items: center;
@@ -762,9 +861,7 @@
 
     .game-inline-media.is-missing {
       border-style: dashed;
-      background:
-        radial-gradient(circle at center, rgba(255,203,60,0.12), transparent 60%),
-        #fbfbfb;
+      background: radial-gradient(circle at center, rgba(255,203,60,0.12), transparent 60%), #fbfbfb;
     }
 
     .game-inline-media.is-missing::before {
@@ -777,7 +874,6 @@
       color: #9b8f84;
       font-size: 20px;
       font-weight: 800;
-      font-family: var(--main-font);
     }
 
     .game-actions {
@@ -829,15 +925,11 @@
       background: var(--brand-yellow);
       color: #fff;
       font-size: 28px;
-      font-family: var(--main-font);
       font-weight: 900;
       cursor: pointer;
       box-shadow: 0 6px 0 rgba(200, 150, 0, 0.5);
       margin: 0 -25px;
-      transition:
-        transform 0.1s ease,
-        box-shadow 0.1s ease,
-        opacity 0.15s ease;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.15s ease;
     }
 
     .carousel-btn:active {
@@ -869,10 +961,7 @@
       background: #E2D9D1;
       padding: 0;
       cursor: pointer;
-      transition:
-        width 0.18s ease,
-        background 0.18s ease,
-        transform 0.18s ease;
+      transition: width 0.18s ease, background 0.18s ease, transform 0.18s ease;
     }
 
     .carousel-dot.is-active {
@@ -896,7 +985,6 @@
       font-weight: 900;
       cursor: pointer;
       box-shadow: 0 4px 0 rgba(255, 203, 60, 0.4);
-      font-family: var(--main-font);
       line-height: 1;
       display: inline-flex;
       align-items: center;
@@ -916,7 +1004,6 @@
       background: rgba(0,0,0,0.6);
       z-index: 15000;
       padding: 20px;
-      font-family: var(--main-font);
     }
 
     .mobile-menu-card {
@@ -927,7 +1014,19 @@
       max-width: 420px;
       margin: 0 auto;
       box-shadow: 0 18px 35px rgba(0,0,0,0.22);
-      font-family: var(--main-font);
+    }
+
+    .mobile-menu-user {
+      margin-bottom: 10px;
+      padding: 13px 15px;
+      border-radius: 18px;
+      background: #FFF8E7;
+      border: 2px solid #FFE08A;
+      color: var(--brand-orange);
+      font-size: 18px;
+      font-weight: 900;
+      text-align: center;
+      word-break: keep-all;
     }
 
     .mobile-menu-links a,
@@ -943,7 +1042,6 @@
       border-bottom: 2px dashed #eee;
       color: var(--text);
       background: #fff;
-      font-family: var(--main-font);
       cursor: pointer;
     }
 
@@ -964,8 +1062,12 @@
       border: none;
       border-radius: 16px;
       margin-top: 10px;
-      font-family: var(--main-font);
       cursor: pointer;
+    }
+
+    .mobile-share-button {
+      color: var(--brand-orange) !important;
+      background: #FFF8E7 !important;
     }
 
     @media (max-width: 1180px) {
@@ -1001,9 +1103,8 @@
 
       .main-nav,
       .nav-user-menu,
-      .btn-outline,
       .btn-solid,
-      .btn-google {
+      .btn-share-nav {
         display: none !important;
       }
 
@@ -1280,8 +1381,33 @@
         height: 165px;
       }
     }
+
+
+    @media (max-width: 980px) {
+      .share-modal-backdrop {
+        padding: 14px;
+      }
+
+      .share-modal-card {
+        padding: 20px;
+        border-radius: 26px;
+      }
+
+      .share-modal-title {
+        font-size: 24px;
+      }
+
+      .share-option-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .share-option-btn {
+        min-height: 64px;
+      }
+    }
   </style>
 </head>
+
 <body>
   <header class="site-header">
     <div class="nav-wrap">
@@ -1291,6 +1417,7 @@
       </a>
 
       <nav class="main-nav" aria-label="매스너 주요 메뉴">
+        <a href="{{ mathner_app_home_url }}">게임</a>
         <a href="/landing/">소개</a>
         <a href="/landing/#pricing">이용요금</a>
 
@@ -1299,8 +1426,8 @@
           <a href="{% url 'social:hub' %}">친구들</a>
           <a href="{% url 'community:home' %}">놀이터</a>
         {% else %}
-          <a href="{% url 'account_login' %}?next={% url 'avatar:my_room' %}">내 아바타</a>
-          <a href="{% url 'account_login' %}?next={% url 'social:hub' %}">친구들</a>
+          <a href="/accounts/login/?next={% url 'avatar:my_room' %}">내 아바타</a>
+          <a href="/accounts/login/?next={% url 'social:hub' %}">친구들</a>
           <a href="{% url 'community:home' %}">놀이터</a>
         {% endif %}
       </nav>
@@ -1316,6 +1443,8 @@
             <span id="navKeyCount">{{ nav_key_count|default_if_none:0 }}</span>
           </span>
         </div>
+
+        <button type="button" class="btn-3d btn-share-nav" id="navShareButton" aria-haspopup="dialog">🔗 공유</button>
 
         {% if user.is_authenticated %}
           <div class="nav-user-menu">
@@ -1338,8 +1467,7 @@
             </div>
           </div>
         {% else %}
-          <a href="{% url 'account_login' %}?next={{ request.get_full_path|urlencode }}" class="btn-3d btn-outline">G 로그인</a>
-          <a href="{% url 'account_login' %}?next={{ request.get_full_path|urlencode }}" class="btn-3d btn-solid">시작하기!!</a>
+          <a href="/accounts/login/?next={{ request.get_full_path|urlencode }}" class="btn-3d btn-solid">로그인</a>
         {% endif %}
 
         <button type="button" class="mobile-only mobile-menu-trigger" id="mobileMenuTrigger" aria-expanded="false" aria-controls="mobileMenuDrawer">☰</button>
@@ -1350,9 +1478,16 @@
   <div class="mobile-menu-drawer" id="mobileMenuDrawer">
     <div class="mobile-menu-card">
       <div class="mobile-menu-links">
+        {% if user.is_authenticated %}
+          <div class="mobile-menu-user">
+            🙂 {{ my_nickname|default:user.username|default:"친구" }} 님
+          </div>
+        {% endif %}
+
         <a href="{{ mathner_app_home_url }}">🎮 게임하기</a>
         <a href="/landing/">🏠 소개</a>
         <a href="/landing/#pricing">🎟️ 이용요금</a>
+        <button type="button" class="mobile-share-button" id="mobileShareButton">🔗 공유하기</button>
 
         {% if user.is_authenticated %}
           <a href="{% url 'avatar:my_room' %}">👕 내 아바타</a>
@@ -1365,15 +1500,44 @@
             <button type="submit" class="mobile-menu-close" style="background:#888;">로그아웃</button>
           </form>
         {% else %}
-          <a href="{% url 'account_login' %}?next={% url 'avatar:my_room' %}">👕 내 아바타</a>
-          <a href="{% url 'account_login' %}?next={% url 'social:hub' %}">👥 친구들</a>
+          <a href="/accounts/login/?next={% url 'avatar:my_room' %}">👕 내 아바타</a>
+          <a href="/accounts/login/?next={% url 'social:hub' %}">👥 친구들</a>
           <a href="{% url 'community:home' %}">🎪 놀이터</a>
           <a href="{% url 'ranking:home' %}">🏆 랭킹</a>
-          <a href="{% url 'account_login' %}?next={{ request.get_full_path|urlencode }}">G 구글로 시작하기</a>
-          <a href="{% url 'account_login' %}?next={{ request.get_full_path|urlencode }}">🔐 로그인</a>
+          <a href="/accounts/login/?next={{ request.get_full_path|urlencode }}">🔐 로그인</a>
         {% endif %}
       </div>
       <button type="button" class="mobile-menu-close" id="mobileMenuClose">닫기 ✕</button>
+    </div>
+  </div>
+
+  <div class="share-modal-backdrop" id="shareModal" aria-hidden="true">
+    <div class="share-modal-card" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
+      <button type="button" class="share-modal-close" id="shareModalClose" aria-label="공유 창 닫기">×</button>
+
+      <h2 class="share-modal-title" id="shareModalTitle">매스너 공유하기 🔗</h2>
+      <p class="share-modal-desc">
+        친구나 부모님에게 매스너 링크를 보내거나, 휴대폰/PC 바탕화면에 바로가기 아이콘을 만들어둘 수 있어요.
+      </p>
+
+      <div class="share-link-box">
+        <input type="text" class="share-link-input" id="shareLinkInput" value="https://www.mathner.com/" readonly aria-label="공유 링크">
+        <button type="button" class="share-mini-copy" id="shareQuickCopyButton">복사</button>
+      </div>
+
+      <div class="share-option-grid">
+        <button type="button" class="share-option-btn" id="shareNativeButton">
+          📤 기본 공유
+          <span>휴대폰 공유창 열기</span>
+        </button>
+        <button type="button" class="share-option-btn" id="shareInstallButton">
+          📱 아이콘 만들기
+          <span>홈 화면/바탕화면 추가</span>
+        </button>
+      </div>
+
+      <p class="share-install-guide" id="shareInstallGuide"></p>
+      <p class="share-toast" id="shareToast" role="status" aria-live="polite"></p>
     </div>
   </div>
 
@@ -1417,7 +1581,7 @@
           {% if user.is_authenticated %}
             <a href="{% url 'avatar:my_room' %}" class="btn-avatar">👗 아바타 꾸미기 룸으로!</a>
           {% else %}
-            <a href="{% url 'account_login' %}?next={% url 'avatar:my_room' %}" class="btn-avatar">로그인하고 만들기!!</a>
+            <a href="/accounts/login/?next={% url 'avatar:my_room' %}" class="btn-avatar">로그인하고 만들기!!</a>
           {% endif %}
         </aside>
 
@@ -1493,6 +1657,13 @@
   {% block extra_js %}{% endblock %}
 
   <script>
+    let deferredInstallPrompt = null;
+
+    window.addEventListener("beforeinstallprompt", function (event) {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+    });
+
     document.addEventListener("DOMContentLoaded", function () {
       const mobileMenuTrigger = document.getElementById("mobileMenuTrigger");
       const mobileMenuClose = document.getElementById("mobileMenuClose");
@@ -1531,6 +1702,162 @@
           if (e.target === mobileMenuDrawer) closeMobileMenu();
         });
       }
+
+
+      const navShareButton = document.getElementById("navShareButton");
+      const mobileShareButton = document.getElementById("mobileShareButton");
+      const shareModal = document.getElementById("shareModal");
+      const shareModalClose = document.getElementById("shareModalClose");
+      const shareLinkInput = document.getElementById("shareLinkInput");
+      const shareQuickCopyButton = document.getElementById("shareQuickCopyButton");
+      const shareNativeButton = document.getElementById("shareNativeButton");
+      const shareInstallButton = document.getElementById("shareInstallButton");
+      const shareInstallGuide = document.getElementById("shareInstallGuide");
+      const shareToast = document.getElementById("shareToast");
+
+      const defaultShareUrl = "https://www.mathner.com/";
+      const shareData = {
+        title: "Mathner(매스너) - 초등 수학 게임",
+        text: "초등 사칙연산을 게임처럼 연습하고 별로 아바타를 꾸미는 매스너를 같이 해봐요!",
+        url: defaultShareUrl
+      };
+
+      function showShareToast(message) {
+        if (!shareToast) return;
+        shareToast.textContent = message;
+        shareToast.classList.add("is-open");
+
+        window.clearTimeout(showShareToast.timer);
+        showShareToast.timer = window.setTimeout(function () {
+          shareToast.classList.remove("is-open");
+        }, 2600);
+      }
+
+      function openShareModal(e) {
+        if (e) e.preventDefault();
+        if (!shareModal) return;
+
+        closeMobileMenu();
+
+        if (shareLinkInput) {
+          shareLinkInput.value = shareData.url;
+          window.setTimeout(function () {
+            shareLinkInput.focus();
+            shareLinkInput.select();
+          }, 80);
+        }
+
+        if (shareInstallGuide) {
+          shareInstallGuide.classList.remove("is-open");
+          shareInstallGuide.textContent = "";
+        }
+
+        shareModal.classList.add("is-open");
+        shareModal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeShareModal() {
+        if (!shareModal) return;
+        shareModal.classList.remove("is-open");
+        shareModal.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+      }
+
+      function fallbackCopyText(text) {
+        const tempInput = document.createElement("textarea");
+        tempInput.value = text;
+        tempInput.setAttribute("readonly", "");
+        tempInput.style.position = "fixed";
+        tempInput.style.left = "-9999px";
+        document.body.appendChild(tempInput);
+        tempInput.select();
+
+        let copied = false;
+        try {
+          copied = document.execCommand("copy");
+        } catch (copyError) {
+          copied = false;
+        }
+
+        document.body.removeChild(tempInput);
+        return copied;
+      }
+
+      function copyShareLink() {
+        const url = shareData.url;
+
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(url)
+            .then(function () {
+              showShareToast("링크가 복사됐어요! 카톡/문자/커뮤니티에 붙여넣으면 됩니다.");
+            })
+            .catch(function () {
+              const copied = fallbackCopyText(url);
+              showShareToast(copied ? "링크가 복사됐어요!" : "복사가 안 되면 링크 칸을 길게 눌러 직접 복사해주세요.");
+            });
+          return;
+        }
+
+        const copied = fallbackCopyText(url);
+        showShareToast(copied ? "링크가 복사됐어요!" : "복사가 안 되면 링크 칸을 길게 눌러 직접 복사해주세요.");
+      }
+
+      function openNativeShare() {
+        if (navigator.share) {
+          navigator.share(shareData).catch(function () {
+            showShareToast("공유창을 닫았어요. 필요하면 위의 복사 버튼을 눌러주세요.");
+          });
+          return;
+        }
+
+        copyShareLink();
+        showShareToast("이 브라우저는 기본 공유창이 없어 링크를 복사했어요.");
+      }
+
+      function showInstallGuide() {
+        if (deferredInstallPrompt) {
+          deferredInstallPrompt.prompt();
+          deferredInstallPrompt.userChoice.finally(function () {
+            deferredInstallPrompt = null;
+          });
+          return;
+        }
+
+        if (!shareInstallGuide) return;
+
+        const ua = navigator.userAgent.toLowerCase();
+        let guide = "이 브라우저에서는 버튼으로 바로 설치창을 열 수 없어요. PC 크롬/엣지는 주소창 오른쪽 설치 아이콘 또는 메뉴(⋮) > 저장 및 공유 > 바로가기 만들기를 눌러주세요.";
+
+        if (/iphone|ipad|ipod/.test(ua)) {
+          guide = "아이폰/아이패드는 버튼으로 바로 만들 수 없어요. 사파리 하단 공유 버튼(□↑) > 홈 화면에 추가를 눌러주세요.";
+        } else if (/android/.test(ua)) {
+          guide = "설치창이 바로 뜨지 않으면 크롬 오른쪽 위 메뉴(⋮) > 홈 화면에 추가 또는 앱 설치를 눌러주세요.";
+        }
+
+        shareInstallGuide.textContent = guide;
+        shareInstallGuide.classList.add("is-open");
+      }
+
+      if (navShareButton) navShareButton.addEventListener("click", openShareModal);
+      if (mobileShareButton) mobileShareButton.addEventListener("click", openShareModal);
+      if (shareModalClose) shareModalClose.addEventListener("click", closeShareModal);
+      if (shareQuickCopyButton) shareQuickCopyButton.addEventListener("click", copyShareLink);
+      if (shareNativeButton) shareNativeButton.addEventListener("click", openNativeShare);
+      if (shareInstallButton) shareInstallButton.addEventListener("click", showInstallGuide);
+
+      if (shareModal) {
+        shareModal.addEventListener("click", function (e) {
+          if (e.target === shareModal) closeShareModal();
+        });
+      }
+
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+          closeShareModal();
+          closeMobileMenu();
+        }
+      });
 
       const trigger = document.getElementById("navUserTrigger");
       const dropdown = document.getElementById("navUserDropdown");
@@ -1620,14 +1947,12 @@
 
         function updateButtons() {
           const max = maxIndex();
-
           if (prevBtn) prevBtn.disabled = index <= 0;
           if (nextBtn) nextBtn.disabled = index >= max;
         }
 
         function renderDots() {
           if (!dotsBox) return;
-
           const max = maxIndex();
           dotsBox.innerHTML = "";
 
@@ -1665,7 +1990,6 @@
           }
 
           track.style.transform = "translate3d(-" + currentOffset() + "px, 0, 0)";
-
           updateButtons();
           syncDots();
 
@@ -1686,13 +2010,8 @@
           moveCarousel(true);
         }
 
-        if (prevBtn) {
-          prevBtn.addEventListener("click", goPrev);
-        }
-
-        if (nextBtn) {
-          nextBtn.addEventListener("click", goNext);
-        }
+        if (prevBtn) prevBtn.addEventListener("click", goPrev);
+        if (nextBtn) nextBtn.addEventListener("click", goNext);
 
         carouselWrap.addEventListener("pointerdown", function (e) {
           if (e.target.closest("a") || e.target.closest("button")) return;
