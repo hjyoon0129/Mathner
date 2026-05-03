@@ -1,332 +1,2137 @@
-﻿{% extends "base_app.html" %}
-{% load static %}
+﻿{% load static %}
+{% load socialaccount %}
+{% url 'core:app_home' as mathner_app_home_url %}
+{% url 'core:landing' as mathner_landing_url %}
+{% url 'account_login' as mathner_login_url %}
 
-{% block extra_css %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Boogaloo&family=Bubblegum+Sans&family=Cabin+Sketch:wght@400;700&family=Capriola&family=Chewy&family=Coming+Soon&family=Delius+Swash+Caps&family=Dokdo&family=Dongle:wght@400;700&family=Gaegu:wght@400;700&family=Gowun+Batang:wght@400;700&family=Life+Savers:wght@400;700;800&family=Londrina+Shadow&family=Love+Ya+Like+A+Sister&family=Luckiest+Guy&family=McLaren&family=Modak&family=Mouse+Memoirs&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
-<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
-<link rel="stylesheet" href="{% static 'game/css/aura_play.css' %}?v=20260506_v30_modes_mobile">
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<style>
-  body.mathner-game-play-page footer,
-  body.mathner-game-play-page .footer,
-  body.mathner-game-play-page .site-footer,
-  body.mathner-game-play-page .app-footer,
-  body.mathner-game-play-page #footer {
-    display: none !important;
-  }
+  <title>{% block title %}매스너 Mathner | 게임처럼 즐기는 어린이 산수 연습{% endblock %}</title>
+  <meta name="description" content="매스너는 아이들이 산수 게임을 하며 별을 모으고, 아바타를 꾸미고, 친구 방명록으로 소통하는 어린이 수학 놀이 웹앱입니다." />
 
-  body.mathner-game-play-page {
-    padding-bottom: 0 !important;
-  }
-</style>
+  <meta property="og:title" content="매스너 Mathner | 게임처럼 즐기는 산수 연습" />
+  <meta property="og:description" content="문제를 풀고 별을 모아 아바타를 꾸미고, 친구 방명록으로 함께 성장하는 어린이 산수 게임." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.mathner.com/landing/" />
+  <meta property="og:image" content="{% static 'img/landing/avatar.png' %}" />
 
-<link rel="preload" as="image" href="{% static 'avatar/img/base/male/body.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/male/head.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/male/rear_hair.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/male/front_hair.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/male/eyes.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/male/eyebrow.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/male/mouth.webp' %}">
-<link rel="preload" as="image" href="{% static 'img/effects/wind_aura_base.png' %}">
-{% endblock %}
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
 
-{% block content %}
-<script>
-  document.body.classList.add("mathner-game-play-page");
-</script>
+  <style>
+    :root {
+      --bg: #FFF8E7;
+      --bg-2: #FFF1C9;
+      --text: #3F322B;
+      --muted: #7B6A5F;
 
-<div class="play-page" id="playPageRoot"
-     data-aura-state="idle"
-     data-play-avatar-json='{{ play_avatar_data_json|default:"{}"|safe }}'
-     data-base-body-male="{% static 'avatar/img/base/male/body.webp' %}"
-     data-base-head-male="{% static 'avatar/img/base/male/head.webp' %}"
-     data-base-hair-back-male="{% static 'avatar/img/base/male/rear_hair.webp' %}"
-     data-base-hair-front-male="{% static 'avatar/img/base/male/front_hair.webp' %}"
-     data-base-eyes-male="{% static 'avatar/img/base/male/eyes.webp' %}"
-     data-base-eyebrow-male="{% static 'avatar/img/base/male/eyebrow.webp' %}"
-     data-base-mouth-male="{% static 'avatar/img/base/male/mouth.webp' %}"
-     data-wind-aura-url="{% static 'img/effects/wind_aura_base.png' %}">
+      --yellow: #FFCB3C;
+      --orange: #FF8F00;
+      --orange-dark: #D67D00;
+      --mint: #00D2D3;
+      --mint-dark: #00A8A8;
+      --pink: #FF6B81;
+      --pink-dark: #D14D62;
+      --purple: #4834D4;
+      --blue: #4C7DFF;
 
-    <div class="wrap wrap-compact">
-        <div class="grid grid-tight play-layout">
+      --white: #FFFFFF;
+      --line: #E6D8C8;
+      --shadow: rgba(255, 143, 0, 0.18);
+      --container: min(1180px, calc(100% - 28px));
+      --header-height: 78px;
 
-            <section class="card play-main-card">
-                <div class="card-h play-main-head">
-                    <h2 id="leftTitle">어떤 마법을 연습할까? ✨</h2>
-                </div>
+      --font-main: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto,
+        'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR',
+        'Malgun Gothic', sans-serif;
+    }
 
-                <div class="card-b play-main-body">
+    * {
+      box-sizing: border-box;
+    }
 
-                    <div class="screen on" id="screenSelect">
-                        <div class="tiles mode-tiles-3" id="gameModeTiles"></div>
-                    </div>
+    html {
+      scroll-behavior: smooth;
+    }
 
-                    <div class="screen" id="screenSetup">
-                        <div class="modeBand" id="modeBandNow">🌱 연습 모드</div>
+    body {
+      margin: 0;
+      padding: 0;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(255, 203, 60, 0.28), transparent 28%),
+        radial-gradient(circle at 85% 18%, rgba(0, 210, 211, 0.18), transparent 30%),
+        radial-gradient(circle at 50% 80%, rgba(255, 107, 129, 0.12), transparent 36%),
+        var(--bg);
+      color: var(--text);
+      font-family: var(--font-main);
+      letter-spacing: -0.25px;
+      overflow-x: hidden;
+    }
 
-                        <div id="practiceOperationWrap">
-                            <div class="sectionLabel">어떤 기호를 연습할까? ➕ ➖ ✖️ ➗</div>
-                            <div class="seg operation-seg" id="practiceOpSeg"></div>
-                        </div>
+    body,
+    button,
+    input,
+    select,
+    textarea,
+    a {
+      font-family: var(--font-main);
+    }
 
-                        <div class="spacer-12"></div>
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
 
-                        <div class="setup-grid">
-                            <div class="setup-card">
-                                <div class="setup-k">보상 별 ⭐</div>
-                                <div class="setup-v" id="setupRewardText">
-                                    기본 1개 →
-                                    <br>
-                                    <strong>피버 3개!</strong>
-                                </div>
-                            </div>
+    img {
+      max-width: 100%;
+      display: block;
+    }
 
-                            <div class="setup-card">
-                                <div class="setup-k">규칙 🎯</div>
-                                <div class="setup-v" id="setupRuleText">
-                                    연속으로 맞추면
-                                    <br>
-                                    <strong>마법이 강해져요!</strong>
-                                </div>
-                            </div>
-                        </div>
+    button,
+    a {
+      -webkit-tap-highlight-color: transparent;
+    }
 
-                        <div class="spacer-12"></div>
+    .mobile-only {
+      display: none;
+    }
 
-                        <div class="seg setup-action-seg">
-                            <button class="btn secondary" id="btnBackToModes" type="button">⬅️ 뒤로 가기</button>
-                            <button class="btn btn-primary" id="btnGoPlay" type="button">🚀 게임 화면으로!</button>
-                        </div>
-                    </div>
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 14000;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 4px solid var(--yellow);
+      box-shadow: 0 8px 24px rgba(74, 59, 50, 0.06);
+    }
 
-                    <div class="screen" id="screenPlay">
-                        <div class="top-nav-action">
-                            <button class="btn secondary" id="btnBackToSetup" type="button">⬅️ 설정으로 돌아가기</button>
-                        </div>
+    .nav-wrap {
+      width: var(--container);
+      min-height: var(--header-height);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
 
-                        <div class="question" id="questionBox">
-                            <div class="live-effects" id="liveEffects" aria-hidden="true"></div>
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      flex: 0 0 auto;
+      color: var(--orange);
+      font-size: 27px;
+      font-weight: 900;
+      white-space: nowrap;
+      text-shadow: 1px 1px 0 #fff;
+    }
 
-                            <div class="game-status-bar">
-                                <div class="timerBox">
-                                    ⏱ <span id="timeLeft">60</span>초
-                                </div>
-                                <div class="scoreBox">
-                                    ⭐ <span id="earnedStars">0</span>개
-                                </div>
-                            </div>
+    .brand-logo {
+      width: 50px;
+      height: 50px;
+      border-radius: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--yellow), var(--orange));
+      color: #fff;
+      font-size: 34px;
+      font-weight: 950;
+      line-height: 1;
+      box-shadow: 0 6px 0 rgba(214, 125, 0, 0.55);
+      transform: translateY(-2px);
+    }
 
-                            <div class="bar">
-                                <i id="progressFill"></i>
-                            </div>
+    .main-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
 
-                            <div class="bigMath" id="mathText">준비됐나요? 🙂</div>
+    .main-nav a {
+      min-height: 46px;
+      padding: 0 15px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #5C4D44;
+      font-size: 16px;
+      font-weight: 850;
+      white-space: nowrap;
+      transition: background 0.16s ease, color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+    }
 
-                            <div class="answerRow">
-                                <input id="answerInput"
-                                       class="answerInput"
-                                       type="text"
-                                       inputmode="numeric"
-                                       pattern="[0-9]*"
-                                       placeholder="정답은?"
-                                       autocomplete="off"
-                                       disabled>
-                                <button class="btn btn-primary submitBtn" id="btnSubmit" type="button" disabled>발사! 🚀</button>
-                            </div>
+    .main-nav a:hover {
+      background: var(--yellow);
+      color: #fff;
+      box-shadow: 0 4px 0 rgba(255, 143, 0, 0.2);
+      transform: translateY(-1px);
+    }
 
-                            <div class="mobilePadWrap" id="mobilePadWrap" aria-hidden="true">
-                                <div class="mobilePad" id="mobilePad">
-                                    <button type="button" class="mobilePadBtn" data-pad="1">1</button>
-                                    <button type="button" class="mobilePadBtn" data-pad="2">2</button>
-                                    <button type="button" class="mobilePadBtn" data-pad="3">3</button>
-                                    <button type="button" class="mobilePadBtn mobilePadBtnUtil" data-pad="back">지우기</button>
+    .nav-actions {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex: 0 0 auto;
+      position: relative;
+    }
 
-                                    <button type="button" class="mobilePadBtn" data-pad="4">4</button>
-                                    <button type="button" class="mobilePadBtn" data-pad="5">5</button>
-                                    <button type="button" class="mobilePadBtn" data-pad="6">6</button>
-                                    <button type="button" class="mobilePadBtn mobilePadBtnUtil" data-pad="clear">전체삭제</button>
+    .nav-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 46px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 3px solid var(--yellow);
+      background: #fff;
+      color: var(--text);
+      font-size: 17px;
+      font-weight: 900;
+      white-space: nowrap;
+      box-shadow: 0 4px 0 rgba(255, 203, 60, 0.38);
+    }
 
-                                    <button type="button" class="mobilePadBtn" data-pad="7">7</button>
-                                    <button type="button" class="mobilePadBtn" data-pad="8">8</button>
-                                    <button type="button" class="mobilePadBtn" data-pad="9">9</button>
-                                    <button type="button" class="mobilePadBtn" data-pad="0">0</button>
-                                </div>
-                            </div>
+    .nav-status-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
 
-                            <div class="msg-wrap">
-                                <div class="msg" id="msg"></div>
-                            </div>
+    .nav-status-item span:first-child {
+      font-size: 20px;
+    }
 
-                            <div class="actionRow bottom-action-row">
-                                <button class="btn btn-primary" id="btnStart" type="button">▶️ 준비, 시작!</button>
-                                <button class="btn secondary" id="btnReset" type="button">🔄 다시 하기</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+    .btn-3d {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 12px 22px;
+      border-radius: 20px;
+      border: 0;
+      cursor: pointer;
+      color: #fff;
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: -0.25px;
+      white-space: nowrap;
+      text-align: center;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.1s ease;
+    }
 
-            <aside class="card side-panel status-card">
-                <div class="card-h status-card-head">
-                    <h2>✨ 내 마법사 상태 ✨</h2>
-                </div>
+    .btn-3d:active {
+      transform: translateY(5px) !important;
+      box-shadow: 0 0 0 transparent !important;
+    }
 
-                <div class="card-b status-body">
-                    <div class="status-avatar-stage">
-                        <div class="status-avatar-wrap">
-                            <div class="status-avatar-canvas is-idle" id="statusAvatarCanvas">
+    .btn-solid {
+      background: var(--orange);
+      box-shadow: 0 6px 0 var(--orange-dark);
+    }
 
-                                <div class="avatar-bg-effect" id="avatarBgEffect" aria-hidden="true">
-                                    <div class="canvas-moon"></div>
+    .btn-outline {
+      background: #fff;
+      color: var(--orange);
+      border: 3px solid var(--orange);
+      box-shadow: 0 6px 0 var(--orange-dark);
+    }
 
-                                    <div class="avatar-wind-ring ring-a"></div>
-                                    <div class="avatar-wind-ring ring-b"></div>
-                                    <div class="avatar-wind-ring ring-c"></div>
+    .btn-mint {
+      background: var(--mint);
+      box-shadow: 0 6px 0 var(--mint-dark);
+    }
 
-                                    <div class="canvas-particle p1"></div>
-                                    <div class="canvas-particle p2"></div>
-                                    <div class="canvas-particle p3"></div>
-                                    <div class="canvas-particle p4"></div>
-                                    <div class="canvas-particle p5"></div>
-                                    <div class="canvas-particle p6"></div>
-                                    <div class="canvas-particle p7"></div>
-                                    <div class="canvas-particle p8"></div>
-                                    <div class="canvas-particle p9"></div>
-                                    <div class="canvas-particle p10"></div>
-                                    <div class="canvas-particle p11"></div>
-                                    <div class="canvas-particle p12"></div>
-                                </div>
+    .btn-pink {
+      background: var(--pink);
+      box-shadow: 0 6px 0 var(--pink-dark);
+    }
 
-                                <div class="status-avatar-stack" id="statusAvatarStack"></div>
-                            </div>
-                        </div>
+    .btn-purple {
+      background: var(--purple);
+      box-shadow: 0 6px 0 #2C1E8A;
+    }
 
-                        <div class="status-avatar-name synced-nickname" id="statusAvatarName">
-                            {% if user.is_authenticated %}
-                                {{ my_nickname|default:"마법사님" }}
-                            {% else %}
-                                반가운 손님! 👋
-                            {% endif %}
-                        </div>
-                    </div>
+    .btn-light {
+      background: #fff;
+      color: var(--text);
+      border: 3px solid var(--line);
+      box-shadow: 0 6px 0 #CDBFAE;
+    }
 
-                    <div class="status-core-grid">
-                        <div class="status-core-card">
-                            <div class="status-core-k">모은 별 ⭐</div>
-                            <div class="status-core-v" id="statStars">{{ total_stars|default:0 }}</div>
-                        </div>
+    .btn-3d:hover {
+      transform: translateY(-1px);
+    }
 
-                        <div class="status-core-card">
-                            <div class="status-core-k">남은 열쇠 🔑</div>
-                            <div class="status-core-v" id="statKeys">{{ remaining_keys|default:3 }}</div>
-                        </div>
+    .nav-user-menu {
+      position: relative;
+      flex: 0 0 auto;
+    }
 
-                        <div class="status-core-card">
-                            <div class="status-core-k">아바타 파워 ⚡</div>
-                            <div class="status-core-v" id="statAura">조용함...</div>
-                        </div>
+    .nav-user-trigger {
+      min-height: 48px;
+      padding: 10px 18px;
+      border: 3px solid var(--line);
+      border-radius: 20px;
+      background: #fff;
+      color: var(--text);
+      font-size: 17px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #D6C8B8;
+      white-space: nowrap;
+    }
 
-                        <div class="status-core-card">
-                            <div class="status-core-k">현재 모드 🎮</div>
-                            <div class="status-core-v" id="statGameMode">연습 모드</div>
-                        </div>
-                    </div>
-                </div>
-            </aside>
+    .nav-user-dropdown {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      min-width: 225px;
+      display: none;
+      background: #fff;
+      border: 4px solid var(--yellow);
+      border-radius: 24px;
+      box-shadow: 0 18px 36px rgba(0,0,0,0.12);
+      overflow: hidden;
+      padding: 8px 0;
+    }
+
+    .nav-user-dropdown.open {
+      display: block;
+    }
+
+    .nav-user-dropdown a,
+    .nav-dropdown-btn {
+      display: block;
+      width: 100%;
+      padding: 14px 20px;
+      text-align: left;
+      background: #fff;
+      border: 0;
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .nav-user-dropdown a:hover,
+    .nav-dropdown-btn:hover {
+      background: #FFF8E7;
+      color: var(--orange);
+    }
+
+    .mobile-menu-trigger {
+      width: 46px;
+      height: 46px;
+      border: 3px solid var(--yellow);
+      border-radius: 16px;
+      background: #fff;
+      color: var(--orange);
+      font-size: 23px;
+      font-weight: 950;
+      cursor: pointer;
+      box-shadow: 0 4px 0 rgba(255, 203, 60, 0.38);
+      line-height: 1;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .mobile-menu-drawer {
+      display: none;
+    }
+
+    .mobile-menu-drawer.is-open {
+      display: block;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.58);
+      z-index: 15000;
+      padding: 18px;
+    }
+
+    .mobile-menu-card {
+      max-width: 430px;
+      margin: 0 auto;
+      background: #fff;
+      border: 4px solid var(--yellow);
+      border-radius: 26px;
+      padding: 18px;
+      box-shadow: 0 18px 36px rgba(0,0,0,0.22);
+    }
+
+    .mobile-menu-links a,
+    .mobile-menu-links button {
+      display: block;
+      width: 100%;
+      padding: 14px 12px;
+      border: 0;
+      border-bottom: 2px dashed #eee;
+      background: #fff;
+      color: var(--text);
+      font-size: 19px;
+      font-weight: 900;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .mobile-menu-links a:hover,
+    .mobile-menu-links button:hover {
+      color: var(--orange);
+      background: #FFF8E7;
+    }
+
+    .mobile-menu-close {
+      width: 100%;
+      margin-top: 10px;
+      padding: 14px;
+      border: 0;
+      border-radius: 17px;
+      background: var(--orange);
+      color: #fff;
+      font-size: 19px;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .landing-main {
+      overflow: hidden;
+    }
+
+    .section {
+      width: var(--container);
+      margin: 0 auto;
+      padding: 78px 0;
+    }
+
+    .hero {
+      width: var(--container);
+      margin: 0 auto;
+      padding: 64px 0 74px;
+      display: grid;
+      grid-template-columns: 1.02fr 0.98fr;
+      gap: 34px;
+      align-items: center;
+    }
+
+    .hero-copy {
+      min-width: 0;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 15px;
+      border-radius: 999px;
+      background: #fff;
+      border: 3px solid var(--yellow);
+      color: var(--orange);
+      font-size: 15px;
+      font-weight: 950;
+      box-shadow: 0 4px 0 rgba(255, 203, 60, 0.38);
+      margin-bottom: 18px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      color: var(--text);
+      font-size: clamp(42px, 6vw, 72px);
+      line-height: 1.03;
+      letter-spacing: -1.5px;
+      font-weight: 950;
+    }
+
+    .hero h1 strong {
+      display: inline-block;
+      color: var(--orange);
+      text-shadow: 2px 2px 0 #fff;
+    }
+
+    .hero-desc {
+      max-width: 600px;
+      margin: 22px 0 0;
+      color: var(--muted);
+      font-size: 21px;
+      line-height: 1.65;
+      font-weight: 700;
+      word-break: keep-all;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 13px;
+      margin-top: 30px;
+    }
+
+    .hero-mini {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .mini-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.82);
+      border: 2px solid rgba(230,216,200,0.9);
+      color: #6D5B50;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .hero-board {
+      position: relative;
+      min-width: 0;
+    }
+
+    .hero-card {
+      position: relative;
+      background: #fff;
+      border: 5px solid var(--yellow);
+      border-radius: 38px;
+      box-shadow: 0 15px 0 rgba(255, 203, 60, 0.34);
+      padding: 22px;
+      overflow: hidden;
+    }
+
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      border-radius: 999px;
+      background: rgba(0, 210, 211, 0.16);
+      top: -80px;
+      right: -70px;
+    }
+
+    .game-preview {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      z-index: 1;
+    }
+
+    .preview-box {
+      min-height: 265px;
+      border-radius: 28px;
+      border: 4px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,248,231,0.95));
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    .preview-box h3 {
+      margin: 0;
+      font-size: 25px;
+      line-height: 1.15;
+      font-weight: 950;
+      color: var(--text);
+      word-break: keep-all;
+    }
+
+    .preview-box p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.45;
+      font-weight: 750;
+      word-break: keep-all;
+    }
+
+    .preview-img {
+      margin-top: 14px;
+      height: 155px;
+      border-radius: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #FFF8E7;
+      border: 3px dashed rgba(255,143,0,0.26);
+      overflow: hidden;
+    }
+
+    .preview-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .preview-img .emoji-fallback {
+      font-size: 70px;
+      display: none;
+    }
+
+    .floating-result {
+      position: absolute;
+      left: 22px;
+      bottom: -28px;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      border-radius: 22px;
+      background: #fff;
+      border: 4px solid var(--pink);
+      box-shadow: 0 10px 22px rgba(255, 107, 129, 0.18);
+      color: var(--pink);
+      font-size: 17px;
+      font-weight: 950;
+    }
+
+    .section-head {
+      max-width: 790px;
+      margin: 0 auto 32px;
+      text-align: center;
+    }
+
+    .section-kicker {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #fff;
+      border: 3px solid var(--yellow);
+      color: var(--orange);
+      font-size: 14px;
+      font-weight: 950;
+      box-shadow: 0 4px 0 rgba(255, 203, 60, 0.35);
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      margin: 0;
+      color: var(--text);
+      font-size: clamp(32px, 4.2vw, 52px);
+      line-height: 1.1;
+      letter-spacing: -1px;
+      font-weight: 950;
+      word-break: keep-all;
+    }
+
+    .section-desc {
+      margin: 16px auto 0;
+      color: var(--muted);
+      font-size: 19px;
+      line-height: 1.65;
+      font-weight: 700;
+      word-break: keep-all;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .feature-card {
+      background: #fff;
+      border: 4px solid var(--line);
+      border-radius: 32px;
+      padding: 24px;
+      box-shadow: 0 10px 0 rgba(230,216,200,0.45);
+      transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--yellow);
+      box-shadow: 0 13px 0 rgba(255,203,60,0.28);
+    }
+
+    .feature-icon {
+      width: 58px;
+      height: 58px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #FFF1C9;
+      color: var(--orange);
+      font-size: 30px;
+      margin-bottom: 15px;
+    }
+
+    .feature-card h3 {
+      margin: 0 0 10px;
+      font-size: 23px;
+      font-weight: 950;
+      color: var(--text);
+    }
+
+    .feature-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.6;
+      font-weight: 700;
+      word-break: keep-all;
+    }
+
+    .split-section {
+      display: grid;
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 28px;
+      align-items: center;
+    }
+
+    .split-section.reverse {
+      grid-template-columns: 1.05fr 0.95fr;
+    }
+
+    .visual-panel {
+      background: #fff;
+      border: 5px solid var(--mint);
+      border-radius: 38px;
+      padding: 24px;
+      box-shadow: 0 14px 0 rgba(0, 210, 211, 0.28);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .visual-panel.pink {
+      border-color: var(--pink);
+      box-shadow: 0 14px 0 rgba(255, 107, 129, 0.24);
+    }
+
+    .avatar-stage {
+      height: 350px;
+      border-radius: 30px;
+      background:
+        radial-gradient(circle at center, rgba(0,210,211,0.18), transparent 45%),
+        linear-gradient(180deg, #E0FFFF 0%, #fff 100%);
+      border: 4px dashed rgba(0, 210, 211, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .avatar-stage::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 28px;
+      width: 200px;
+      height: 62px;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background: rgba(0,210,211,0.18);
+      filter: blur(8px);
+    }
+
+    .avatar-stage img {
+      position: relative;
+      z-index: 2;
+      width: 320px;
+      height: 320px;
+      object-fit: contain;
+    }
+
+    .avatar-fallback {
+      display: none;
+      position: relative;
+      z-index: 2;
+      font-size: 120px;
+    }
+
+    .custom-badges {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .custom-badge {
+      padding: 13px 14px;
+      border-radius: 18px;
+      background: #F7FFFF;
+      border: 3px solid rgba(0, 210, 211, 0.2);
+      color: #0F8E8E;
+      font-size: 15px;
+      font-weight: 950;
+      text-align: center;
+    }
+
+    .copy-block h2 {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 50px);
+      line-height: 1.12;
+      font-weight: 950;
+      color: var(--text);
+      letter-spacing: -0.9px;
+      word-break: keep-all;
+    }
+
+    .copy-block p {
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 19px;
+      line-height: 1.75;
+      font-weight: 700;
+      word-break: keep-all;
+    }
+
+    .bullet-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .bullet {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.72);
+      border: 2px solid rgba(230,216,200,0.82);
+      color: #594A41;
+      font-size: 16px;
+      font-weight: 850;
+      line-height: 1.45;
+    }
+
+    .bullet span:first-child {
+      flex: 0 0 auto;
+    }
+
+    .copy-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .guestbook-panel {
+      background: #fff;
+      border: 5px solid var(--pink);
+      border-radius: 38px;
+      padding: 24px;
+      box-shadow: 0 14px 0 rgba(255, 107, 129, 0.24);
+    }
+
+    .guestbook-card {
+      border-radius: 28px;
+      background: linear-gradient(180deg, #FFF7F9, #fff);
+      border: 4px solid rgba(255, 107, 129, 0.25);
+      padding: 18px;
+    }
+
+    .guestbook-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .guestbook-title {
+      font-size: 22px;
+      font-weight: 950;
+      color: var(--pink);
+    }
+
+    .guestbook-room {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #fff;
+      border: 2px solid rgba(255, 107, 129, 0.25);
+      color: #C74C5F;
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .message-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .message {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 10px;
+      padding: 13px;
+      border-radius: 20px;
+      background: #fff;
+      border: 2px solid rgba(230,216,200,0.85);
+    }
+
+    .message-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--yellow), var(--orange));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 21px;
+      font-weight: 950;
+    }
+
+    .message strong {
+      display: block;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 950;
+      margin-bottom: 4px;
+    }
+
+    .message p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 750;
+      line-height: 1.45;
+      word-break: keep-all;
+    }
+
+    .guestbook-input {
+      margin-top: 14px;
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 20px;
+      background: #fff;
+      border: 3px solid rgba(255, 107, 129, 0.22);
+    }
+
+    .guestbook-input span {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      color: #A79489;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .guestbook-input button {
+      flex: 0 0 auto;
+      border: 0;
+      border-radius: 15px;
+      background: var(--pink);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 950;
+      padding: 10px 13px;
+    }
+
+    .games-band {
+      width: 100%;
+      background: linear-gradient(135deg, rgba(255,203,60,0.25), rgba(0,210,211,0.18));
+      border-top: 4px solid rgba(255,203,60,0.35);
+      border-bottom: 4px solid rgba(255,203,60,0.35);
+    }
+
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .game-card {
+      background: #fff;
+      border: 5px solid var(--yellow);
+      border-radius: 34px;
+      padding: 22px;
+      box-shadow: 0 12px 0 rgba(255,203,60,0.30);
+      transition: transform 0.16s ease, box-shadow 0.16s ease;
+      cursor: pointer;
+    }
+
+    .game-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 0 rgba(255,203,60,0.24);
+    }
+
+    .game-badge {
+      display: inline-flex;
+      padding: 7px 13px;
+      border-radius: 999px;
+      background: var(--pink);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 950;
+      margin-bottom: 12px;
+    }
+
+    .game-badge.blue {
+      background: var(--purple);
+    }
+
+    .game-card h3 {
+      margin: 0;
+      font-size: 31px;
+      font-weight: 950;
+      letter-spacing: -0.7px;
+      line-height: 1.16;
+      word-break: keep-all;
+    }
+
+    .game-card p {
+      margin: 12px 0 18px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.55;
+      font-weight: 750;
+      word-break: keep-all;
+    }
+
+    .game-thumb {
+      height: 210px;
+      border-radius: 24px;
+      background: #FFF8E7;
+      border: 3px dashed rgba(255,143,0,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+
+    .game-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .game-thumb .emoji-fallback {
+      display: none;
+      font-size: 76px;
+    }
+
+    .game-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .game-actions .btn-3d {
+      flex: 1;
+      min-height: 48px;
+      padding: 11px 10px;
+      font-size: 16px;
+      border-radius: 18px;
+    }
+
+    .pricing-wrap {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .price-card {
+      position: relative;
+      background: #fff;
+      border: 4px solid var(--line);
+      border-radius: 34px;
+      padding: 24px;
+      box-shadow: 0 11px 0 rgba(230,216,200,0.45);
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+    }
+
+    .price-card.featured {
+      border-color: var(--orange);
+      box-shadow: 0 14px 0 rgba(255,143,0,0.24);
+      transform: translateY(-6px);
+    }
+
+    .price-ribbon {
+      position: absolute;
+      top: -15px;
+      right: 20px;
+      padding: 8px 13px;
+      border-radius: 999px;
+      background: var(--orange);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 950;
+      box-shadow: 0 4px 0 var(--orange-dark);
+    }
+
+    .plan-name {
+      font-size: 22px;
+      font-weight: 950;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .plan-desc {
+      min-height: 48px;
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.5;
+      font-weight: 750;
+      word-break: keep-all;
+    }
+
+    .price {
+      display: flex;
+      align-items: flex-end;
+      gap: 5px;
+      margin-bottom: 14px;
+    }
+
+    .price strong {
+      font-size: 42px;
+      line-height: 1;
+      font-weight: 950;
+      color: var(--text);
+      letter-spacing: -1.2px;
+    }
+
+    .price span {
+      padding-bottom: 5px;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 850;
+    }
+
+    .price-list {
+      display: grid;
+      gap: 10px;
+      margin: 12px 0 22px;
+      padding: 0;
+      list-style: none;
+      flex: 1;
+    }
+
+    .price-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      color: #5D4E45;
+      font-size: 15px;
+      line-height: 1.45;
+      font-weight: 800;
+      word-break: keep-all;
+    }
+
+    .price-list li::before {
+      content: "✓";
+      flex: 0 0 auto;
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #E8FFFF;
+      color: var(--mint-dark);
+      font-size: 13px;
+      font-weight: 950;
+      margin-top: 1px;
+    }
+
+    .price-card .btn-3d {
+      width: 100%;
+    }
+
+    .trust-note {
+      margin-top: 20px;
+      padding: 16px 18px;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.75);
+      border: 3px dashed rgba(255,203,60,0.55);
+      color: #6F5D52;
+      font-size: 15px;
+      line-height: 1.55;
+      font-weight: 800;
+      text-align: center;
+      word-break: keep-all;
+    }
+
+    .final-cta {
+      width: var(--container);
+      margin: 0 auto;
+      padding: 20px 0 86px;
+    }
+
+    .final-card {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: center;
+      background: linear-gradient(135deg, var(--orange), var(--yellow));
+      border-radius: 38px;
+      padding: 32px;
+      color: #fff;
+      box-shadow: 0 14px 0 rgba(214,125,0,0.38);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .final-card::after {
+      content: "";
+      position: absolute;
+      width: 230px;
+      height: 230px;
+      right: -80px;
+      top: -90px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.2);
+    }
+
+    .final-card h2 {
+      margin: 0;
+      font-size: clamp(29px, 4vw, 46px);
+      line-height: 1.12;
+      font-weight: 950;
+      letter-spacing: -0.9px;
+      position: relative;
+      z-index: 1;
+      word-break: keep-all;
+    }
+
+    .final-card p {
+      margin: 10px 0 0;
+      font-size: 18px;
+      line-height: 1.55;
+      font-weight: 800;
+      opacity: 0.95;
+      position: relative;
+      z-index: 1;
+      word-break: keep-all;
+    }
+
+    .final-card .btn-3d {
+      position: relative;
+      z-index: 1;
+      background: #fff;
+      color: var(--orange);
+      box-shadow: 0 6px 0 rgba(150, 90, 0, 0.25);
+      border: 0;
+      min-width: 180px;
+    }
+
+    .landing-footer {
+      padding: 34px 0;
+      background: #fff;
+      border-top: 4px solid var(--yellow);
+    }
+
+    .footer-inner {
+      width: var(--container);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      color: #7B6A5F;
+      font-size: 14px;
+      font-weight: 750;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .footer-links a {
+      color: #7B6A5F;
+      font-weight: 850;
+    }
+
+    .footer-links a:hover {
+      color: var(--orange);
+    }
+
+    @media (max-width: 1080px) {
+      .main-nav {
+        gap: 4px;
+      }
+
+      .main-nav a {
+        padding: 0 11px;
+        font-size: 15px;
+      }
+
+      .nav-chip {
+        padding: 8px 13px;
+      }
+    }
+
+    @media (max-width: 980px) {
+      :root {
+        --container: min(430px, calc(100% - 18px));
+        --header-height: 66px;
+      }
+
+      .site-header {
+        border-bottom-width: 3px;
+      }
+
+      .nav-wrap {
+        width: 100%;
+        padding: 0 8px;
+        min-height: var(--header-height);
+        gap: 8px;
+      }
+
+      .main-nav,
+      .nav-user-menu,
+      .nav-actions > .btn-3d {
+        display: none !important;
+      }
+
+      .mobile-only {
+        display: inline-flex;
+      }
+
+      .brand {
+        gap: 8px;
+        font-size: 22px;
+      }
+
+      .brand-logo {
+        width: 44px;
+        height: 44px;
+        border-radius: 15px;
+        font-size: 30px;
+        box-shadow: 0 4px 0 rgba(214,125,0,0.48);
+      }
+
+      .nav-actions {
+        gap: 8px;
+      }
+
+      .nav-chip {
+        min-height: 42px;
+        padding: 6px 10px;
+        gap: 8px;
+        font-size: 16px;
+        border-width: 3px;
+        box-shadow: 0 3px 0 rgba(255, 203, 60, 0.38);
+      }
+
+      .nav-status-item span:first-child {
+        font-size: 18px;
+      }
+
+      .mobile-menu-trigger {
+        width: 42px;
+        height: 42px;
+        border-radius: 15px;
+        font-size: 22px;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        padding: 38px 0 58px;
+        gap: 30px;
+      }
+
+      .hero h1 {
+        font-size: 42px;
+      }
+
+      .hero-desc {
+        font-size: 18px;
+        line-height: 1.62;
+      }
+
+      .hero-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .hero-actions .btn-3d {
+        width: 100%;
+      }
+
+      .game-preview {
+        grid-template-columns: 1fr;
+      }
+
+      .preview-box {
+        min-height: auto;
+      }
+
+      .preview-img {
+        height: 175px;
+      }
+
+      .floating-result {
+        position: relative;
+        left: auto;
+        bottom: auto;
+        margin-top: 16px;
+        width: 100%;
+        justify-content: center;
+      }
+
+      .section {
+        padding: 56px 0;
+      }
+
+      .section-desc {
+        font-size: 17px;
+      }
+
+      .feature-grid,
+      .split-section,
+      .split-section.reverse,
+      .game-grid,
+      .pricing-wrap {
+        grid-template-columns: 1fr;
+      }
+
+      .split-section.reverse .guestbook-panel {
+        order: 1;
+      }
+
+      .split-section.reverse .copy-block {
+        order: 2;
+      }
+
+      .avatar-stage {
+        height: 300px;
+      }
+
+      .avatar-stage img {
+        width: 285px;
+        height: 285px;
+      }
+
+      .custom-badges {
+        grid-template-columns: 1fr;
+      }
+
+      .copy-block h2 {
+        font-size: 34px;
+      }
+
+      .copy-block p {
+        font-size: 17px;
+      }
+
+      .game-thumb {
+        height: 185px;
+      }
+
+      .game-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .price-card.featured {
+        transform: none;
+      }
+
+      .final-card {
+        grid-template-columns: 1fr;
+        padding: 26px;
+      }
+
+      .final-card .btn-3d {
+        width: 100%;
+      }
+
+      .footer-inner {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .footer-links {
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 430px) {
+      :root {
+        --container: min(390px, calc(100% - 18px));
+      }
+
+      .brand {
+        font-size: 20px;
+      }
+
+      .brand-logo {
+        width: 42px;
+        height: 42px;
+        font-size: 29px;
+      }
+
+      .nav-chip {
+        font-size: 15px;
+        padding: 6px 9px;
+      }
+
+      .hero h1 {
+        font-size: 38px;
+      }
+
+      .hero-card {
+        border-radius: 32px;
+        padding: 18px;
+      }
+
+      .preview-box {
+        border-radius: 24px;
+      }
+
+      .section-title {
+        font-size: 32px;
+      }
+
+      .feature-card,
+      .visual-panel,
+      .guestbook-panel,
+      .game-card,
+      .price-card {
+        border-radius: 28px;
+      }
+
+      .game-card h3 {
+        font-size: 27px;
+      }
+
+      .price strong {
+        font-size: 38px;
+      }
+    }
+
+    @media (max-width: 370px) {
+      .brand span:not(.brand-logo) {
+        display: none;
+      }
+
+      .nav-chip {
+        gap: 6px;
+      }
+
+      .hero h1 {
+        font-size: 35px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="nav-wrap">
+      <a href="{{ mathner_landing_url|default:'/landing/' }}" class="brand">
+        <span class="brand-logo">m</span>
+        <span>매스너</span>
+      </a>
+
+      <nav class="main-nav" aria-label="메인 메뉴">
+        <a href="#intro">소개</a>
+        <a href="#games">게임</a>
+        <a href="#avatar">아바타 꾸미기</a>
+        <a href="#guestbook">방명록</a>
+        <a href="#pricing">이용요금</a>
+
+        {% if user.is_authenticated %}
+          <a href="{% url 'ranking:home' %}">랭킹</a>
+        {% else %}
+          <a href="{% url 'account_login' %}?next={% url 'ranking:home' %}">랭킹</a>
+        {% endif %}
+      </nav>
+
+      <div class="nav-actions">
+        <div class="nav-chip" aria-label="내 별과 열쇠">
+          <span class="nav-status-item">
+            <span>⭐</span>
+            <span id="navStarCount">{{ nav_star_count|default_if_none:0 }}</span>
+          </span>
+          <span class="nav-status-item">
+            <span>🔑</span>
+            <span id="navKeyCount">{{ nav_key_count|default_if_none:0 }}</span>
+          </span>
         </div>
-    </div>
 
-    <div class="rewardOverlay" id="rewardOverlay">
-        <div class="rewardConfetti"></div>
-        <div class="rewardCard">
-            <div class="rewardStarBounce">⭐</div>
-            <div class="rewardTitle">우와! 대단해요!</div>
-            <div class="rewardAmount" id="rewardAmount">+0</div>
-            <div class="rewardSub">별을 이만큼이나 모았어요!</div>
+        {% if user.is_authenticated %}
+          <div class="nav-user-menu">
+            <button type="button" class="nav-user-trigger" id="navUserTrigger" aria-expanded="false">
+              🙂 {{ my_nickname|default:user.username|default:"친구" }} ▾
+            </button>
+
+            <div class="nav-user-dropdown" id="navUserDropdown">
+              <a href="{{ mathner_app_home_url }}">🎮 게임하기</a>
+              <a href="{% url 'avatar:my_room' %}">👕 내 아바타 방</a>
+              <a href="{% url 'social:hub' %}">👥 친구들</a>
+              <a href="{% url 'community:home' %}">🎪 놀이터</a>
+              <a href="{% url 'ranking:home' %}">🏆 랭킹 보기</a>
+              <a href="/shop/">🛍️ 상점 가기</a>
+              <a href="#pricing">🎟️ 이용요금</a>
+
+              <form method="post" action="{% url 'account_logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="nav-dropdown-btn">👋 로그아웃</button>
+              </form>
+            </div>
+          </div>
+        {% else %}
+          <a href="{% url 'account_login' %}?next={{ mathner_app_home_url|urlencode }}" class="btn-3d btn-outline">G 로그인</a>
+          <a href="{% url 'account_login' %}?next={{ mathner_app_home_url|urlencode }}" class="btn-3d btn-solid">시작하기</a>
+        {% endif %}
+
+        <button type="button" class="mobile-only mobile-menu-trigger" id="mobileMenuTrigger" aria-expanded="false" aria-controls="mobileMenuDrawer">
+          ☰
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="mobile-menu-drawer" id="mobileMenuDrawer">
+    <div class="mobile-menu-card">
+      <div class="mobile-menu-links">
+        <a href="#intro">🏠 소개</a>
+        <a href="#games">🎮 게임</a>
+        <a href="#avatar">👕 아바타 꾸미기</a>
+        <a href="#guestbook">💬 방명록</a>
+        <a href="#pricing">🎟️ 이용요금</a>
+
+        {% if user.is_authenticated %}
+          <a href="{{ mathner_app_home_url }}">🚀 게임하기</a>
+          <a href="{% url 'avatar:my_room' %}">👕 내 아바타</a>
+          <a href="{% url 'social:hub' %}">👥 친구들</a>
+          <a href="{% url 'community:home' %}">🎪 놀이터</a>
+          <a href="{% url 'ranking:home' %}">🏆 랭킹</a>
+          <a href="/shop/">🛍️ 상점</a>
+          <form method="post" action="{% url 'account_logout' %}">
+            {% csrf_token %}
+            <button type="submit">👋 로그아웃</button>
+          </form>
+        {% else %}
+          <a href="{% url 'account_login' %}?next={{ mathner_app_home_url|urlencode }}">G 구글로 시작하기</a>
+          <a href="{% url 'account_login' %}?next={% url 'avatar:my_room' %}">👕 로그인하고 아바타 만들기</a>
+          <a href="{% url 'account_login' %}?next={% url 'social:hub' %}">👥 친구 방 놀러가기</a>
+          <a href="{% url 'community:home' %}">🎪 놀이터 보기</a>
+        {% endif %}
+      </div>
+
+      <button type="button" class="mobile-menu-close" id="mobileMenuClose">닫기 ✕</button>
+    </div>
+  </div>
+
+  <main class="landing-main">
+    <section class="hero" id="intro">
+      <div class="hero-copy">
+        <div class="eyebrow">⭐ 산수가 게임이 되는 곳</div>
+
+        <h1>
+          문제를 풀고<br />
+          <strong>내 아바타를 키우는</strong><br />
+          수학 놀이터
+        </h1>
+
+        <p class="hero-desc">
+          매스너는 아이들이 사칙연산을 게임처럼 풀면서 별을 모으고,
+          아바타를 꾸미고, 친구 방명록으로 함께 성장하는 어린이 수학 웹앱입니다.
+        </p>
+
+        <div class="hero-actions">
+          {% if user.is_authenticated %}
+            <a href="{{ mathner_app_home_url }}" class="btn-3d btn-solid">🚀 지금 게임하기</a>
+            <a href="{% url 'avatar:my_room' %}" class="btn-3d btn-mint">👕 아바타 꾸미기</a>
+          {% else %}
+            <a href="{% url 'account_login' %}?next={{ mathner_app_home_url|urlencode }}" class="btn-3d btn-solid">🚀 무료로 시작하기</a>
+            <a href="{% url 'account_login' %}?next={% url 'avatar:my_room' %}" class="btn-3d btn-mint">👕 아바타 만들기</a>
+          {% endif %}
         </div>
-    </div>
 
-    <div class="modal" id="modal">
-        <div class="modalBox" role="dialog" aria-modal="true">
-            <div class="modalHead">
-                <h3 id="modalTitle">🎉 최종 결과 발표! 🎉</h3>
-            </div>
-
-            <div class="modalBody">
-                <div class="resultText" id="rText">최고의 마법사네요! 👍</div>
-
-                <div class="resultPanel">
-                    <div class="resultItem">
-                        <div class="k">⭕ 정답</div>
-                        <div class="v" id="rCorrect">0</div>
-                    </div>
-
-                    <div class="resultItem">
-                        <div class="k">❌ 오답</div>
-                        <div class="v" id="rWrong">0</div>
-                    </div>
-
-                    <div class="resultItem">
-                        <div class="k">⭐ 얻은 별</div>
-                        <div class="v" id="rStars">0</div>
-                    </div>
-                </div>
-
-                <div id="friendRankSummary" class="friend-rank-summary">
-                    <div class="friend-rank-label">🏆 내 친구 랭킹</div>
-                    <div id="friendRankText" class="friend-rank-text">계산 중... ⏳</div>
-                </div>
-            </div>
-
-            <div class="modalActions">
-                <button class="btn btn-primary" id="btnAgain" type="button">🔄 한 번 더 하기!</button>
-                <a class="btn secondary" id="btnOpenRanking" href="{% url 'ranking:home' %}">🏆 랭킹</a>
-                <button class="btn secondary" id="btnClose" type="button">닫기</button>
-            </div>
+        <div class="hero-mini">
+          <span class="mini-chip">🔑 매일 무료 열쇠</span>
+          <span class="mini-chip">⭐ 별 모으기</span>
+          <span class="mini-chip">👕 꾸미기 보상</span>
+          <span class="mini-chip">💬 방명록 소통</span>
         </div>
-    </div>
+      </div>
 
-    <div class="modal" id="keyExhaustedModal">
-        <div class="modalBox" role="dialog" aria-modal="true">
-            <div class="modalHead">
-                <h3>앗! 열쇠가 없어요 😭</h3>
+      <div class="hero-board">
+        <div class="hero-card">
+          <div class="game-preview">
+            <div class="preview-box">
+              <div>
+                <h3>마법 오라 키우기</h3>
+                <p>정답을 맞힐수록 아바타 주변의 마법 오라가 반짝입니다.</p>
+              </div>
+              <div class="preview-img">
+                <img src="{% static 'img/games/avatar-aura.png' %}" alt="마법 오라 게임" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                <span class="emoji-fallback">✨</span>
+              </div>
             </div>
 
-            <div class="modalBody key-modal-body">
-                <div class="key-modal-icon">🔑❌</div>
-                <div class="key-modal-text">
-                    오늘 쓸 수 있는 무료 열쇠를 다 썼어요!<br>
-                    내일 다시 오거나 부모님께 여쭤보세요!
-                </div>
+            <div class="preview-box">
+              <div>
+                <h3>쏟아지는 수학 비</h3>
+                <p>비가 내려오기 전에 빠르게 계산하고 살아남는 게임입니다.</p>
+              </div>
+              <div class="preview-img">
+                <img src="{% static 'img/games/math-rain.png' %}" alt="수학 비 게임" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                <span class="emoji-fallback">☔</span>
+              </div>
             </div>
-
-            <div class="modalActions">
-                <button class="btn secondary" id="btnKeyModalClose" type="button">나중에 할래요</button>
-                <a href="{% url 'core:landing' %}#pricing" class="btn btn-primary">🎟️ 이용권 구경하기</a>
-            </div>
+          </div>
         </div>
-    </div>
-</div>
-{% endblock %}
 
-{% block extra_js %}
-<script>
-  window.PLAY_PAGE_CONFIG = {
-    initialStars: Number("{{ total_stars|default_if_none:0 }}"),
-    initialKeys: Number("{{ remaining_keys|default_if_none:0 }}"),
-    startRunUrl: "{% url 'core:start_game_run' %}",
-    finalizeRunUrl: "{% url 'core:save_game_result' %}",
-    trackEventUrl: "{% url 'core:track_game_event' %}",
-    gameName: "aura",
-    rankingRecordUrl: "{% url 'ranking:api_record_score' %}",
-    friendNearbyRankUrlBase: "{% url 'ranking:api_friend_nearby_rank' %}",
-    rankingHomeUrlBase: "{% url 'ranking:home' %}",
-    isAuthenticated: {{ user.is_authenticated|yesno:"true,false" }},
-    avatarLoginUrl: "{% url 'account_login' %}?next={% url 'avatar:my_room' %}",
-    nickname: "{{ my_nickname|default:''|escapejs }}"
-  };
-</script>
-<script src="{% static 'game/js/aura_play.js' %}?v=20260506_v33_avatar_room_font_sync"></script>
-{% endblock %}
+        <div class="floating-result">
+          ⭐ 문제를 풀면 별이 쌓여요!
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="section-head">
+        <div class="section-kicker">왜 매스너인가요?</div>
+        <h2 class="section-title">공부 느낌보다, 계속 하고 싶은 놀이 느낌</h2>
+        <p class="section-desc">
+          아이가 계산을 반복해야 할 이유를 게임 보상, 캐릭터 성장, 친구 공간으로 자연스럽게 만들어줍니다.
+        </p>
+      </div>
+
+      <div class="feature-grid">
+        <article class="feature-card">
+          <div class="feature-icon">🎮</div>
+          <h3>게임으로 반복 연습</h3>
+          <p>
+            단순 문제집처럼 푸는 것이 아니라, 점수와 별 보상을 통해 계속 도전하게 만듭니다.
+          </p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">⭐</div>
+          <h3>별 보상 시스템</h3>
+          <p>
+            정답을 맞히면 별을 모으고, 모은 별로 폰트, 효과, 아바타 아이템을 구매할 수 있습니다.
+          </p>
+        </article>
+
+        <article class="feature-card">
+          <div class="feature-icon">👥</div>
+          <h3>친구와 함께 성장</h3>
+          <p>
+            친구 방에 놀러가고 방명록을 남기며 혼자 하는 학습보다 오래 머무를 이유를 만듭니다.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="games-band" id="games">
+      <div class="section">
+        <div class="section-head">
+          <div class="section-kicker">대표 게임</div>
+          <h2 class="section-title">바로 시작할 수 있는 수학 게임</h2>
+          <p class="section-desc">
+            처음 들어온 아이도 복잡한 설명 없이 바로 문제를 풀고 별을 모을 수 있게 구성했습니다.
+          </p>
+        </div>
+
+        <div class="game-grid">
+          <article class="game-card" data-card-link="{% url 'core:play' %}?mode=avatar-aura">
+            <span class="game-badge">⭐ 인기 게임</span>
+            <h3>✨ 마법 오라 키우기</h3>
+            <p>
+              빠르게 계산하고 콤보를 쌓으면 아바타 주변의 오라가 더 화려해집니다.
+            </p>
+
+            <div class="game-thumb">
+              <img src="{% static 'img/games/avatar-aura.png' %}" alt="마법 오라 키우기" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+              <span class="emoji-fallback">✨</span>
+            </div>
+
+            <div class="game-actions">
+              {% if user.is_authenticated %}
+                <a href="{% url 'core:play' %}?mode=avatar-aura" class="btn-3d btn-pink">시작하기</a>
+              {% else %}
+                <a href="{% url 'account_login' %}?next={% url 'core:play' %}?mode=avatar-aura" class="btn-3d btn-pink">로그인 후 시작</a>
+              {% endif %}
+              <a href="{% url 'ranking:home' %}?mode=practice" class="btn-3d btn-light">랭킹 보기</a>
+            </div>
+          </article>
+
+          <article class="game-card" data-card-link="{% url 'game:math_rain' %}">
+            <span class="game-badge blue">⚡ 순발력 게임</span>
+            <h3>☔ 쏟아지는 수학 비</h3>
+            <p>
+              문제가 바닥에 닿기 전에 정답을 입력하는 집중력 높은 산수 게임입니다.
+            </p>
+
+            <div class="game-thumb">
+              <img src="{% static 'img/games/math-rain.png' %}" alt="쏟아지는 수학 비" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+              <span class="emoji-fallback">☔</span>
+            </div>
+
+            <div class="game-actions">
+              {% if user.is_authenticated %}
+                <a href="{% url 'game:math_rain' %}" class="btn-3d btn-purple">도전하기</a>
+              {% else %}
+                <a href="{% url 'account_login' %}?next={% url 'game:math_rain' %}" class="btn-3d btn-purple">로그인 후 도전</a>
+              {% endif %}
+              <a href="{% url 'ranking:home' %}?mode=math_rain" class="btn-3d btn-light">랭킹 보기</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="avatar">
+      <div class="split-section">
+        <div class="visual-panel">
+          <div class="avatar-stage">
+            <img src="{% static 'img/landing/avatar.png' %}" alt="매스너 아바타" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+            <span class="avatar-fallback">🧙‍♂️</span>
+          </div>
+
+          <div class="custom-badges">
+            <div class="custom-badge">프리미엄 폰트</div>
+            <div class="custom-badge">닉네임 효과</div>
+            <div class="custom-badge">의상 아이템</div>
+            <div class="custom-badge">오라 꾸미기</div>
+          </div>
+        </div>
+
+        <div class="copy-block">
+          <div class="section-kicker">아바타 꾸미기</div>
+          <h2>별을 모으면 내 캐릭터가 점점 달라져요</h2>
+          <p>
+            문제를 풀어서 모은 별로 옷, 폰트, 닉네임 효과를 얻을 수 있습니다.
+            아이가 단순히 점수만 보는 것이 아니라 “내 방”과 “내 캐릭터”를 키우는 느낌을 받을 수 있습니다.
+          </p>
+
+          <div class="bullet-list">
+            <div class="bullet">
+              <span>👕</span>
+              <span>옷, 모자, 신발 같은 아바타 아이템으로 캐릭터를 꾸밀 수 있습니다.</span>
+            </div>
+            <div class="bullet">
+              <span>🌈</span>
+              <span>닉네임 폰트와 레인보우, 네온, 반짝임 같은 효과를 적용할 수 있습니다.</span>
+            </div>
+            <div class="bullet">
+              <span>⭐</span>
+              <span>게임을 많이 할수록 별이 쌓이고 더 많은 꾸미기 목표가 생깁니다.</span>
+            </div>
+          </div>
+
+          <div class="copy-actions">
+            {% if user.is_authenticated %}
+              <a href="{% url 'avatar:my_room' %}" class="btn-3d btn-mint">내 아바타 꾸미기</a>
+              <a href="/shop/" class="btn-3d btn-light">상점 보기</a>
+            {% else %}
+              <a href="{% url 'account_login' %}?next={% url 'avatar:my_room' %}" class="btn-3d btn-mint">로그인하고 만들기</a>
+              <a href="#pricing" class="btn-3d btn-light">프리미엄 보기</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="guestbook">
+      <div class="split-section reverse">
+        <div class="copy-block">
+          <div class="section-kicker">방명록 & 친구 방</div>
+          <h2>혼자 푸는 수학이 아니라, 친구 방에 놀러가는 수학</h2>
+          <p>
+            매스너는 게임만 하는 구조가 아니라 친구의 아바타 방을 방문하고,
+            방명록을 남기며 다시 접속할 이유를 만들어줍니다.
+          </p>
+
+          <div class="bullet-list">
+            <div class="bullet">
+              <span>💬</span>
+              <span>친구의 방에 응원 메시지를 남기고 내 방에도 방명록을 받을 수 있습니다.</span>
+            </div>
+            <div class="bullet">
+              <span>🏠</span>
+              <span>아바타 방은 아이가 직접 꾸미는 작은 프로필 공간처럼 사용할 수 있습니다.</span>
+            </div>
+            <div class="bullet">
+              <span>🏆</span>
+              <span>랭킹과 친구 시스템으로 꾸준히 다시 들어오는 동기를 만들 수 있습니다.</span>
+            </div>
+          </div>
+
+          <div class="copy-actions">
+            {% if user.is_authenticated %}
+              <a href="{% url 'social:hub' %}" class="btn-3d btn-pink">친구 방 놀러가기</a>
+              <a href="{% url 'community:home' %}" class="btn-3d btn-light">놀이터 보기</a>
+            {% else %}
+              <a href="{% url 'account_login' %}?next={% url 'social:hub' %}" class="btn-3d btn-pink">로그인하고 친구 찾기</a>
+              <a href="{% url 'community:home' %}" class="btn-3d btn-light">놀이터 보기</a>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="guestbook-panel">
+          <div class="guestbook-card">
+            <div class="guestbook-top">
+              <div class="guestbook-title">TOM의 방명록</div>
+              <div class="guestbook-room">방문자 128</div>
+            </div>
+
+            <div class="message-list">
+              <div class="message">
+                <div class="message-avatar">A</div>
+                <div>
+                  <strong>Anna</strong>
+                  <p>오늘 별 많이 모았네! 아바타 옷 진짜 멋지다 ✨</p>
+                </div>
+              </div>
+
+              <div class="message">
+                <div class="message-avatar">M</div>
+                <div>
+                  <strong>Min</strong>
+                  <p>수학 비 랭킹에서 만나요! 나도 다시 도전할래 ☔</p>
+                </div>
+              </div>
+
+              <div class="message">
+                <div class="message-avatar">J</div>
+                <div>
+                  <strong>Jin</strong>
+                  <p>닉네임 효과 예쁘다. 나도 별 모아서 살 거야 🌈</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="guestbook-input">
+              <span>응원 메시지를 남겨보세요...</span>
+              <button type="button">남기기</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="pricing">
+      <div class="section-head">
+        <div class="section-kicker">이용요금</div>
+        <h2 class="section-title">무료로 시작하고, 더 많이 즐기고 싶을 때 업그레이드</h2>
+        <p class="section-desc">
+          처음에는 무료로 충분히 경험하고, 아이가 계속 사용한다면 4,900원 또는 9,900원 플랜으로 열쇠와 꾸미기 혜택을 늘릴 수 있습니다.
+        </p>
+      </div>
+
+      <div class="pricing-wrap">
+        <article class="price-card">
+          <div class="plan-name">Free</div>
+          <p class="plan-desc">처음 매스너를 경험하는 아이에게 적합한 기본 플랜</p>
+
+          <div class="price">
+            <strong>0원</strong>
+            <span>/월</span>
+          </div>
+
+          <ul class="price-list">
+            <li>매일 무료 열쇠 3개</li>
+            <li>기본 산수 게임 플레이</li>
+            <li>기본 아바타 꾸미기</li>
+            <li>방명록과 친구 기능 이용</li>
+            <li>기본 폰트와 기본 효과 사용</li>
+          </ul>
+
+          {% if user.is_authenticated %}
+            <a href="{{ mathner_app_home_url }}" class="btn-3d btn-light">현재 플랜으로 시작</a>
+          {% else %}
+            <a href="{% url 'account_login' %}?next={{ mathner_app_home_url|urlencode }}" class="btn-3d btn-light">무료로 시작</a>
+          {% endif %}
+        </article>
+
+        <article class="price-card featured">
+          <div class="price-ribbon">추천</div>
+
+          <div class="plan-name">Premium</div>
+          <p class="plan-desc">매일 더 많이 플레이하고 꾸미기 보상을 더 즐기는 플랜</p>
+
+          <div class="price">
+            <strong>4,900원</strong>
+            <span>/월</span>
+          </div>
+
+          <ul class="price-list">
+            <li>매일 열쇠 10개 지급</li>
+            <li>프리미엄 폰트 사용</li>
+            <li>프리미엄 닉네임 효과 사용</li>
+            <li>프리미엄 아바타 아이템 구매 가능</li>
+            <li>별 보상 기반 꾸미기 목표 강화</li>
+          </ul>
+
+          {% if user.is_authenticated %}
+            <a href="/shop/" class="btn-3d btn-solid">프리미엄 보기</a>
+          {% else %}
+            <a href="{% url 'account_login' %}?next=/shop/" class="btn-3d btn-solid">로그인하고 보기</a>
+          {% endif %}
+        </article>
+
+        <article class="price-card">
+          <div class="plan-name">Premium Plus</div>
+          <p class="plan-desc">더 많은 열쇠와 특별 꾸미기를 원하는 적극적인 이용자용 플랜</p>
+
+          <div class="price">
+            <strong>9,900원</strong>
+            <span>/월</span>
+          </div>
+
+          <ul class="price-list">
+            <li>매일 열쇠 20개 지급</li>
+            <li>Premium 혜택 모두 포함</li>
+            <li>특별 오라와 고급 효과 우선 제공</li>
+            <li>이벤트 꾸미기 아이템 우선 이용</li>
+            <li>랭킹, 친구방, 방명록 활동에 어울리는 고급 꾸미기</li>
+          </ul>
+
+          {% if user.is_authenticated %}
+            <a href="/shop/" class="btn-3d btn-purple">Plus 보기</a>
+          {% else %}
+            <a href="{% url 'account_login' %}?next=/shop/" class="btn-3d btn-purple">로그인하고 보기</a>
+          {% endif %}
+        </article>
+      </div>
+
+      <div class="trust-note">
+        결제 기능을 아직 완전히 연결하지 않았다면, 위 버튼은 우선 상점 또는 로그인 화면으로 연결됩니다.
+        나중에 LemonSqueezy, Paddle 같은 결제 페이지가 생기면 버튼 href만 결제 URL로 바꾸면 됩니다.
+      </div>
+    </section>
+
+    <section class="final-cta">
+      <div class="final-card">
+        <div>
+          <h2>오늘부터 산수를 게임처럼 시작해보세요</h2>
+          <p>
+            문제를 풀고, 별을 모으고, 아바타를 꾸미고, 친구 방명록까지.
+            아이가 다시 들어오고 싶어지는 수학 놀이터를 목표로 만들었습니다.
+          </p>
+        </div>
+
+        {% if user.is_authenticated %}
+          <a href="{{ mathner_app_home_url }}" class="btn-3d">게임 시작</a>
+        {% else %}
+          <a href="{% url 'account_login' %}?next={{ mathner_app_home_url|urlencode }}" class="btn-3d">무료로 시작</a>
+        {% endif %}
+      </div>
+    </section>
+  </main>
+
+  <footer class="landing-footer">
+    <div class="footer-inner">
+      <div>
+        © {% now "Y" %} Mathner. All rights reserved.
+      </div>
+
+      <div class="footer-links">
+        <a href="/privacy/">개인정보처리방침</a>
+        <a href="/terms/">이용약관</a>
+        <a href="/refund/">환불정책</a>
+        <a href="{{ mathner_app_home_url }}">게임하기</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const mobileMenuTrigger = document.getElementById("mobileMenuTrigger");
+      const mobileMenuClose = document.getElementById("mobileMenuClose");
+      const mobileMenuDrawer = document.getElementById("mobileMenuDrawer");
+
+      function closeMobileMenu() {
+        if (!mobileMenuDrawer) return;
+        mobileMenuDrawer.classList.remove("is-open");
+        if (mobileMenuTrigger) {
+          mobileMenuTrigger.setAttribute("aria-expanded", "false");
+        }
+        document.body.style.overflow = "";
+      }
+
+      function openMobileMenu() {
+        if (!mobileMenuDrawer) return;
+        mobileMenuDrawer.classList.add("is-open");
+        if (mobileMenuTrigger) {
+          mobileMenuTrigger.setAttribute("aria-expanded", "true");
+        }
+        document.body.style.overflow = "hidden";
+      }
+
+      if (mobileMenuTrigger) {
+        mobileMenuTrigger.addEventListener("click", function () {
+          if (mobileMenuDrawer && mobileMenuDrawer.classList.contains("is-open")) {
+            closeMobileMenu();
+          } else {
+            openMobileMenu();
+          }
+        });
+      }
+
+      if (mobileMenuClose) {
+        mobileMenuClose.addEventListener("click", closeMobileMenu);
+      }
+
+      if (mobileMenuDrawer) {
+        mobileMenuDrawer.addEventListener("click", function (event) {
+          if (event.target === mobileMenuDrawer) {
+            closeMobileMenu();
+          }
+        });
+
+        mobileMenuDrawer.querySelectorAll("a").forEach(function (link) {
+          link.addEventListener("click", closeMobileMenu);
+        });
+      }
+
+      const navUserTrigger = document.getElementById("navUserTrigger");
+      const navUserDropdown = document.getElementById("navUserDropdown");
+
+      if (navUserTrigger && navUserDropdown) {
+        navUserTrigger.addEventListener("click", function (event) {
+          event.stopPropagation();
+          const opened = navUserDropdown.classList.toggle("open");
+          navUserTrigger.setAttribute("aria-expanded", opened ? "true" : "false");
+        });
+
+        document.addEventListener("click", function (event) {
+          if (!navUserTrigger.contains(event.target) && !navUserDropdown.contains(event.target)) {
+            navUserDropdown.classList.remove("open");
+            navUserTrigger.setAttribute("aria-expanded", "false");
+          }
+        });
+      }
+
+      document.querySelectorAll(".game-card[data-card-link]").forEach(function (card) {
+        card.addEventListener("click", function (event) {
+          if (event.target.closest("a") || event.target.closest("button")) return;
+
+          const url = card.getAttribute("data-card-link");
+          if (url) {
+            window.location.href = url;
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

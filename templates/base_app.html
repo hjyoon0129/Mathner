@@ -1,5 +1,7 @@
 ﻿{% load static %}
 {% load socialaccount %}
+{% url 'core:app_home' as mathner_app_home_url %}
+{% url 'account_login' as mathner_login_url %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -600,7 +602,6 @@
       background: transparent;
     }
 
-    /* 매스레인 이미지만 가로로 늘림 */
     .math-rain-media img {
       width: 100%;
       height: 100%;
@@ -1108,14 +1109,14 @@
 <body>
   <header class="site-header">
     <div class="nav-wrap">
-      <a href="{% url 'core:app_home' %}" class="brand">
+      <a href="{{ mathner_app_home_url }}" class="brand">
         <span class="brand-logo">m</span>
         <span>매스너</span>
       </a>
 
       <nav class="main-nav">
-        <a href="{% url 'core:landing' %}">소개</a>
-        <a href="{% url 'core:landing' %}#pricing">이용권</a>
+        <a href="/landing/">소개</a>
+        <a href="/landing/#pricing">이용요금</a>
 
         {% if user.is_authenticated %}
           <a href="{% url 'avatar:my_room' %}">내 아바타</a>
@@ -1146,9 +1147,9 @@
               🙂 {{ my_nickname|default:user.username|default:"친구" }} ▾
             </button>
             <div class="nav-user-dropdown" id="navUserDropdown">
-              <a href="{% url 'core:app_home' %}">🎮 게임하기</a>
-              <a href="{% url 'core:landing' %}">🏠 소개</a>
-              <a href="{% url 'core:landing' %}#pricing">🎟️ 이용권</a>
+              <a href="{{ mathner_app_home_url }}">🎮 게임하기</a>
+              <a href="/landing/">🏠 소개</a>
+              <a href="/landing/#pricing">🎟️ 이용요금</a>
               <a href="{% url 'avatar:my_room' %}">👕 내 아바타 방</a>
               <a href="{% url 'social:hub' %}">👥 친구들</a>
               <a href="{% url 'community:home' %}">🎪 놀이터</a>
@@ -1161,8 +1162,8 @@
             </div>
           </div>
         {% else %}
-          <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn-3d btn-outline">G 로그인</a>
-          <a href="{% url 'account_login' %}?next={{ request.path }}" class="btn-3d btn-solid">시작하기!!</a>
+          <a href="{% url 'account_login' %}?next={{ request.get_full_path|urlencode }}" class="btn-3d btn-outline">G 로그인</a>
+          <a href="{% url 'account_login' %}?next={{ request.get_full_path|urlencode }}" class="btn-3d btn-solid">시작하기!!</a>
         {% endif %}
 
         <button type="button" class="mobile-only mobile-menu-trigger" id="mobileMenuTrigger" aria-expanded="false" aria-controls="mobileMenuDrawer">☰</button>
@@ -1173,9 +1174,9 @@
   <div class="mobile-menu-drawer" id="mobileMenuDrawer">
     <div class="mobile-menu-card">
       <div class="mobile-menu-links">
-        <a href="{% url 'core:app_home' %}">🎮 게임하기</a>
-        <a href="{% url 'core:landing' %}">🏠 소개</a>
-        <a href="{% url 'core:landing' %}#pricing">🎟️ 이용권</a>
+        <a href="{{ mathner_app_home_url }}">🎮 게임하기</a>
+        <a href="/landing/">🏠 소개</a>
+        <a href="/landing/#pricing">🎟️ 이용요금</a>
 
         {% if user.is_authenticated %}
           <a href="{% url 'avatar:my_room' %}">👕 내 아바타</a>
@@ -1192,8 +1193,8 @@
           <a href="{% url 'account_login' %}?next={% url 'social:hub' %}">👥 친구들</a>
           <a href="{% url 'community:home' %}">🎪 놀이터</a>
           <a href="{% url 'ranking:home' %}">🏆 랭킹</a>
-          <a href="{% url 'account_login' %}?next={{ request.path }}">G 구글로 시작하기</a>
-          <a href="{% url 'account_login' %}?next={{ request.path }}">🔐 로그인</a>
+          <a href="{% url 'account_login' %}?next={{ request.get_full_path|urlencode }}">G 구글로 시작하기</a>
+          <a href="{% url 'account_login' %}?next={{ request.get_full_path|urlencode }}">🔐 로그인</a>
         {% endif %}
       </div>
       <button type="button" class="mobile-menu-close" id="mobileMenuClose">닫기 ✕</button>
