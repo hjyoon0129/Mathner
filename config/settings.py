@@ -18,6 +18,18 @@ load_dotenv(BASE_DIR / ".env")
 
 
 # =========================
+# Helper
+# =========================
+def env_bool(name, default=False):
+    value = os.getenv(name)
+
+    if value is None:
+        return default
+
+    return str(value).strip().lower() in ("1", "true", "yes", "y", "on")
+
+
+# =========================
 # Core
 # =========================
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -130,7 +142,7 @@ AUTH_PASSWORD_VALIDATORS = []
 # =========================
 # Internationalization
 # =========================
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "ko-kr"
 TIME_ZONE = "Asia/Seoul"
 
 USE_I18N = True
@@ -195,6 +207,13 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "none"
 
+# 비밀번호/PIN 찾기 활성화
+# allauth 기본 password reset URL:
+# /accounts/password/reset/
+# 이 기능은 User.email 기준으로 재설정 메일을 보냅니다.
+ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
+ACCOUNT_CHANGE_EMAIL = True
+
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
 
@@ -234,16 +253,6 @@ CSRF_COOKIE_SAMESITE = "Lax"
 # =========================
 # CSRF / Security
 # =========================
-
-def env_bool(name, default=False):
-    value = os.getenv(name)
-
-    if value is None:
-        return default
-
-    return str(value).strip().lower() in ("1", "true", "yes", "y", "on")
-
-
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
     for origin in os.getenv(
@@ -310,12 +319,47 @@ GEOIP_PATH = BASE_DIR / "geoip"
 
 
 # =========================
-# Email
+# Email / Password Reset
 # =========================
+# 로컬 기본값:
+# - 실제 메일 발송 X
+# - 개발 서버 터미널에 재설정 링크 출력
+#
+# 운영 서버에서 실제 메일 발송하려면 .env에 아래 값을 넣으세요.
+# EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+# EMAIL_HOST=smtp.gmail.com
+# EMAIL_PORT=587
+# EMAIL_USE_TLS=True
+# EMAIL_HOST_USER=your_email@gmail.com
+# EMAIL_HOST_PASSWORD=google_app_password
+# DEFAULT_FROM_EMAIL=Mathner <your_email@gmail.com>
+
 EMAIL_BACKEND = os.getenv(
     "EMAIL_BACKEND",
     "django.core.mail.backends.console.EmailBackend"
 )
+
+EMAIL_HOST = os.getenv("EMAIL_HOST", "")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
+EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", False)
+
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DEFAULT_FROM_EMAIL",
+    "Mathner <noreply@mathner.com>"
+)
+
+SERVER_EMAIL = os.getenv(
+    "SERVER_EMAIL",
+    DEFAULT_FROM_EMAIL
+)
+
+# 비밀번호/PIN 재설정 링크 유효시간
+# 기본 1시간
+PASSWORD_RESET_TIMEOUT = int(os.getenv("PASSWORD_RESET_TIMEOUT", str(60 * 60)))
 
 
 # =========================
