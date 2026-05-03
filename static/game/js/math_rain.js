@@ -79,6 +79,10 @@ let rankingRecorded = false;
 let finishFxTimer = null;
 let rewardIntroTimer = null;
 
+let browserBackGuardActive = false;
+let browserBackFinalizing = false;
+let browserBackHandlerBound = false;
+
 function isMobileUI() {
   return window.matchMedia("(max-width: 640px)").matches;
 }
@@ -86,6 +90,7 @@ function isMobileUI() {
 function getInitialNavValue(el, fallback) {
   const fromNav = Number((el?.textContent || "").trim());
   if (!Number.isNaN(fromNav)) return fromNav;
+
   const fromFallback = Number(fallback);
   return Number.isNaN(fromFallback) ? 0 : fromFallback;
 }
@@ -97,7 +102,9 @@ function randomInt(min, max) {
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
+
   if (parts.length === 2) return parts.pop().split(";").shift();
+
   return "";
 }
 
@@ -137,7 +144,9 @@ function setOperationButtonsDisabled(disabled) {
 
 function renderHearts() {
   if (!heartsBarEl) return;
+
   heartsBarEl.innerHTML = "";
+
   for (let i = 0; i < 5; i += 1) {
     const slot = document.createElement("span");
     slot.className = "heart-slot" + (i < hearts ? " active" : "");
@@ -146,9 +155,71 @@ function renderHearts() {
   }
 }
 
+function updateTextForSelectors(selectors, value) {
+  const text = String(value);
+
+  selectors.forEach((selector) => {
+    document.querySelectorAll(selector).forEach((el) => {
+      if (!el) return;
+      el.textContent = text;
+    });
+  });
+}
+
 function syncNavResources() {
+  if (Number.isNaN(totalStars)) totalStars = 0;
+  if (Number.isNaN(remainingKeys)) remainingKeys = 0;
+
   if (navStarCountEl) navStarCountEl.textContent = String(totalStars);
   if (navKeyCountEl) navKeyCountEl.textContent = String(remainingKeys);
+
+  updateTextForSelectors(
+    [
+      "#navStarCount",
+      "#navStarsCount",
+      "#navbarStarCount",
+      "#navbarStarsCount",
+      "#topStarCount",
+      "#topStarsCount",
+      "#headerStarCount",
+      "#headerStarsCount",
+      "#mobileStarCount",
+      "#mobileStarsCount",
+      ".nav-star-count",
+      ".nav-stars-count",
+      ".navbar-star-count",
+      ".navbar-stars-count",
+      ".top-star-count",
+      ".top-stars-count",
+      "[data-nav-star-count]",
+      "[data-star-count]",
+    ],
+    totalStars
+  );
+
+  updateTextForSelectors(
+    [
+      "#navKeyCount",
+      "#navKeysCount",
+      "#navbarKeyCount",
+      "#navbarKeysCount",
+      "#topKeyCount",
+      "#topKeysCount",
+      "#headerKeyCount",
+      "#headerKeysCount",
+      "#mobileKeyCount",
+      "#mobileKeysCount",
+      ".nav-key-count",
+      ".nav-keys-count",
+      ".navbar-key-count",
+      ".navbar-keys-count",
+      ".top-key-count",
+      ".top-keys-count",
+      "[data-nav-key-count]",
+      "[data-key-count]",
+    ],
+    remainingKeys
+  );
 }
 
 function updateUI() {
@@ -176,7 +247,9 @@ function resetLocalRunState() {
 
 function setOperation(op) {
   if (gameRunning) return;
+
   selectedOp = op;
+
   opButtons.forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.op === op);
   });
@@ -205,6 +278,7 @@ function getSpawnDelay() {
 
 function getFallSpeed(type = "normal") {
   let speed = 32;
+
   if (level === 2) speed = 38;
   else if (level === 3) speed = 44;
   else if (level === 4) speed = 50;
@@ -227,45 +301,87 @@ function makeLevelPattern(op) {
   return { kind: "three", size: "one-one-one", op };
 }
 
-function randOneDigit() { return randomInt(1, 9); }
-function randTwoDigit() { return randomInt(10, 19); }
+function randOneDigit() {
+  return randomInt(1, 9);
+}
+
+function randTwoDigit() {
+  return randomInt(10, 19);
+}
 
 function buildTwoTermQuestion(op, size) {
-  let a = 1, b = 1;
+  let a = 1;
+  let b = 1;
 
-  if (size === "one-one") { a = randOneDigit(); b = randOneDigit(); }
-  else { a = randTwoDigit(); b = randOneDigit(); }
+  if (size === "one-one") {
+    a = randOneDigit();
+    b = randOneDigit();
+  } else {
+    a = randTwoDigit();
+    b = randOneDigit();
+  }
 
   if (op === "+") return { text: `${a}+${b}`, answer: a + b };
+
   if (op === "-") {
     if (b > a) [a, b] = [b, a];
     if (a === b) a += 1;
     return { text: `${a}-${b}`, answer: a - b };
   }
+
   if (op === "*") {
-    if (size === "two-one") { a = randTwoDigit(); b = randomInt(2, 5); }
-    else { a = randomInt(2, 9); b = randomInt(2, 9); }
+    if (size === "two-one") {
+      a = randTwoDigit();
+      b = randomInt(2, 5);
+    } else {
+      a = randomInt(2, 9);
+      b = randomInt(2, 9);
+    }
+
     return { text: `${a}×${b}`, answer: a * b };
   }
 
-  let divisor = 2, quotient = 2;
-  if (size === "two-one") { divisor = randomInt(2, 5); quotient = randTwoDigit(); }
-  else { divisor = randomInt(2, 9); quotient = randomInt(2, 9); }
+  let divisor = 2;
+  let quotient = 2;
+
+  if (size === "two-one") {
+    divisor = randomInt(2, 5);
+    quotient = randTwoDigit();
+  } else {
+    divisor = randomInt(2, 9);
+    quotient = randomInt(2, 9);
+  }
+
   const dividend = divisor * quotient;
+
   return { text: `${dividend}÷${divisor}`, answer: quotient };
 }
 
 function buildThreeTermQuestion(op) {
-  const a = randOneDigit(), b = randOneDigit(), c = randOneDigit();
+  const a = randOneDigit();
+  const b = randOneDigit();
+  const c = randOneDigit();
 
   if (op === "+") return { text: `${a}+${b}+${c}`, answer: a + b + c };
-  if (op === "-") { const sum = a + b + c; return { text: `${sum}-${a}-${b}`, answer: c }; }
+
+  if (op === "-") {
+    const sum = a + b + c;
+    return { text: `${sum}-${a}-${b}`, answer: c };
+  }
+
   if (op === "*") {
-    const aa = randomInt(1, 4), bb = randomInt(1, 4), cc = randomInt(1, 4);
+    const aa = randomInt(1, 4);
+    const bb = randomInt(1, 4);
+    const cc = randomInt(1, 4);
+
     return { text: `${aa}×${bb}×${cc}`, answer: aa * bb * cc };
   }
-  const divisor = randomInt(2, 4), q1 = randomInt(2, 4), q2 = randomInt(2, 4);
+
+  const divisor = randomInt(2, 4);
+  const q1 = randomInt(2, 4);
+  const q2 = randomInt(2, 4);
   const dividend = divisor * q1 * q2;
+
   return { text: `${dividend}÷${divisor}÷${q1}`, answer: q2 };
 }
 
@@ -273,9 +389,12 @@ function buildNormalEquation() {
   const ops = getOperationPool();
   const op = ops[randomInt(0, ops.length - 1)];
   const pattern = makeLevelPattern(op);
+
   let built;
+
   if (pattern.kind === "three") built = buildThreeTermQuestion(op);
   else built = buildTwoTermQuestion(op, pattern.size);
+
   return { type: "normal", text: built.text, answer: built.answer };
 }
 
@@ -291,8 +410,10 @@ function buildRingWing() {
 
 function buildEquationData() {
   const specialRoll = Math.random();
+
   if (specialRoll < 0.08) return buildBomb();
   if (specialRoll < 0.13) return buildRingWing();
+
   return buildNormalEquation();
 }
 
@@ -301,6 +422,7 @@ function spawnEquation() {
 
   const data = buildEquationData();
   const el = document.createElement("div");
+
   el.classList.add("equation");
 
   if (data.type === "bomb") el.classList.add("eq-bomb");
@@ -313,28 +435,37 @@ function spawnEquation() {
   const left = randomInt(12, Math.max(12, gameArea.clientWidth - widthGuess - 12));
 
   el.style.left = `${left}px`;
-  el.style.top = `-18px`;
+  el.style.top = "-18px";
 
   gameArea.appendChild(el);
 
   equations.push({
-    ...data, el, x: left, y: -18, height: 46, speed: getFallSpeed(data.type)
+    ...data,
+    el,
+    x: left,
+    y: -18,
+    height: 46,
+    speed: getFallSpeed(data.type),
   });
 }
 
 function removeEquationByRef(item) {
   const idx = equations.indexOf(item);
+
   if (idx !== -1) equations.splice(idx, 1);
   if (item.el && item.el.parentNode) item.el.remove();
 }
 
 function showFloatText(text, x, y, kind = "bad") {
   const fx = document.createElement("div");
+
   fx.className = `float-text ${kind}`;
   fx.textContent = text;
   fx.style.left = `${x}px`;
   fx.style.top = `${y}px`;
+
   gameArea.appendChild(fx);
+
   setTimeout(() => fx.remove(), 950);
 }
 
@@ -357,12 +488,13 @@ function showRewardFloat(x, y, amount) {
   wrap.style.top = `${y}px`;
 
   gameArea.appendChild(wrap);
+
   setTimeout(() => wrap.remove(), 1050);
 }
 
-// "LEVEL N"을 "N 단계"로 한글화
 function showLevelIntro(levelNumber, callback) {
   isLevelIntroShowing = true;
+
   if (levelIntroTextEl) levelIntroTextEl.textContent = `${levelNumber} 단계`;
   if (levelIntroEl) levelIntroEl.classList.remove("hidden");
 
@@ -375,6 +507,7 @@ function showLevelIntro(levelNumber, callback) {
 
 function maybeQueueLevelTransition() {
   if (levelTransitionPending) return;
+
   if (cleared >= getLevelTarget(level)) {
     levelTransitionPending = true;
     clearInterval(spawnTimer);
@@ -387,6 +520,7 @@ function maybeStartPendingLevel() {
 
   level += 1;
   levelTransitionPending = false;
+
   updateUI();
 
   showLevelIntro(level, () => {
@@ -398,10 +532,13 @@ function maybeStartPendingLevel() {
 
 function rewardCurrentHit(item) {
   const reward = getBaseReward();
+
   runEarnedStars += reward;
   cleared += 1;
   currentCombo += 1;
+
   if (currentCombo > bestCombo) bestCombo = currentCombo;
+
   saveHighScore();
   maybeQueueLevelTransition();
   updateUI();
@@ -410,6 +547,7 @@ function rewardCurrentHit(item) {
 
 function clearAllCurrentEquations() {
   const currentItems = [...equations];
+
   equations = [];
 
   currentItems.forEach((item) => {
@@ -419,14 +557,20 @@ function clearAllCurrentEquations() {
       item.el.classList.add("hit");
       rewardCurrentHit(item);
     }
-    setTimeout(() => { if (item.el && item.el.parentNode) item.el.remove(); }, 180);
+
+    setTimeout(() => {
+      if (item.el && item.el.parentNode) item.el.remove();
+    }, 180);
   });
 
-  setTimeout(() => { maybeStartPendingLevel(); }, 220);
+  setTimeout(() => {
+    maybeStartPendingLevel();
+  }, 220);
 }
 
 function handleCorrectNormal(item) {
   removeEquationByRef(item);
+
   item.el.classList.add("hit");
   gameArea.appendChild(item.el);
   rewardCurrentHit(item);
@@ -439,10 +583,14 @@ function handleCorrectNormal(item) {
 
 function handleCorrectRingWing(item) {
   removeEquationByRef(item);
+
   item.el.classList.add("hit");
   gameArea.appendChild(item.el);
+
   currentCombo += 1;
+
   if (currentCombo > bestCombo) bestCombo = currentCombo;
+
   showFloatText("마법 정답! ✨", item.x - 14, item.y, "ring");
 
   setTimeout(() => {
@@ -453,12 +601,14 @@ function handleCorrectRingWing(item) {
 
 function handleCorrectBomb(item) {
   removeEquationByRef(item);
+
   item.el.classList.add("hit");
   gameArea.appendChild(item.el);
 
   hearts = Math.max(0, hearts - 1);
   wrongCount += 1;
   currentCombo = 0;
+
   showFloatText("-1 ♥", item.x + 8, item.y, "bad");
   updateUI();
 
@@ -473,12 +623,15 @@ function submitAnswer() {
   if (!gameRunning || isLevelIntroShowing) return;
 
   const raw = answerInput.value.trim();
+
   if (!raw) return;
 
   const value = Number(raw);
+
   if (Number.isNaN(value)) return;
 
   const item = equations.find((eq) => eq.answer === value);
+
   if (!item) {
     answerInput.value = "";
     if (!isMobileUI()) answerInput.focus();
@@ -490,7 +643,9 @@ function submitAnswer() {
   else handleCorrectNormal(item);
 
   answerInput.value = "";
+
   if (!isMobileUI()) answerInput.focus();
+
   updateMobilePadState();
 }
 
@@ -498,6 +653,7 @@ function handleGroundHit(item) {
   if (!gameRunning) return;
 
   removeEquationByRef(item);
+
   item.el.classList.add("miss");
   gameArea.appendChild(item.el);
 
@@ -524,7 +680,9 @@ function gameLoop(timestamp) {
   if (!gameRunning) return;
 
   if (!lastTimestamp) lastTimestamp = timestamp;
+
   const delta = (timestamp - lastTimestamp) / 1000;
+
   lastTimestamp = timestamp;
 
   if (!isLevelIntroShowing) {
@@ -532,6 +690,7 @@ function gameLoop(timestamp) {
 
     for (let i = equations.length - 1; i >= 0; i -= 1) {
       const item = equations[i];
+
       item.y += item.speed * delta;
       item.el.style.top = `${item.y}px`;
 
@@ -553,6 +712,7 @@ function clearAllEquationsNow() {
   equations.forEach((item) => {
     if (item.el && item.el.parentNode) item.el.remove();
   });
+
   equations = [];
 }
 
@@ -578,11 +738,14 @@ async function startRunOnServer() {
     credentials: "same-origin",
     body: JSON.stringify({
       game_mode: "math_rain",
+      game_name: "math_rain",
+      game: "math_rain",
       operation: currentOperationKey(),
     }),
   });
 
   const data = await response.json();
+
   if (!response.ok || !data.ok) {
     const err = new Error(data.message || data.error || "Failed to start run.");
     err.code = data.error_code || "";
@@ -590,8 +753,9 @@ async function startRunOnServer() {
   }
 
   runStartedOnServer = true;
-  remainingKeys = Number(data.remaining_keys ?? remainingKeys);
-  totalStars = Number(data.total_stars ?? totalStars);
+  remainingKeys = Number(data.remaining_keys ?? data.nav_key_count ?? remainingKeys);
+  totalStars = Number(data.total_stars ?? data.nav_star_count ?? totalStars);
+
   syncNavResources();
 }
 
@@ -601,6 +765,7 @@ async function recordRankingScore() {
   if (!PAGE_CFG.isAuthenticated) return;
 
   const hasMeaningfulResult = Number(cleared || 0) > 0 || Number(runEarnedStars || 0) > 0;
+
   if (!hasMeaningfulResult) return;
 
   try {
@@ -614,36 +779,47 @@ async function recordRankingScore() {
       credentials: "same-origin",
       body: JSON.stringify({
         game_mode: "math_rain",
+        game_name: "math_rain",
+        game: "math_rain",
         operation: currentOperationKey(),
         score: cleared,
         correct_count: cleared,
         wrong_count: wrongCount,
         earned_stars: runEarnedStars,
+        gained_stars: runEarnedStars,
         best_combo: bestCombo,
       }),
     });
 
     const data = await response.json().catch(() => ({}));
+
     if (response.ok && data.ok) rankingRecorded = true;
   } catch (error) {}
 }
 
-function buildFinalizePayload(reason) {
-  return JSON.stringify({
+function buildFinalizePayloadObject(reason) {
+  return {
     reason,
     earned_stars: runEarnedStars,
     gained_stars: runEarnedStars,
+    stars: runEarnedStars,
     correct_count: cleared,
     wrong_count: wrongCount,
     best_combo: bestCombo,
+    max_combo: bestCombo,
     correct: cleared,
     score: cleared,
     game_mode: "math_rain",
+    game_name: "math_rain",
+    game: "math_rain",
     operation: currentOperationKey(),
-  });
+  };
 }
 
-// 결과 모달창 내용도 한글로 예쁘게
+function buildFinalizePayload(reason) {
+  return JSON.stringify(buildFinalizePayloadObject(reason));
+}
+
 function getFinishMeta(reason) {
   if (reason === "game_over") {
     return {
@@ -663,6 +839,15 @@ function getFinishMeta(reason) {
     };
   }
 
+  if (reason === "browser_back" || reason === "leave") {
+    return {
+      badge: "저장 완료",
+      title: "도전 저장 완료!",
+      desc: "",
+      rewardText: "나가기 전에 모은 별을 안전하게 담았어요!",
+    };
+  }
+
   return {
     badge: "끝!",
     title: "도전 완료! 🥳",
@@ -676,29 +861,35 @@ function clearFinishFx() {
     clearTimeout(finishFxTimer);
     finishFxTimer = null;
   }
+
   if (finishFxLayer) finishFxLayer.innerHTML = "";
 }
 
 function playFinishStarRain(amount) {
   if (!finishFxLayer) return;
+
   clearFinishFx();
 
   const totalCount = Math.min(42, Math.max(18, amount * 5));
 
   for (let i = 0; i < totalCount; i += 1) {
     const star = document.createElement("span");
+
     star.className = "finish-drop-star";
     star.textContent = "★";
     star.style.left = `${Math.random() * 100}%`;
     star.style.animationDuration = `${1.4 + Math.random() * 1.1}s`;
     star.style.animationDelay = `${Math.random() * 0.4}s`;
     star.style.fontSize = `${18 + Math.random() * 14}px`;
+
     finishFxLayer.appendChild(star);
   }
 
   const gain = document.createElement("div");
+
   gain.className = "finish-gain-pop";
   gain.textContent = `+${amount} ★`;
+
   finishFxLayer.appendChild(gain);
 
   finishFxTimer = setTimeout(() => {
@@ -711,6 +902,7 @@ function clearRewardIntroFx() {
     clearTimeout(rewardIntroTimer);
     rewardIntroTimer = null;
   }
+
   if (rewardIntroFxEl) rewardIntroFxEl.innerHTML = "";
 }
 
@@ -720,23 +912,28 @@ function playRewardIntroFx(amount) {
   rewardIntroFxEl.innerHTML = "";
 
   const fallingCount = Math.min(36, Math.max(20, amount * 6));
+
   for (let i = 0; i < fallingCount; i += 1) {
     const star = document.createElement("span");
+
     star.className = "reward-intro-falling-star" + (Math.random() > 0.72 ? " big" : "");
     star.textContent = "★";
     star.style.left = `${Math.random() * 100}%`;
     star.style.fontSize = `${16 + Math.random() * 20}px`;
     star.style.animationDuration = `${1.05 + Math.random() * 1.1}s`;
     star.style.animationDelay = `${Math.random() * 0.55}s`;
+
     rewardIntroFxEl.appendChild(star);
   }
 
   for (let i = 0; i < 22; i += 1) {
     const burst = document.createElement("span");
+
     burst.className = "reward-intro-burst";
     burst.style.setProperty("--bx", `${(Math.random() - 0.5) * 250}px`);
     burst.style.setProperty("--by", `${(Math.random() - 0.5) * 210}px`);
     burst.style.animationDelay = `${Math.random() * 0.18}s`;
+
     rewardIntroFxEl.appendChild(burst);
   }
 }
@@ -766,6 +963,7 @@ function openFinishOverlay(reason) {
   if (finishOverlay) finishOverlay.classList.add("show");
 
   const finishCard = finishOverlay?.querySelector(".finish-card");
+
   if (finishCard) finishCard.scrollTop = 0;
 
   requestAnimationFrame(() => {
@@ -777,12 +975,14 @@ function openRewardIntroThenFinish(reason) {
   const meta = getFinishMeta(reason);
 
   closeRewardIntroOverlay();
+
   if (finishOverlay) finishOverlay.classList.remove("show");
 
   if (rewardIntroAmountEl) rewardIntroAmountEl.textContent = `+${runEarnedStars}`;
   if (rewardIntroTextEl) rewardIntroTextEl.textContent = meta.rewardText;
 
   if (rewardIntroOverlay) rewardIntroOverlay.classList.add("show");
+
   playRewardIntroFx(runEarnedStars);
 
   rewardIntroTimer = setTimeout(() => {
@@ -796,6 +996,15 @@ function closeFinishOverlay() {
   clearFinishFx();
 }
 
+function stopRunMotion() {
+  gameRunning = false;
+
+  clearInterval(spawnTimer);
+  cancelAnimationFrame(animationId);
+  clearAllEquationsNow();
+  setOperationButtonsDisabled(false);
+}
+
 async function finalizeRun(reason, options = {}) {
   const { silent = false, keepalive = false } = options;
 
@@ -805,12 +1014,11 @@ async function finalizeRun(reason, options = {}) {
   }
 
   finalizing = true;
-  gameRunning = false;
 
-  clearInterval(spawnTimer);
-  cancelAnimationFrame(animationId);
-  clearAllEquationsNow();
-  setOperationButtonsDisabled(false);
+  stopRunMotion();
+
+  totalStars += runEarnedStars;
+  syncNavResources();
 
   if (PAGE_CFG.finalizeRunUrl) {
     try {
@@ -826,27 +1034,21 @@ async function finalizeRun(reason, options = {}) {
         body: buildFinalizePayload(reason),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
+
       if (response.ok && data.ok) {
         runSaved = true;
         runStartedOnServer = false;
-        remainingKeys = Number(data.remaining_keys ?? remainingKeys);
-        totalStars = Number(data.total_stars ?? totalStars);
+        remainingKeys = Number(data.remaining_keys ?? data.nav_key_count ?? remainingKeys);
+        totalStars = Number(data.total_stars ?? data.nav_star_count ?? totalStars);
       }
     } catch (error) {}
   }
 
-  if (!runSaved && keepalive && navigator.sendBeacon && PAGE_CFG.finalizeRunUrl) {
-    try {
-      const blob = new Blob([buildFinalizePayload(reason)], {
-        type: "application/json"
-      });
-      const sent = navigator.sendBeacon(PAGE_CFG.finalizeRunUrl, blob);
-      if (sent) {
-        runSaved = true;
-        runStartedOnServer = false;
-      }
-    } catch (error) {}
+  if (!runSaved && keepalive && PAGE_CFG.finalizeRunUrl) {
+    sendFinalizeWithKeepaliveOnly(reason);
+    runSaved = true;
+    runStartedOnServer = false;
   }
 
   await recordRankingScore();
@@ -856,6 +1058,122 @@ async function finalizeRun(reason, options = {}) {
   if (!silent) openRewardIntroThenFinish(reason);
 
   finalizing = false;
+}
+
+function sendFinalizeWithKeepaliveOnly(reason) {
+  if (!PAGE_CFG.finalizeRunUrl) return;
+
+  const payloadObject = buildFinalizePayloadObject(reason);
+  const payload = JSON.stringify(payloadObject);
+
+  try {
+    fetch(PAGE_CFG.finalizeRunUrl, {
+      method: "POST",
+      credentials: "same-origin",
+      keepalive: true,
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: payload,
+    }).catch(() => null);
+  } catch (error) {
+    try {
+      const formBody = new URLSearchParams();
+
+      Object.entries(payloadObject).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          formBody.append(key, String(value));
+        }
+      });
+
+      fetch(PAGE_CFG.finalizeRunUrl, {
+        method: "POST",
+        credentials: "same-origin",
+        keepalive: true,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "X-CSRFToken": getCookie("csrftoken"),
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        body: formBody.toString(),
+      }).catch(() => null);
+    } catch (fallbackError) {}
+  }
+}
+
+function finalizeRunForPageLeaving(reason = "leave") {
+  if (!gameRunning || runSaved || finalizing || !runStartedOnServer) return;
+
+  finalizing = true;
+
+  stopRunMotion();
+
+  totalStars += runEarnedStars;
+  syncNavResources();
+
+  runSaved = true;
+  runStartedOnServer = false;
+
+  sendFinalizeWithKeepaliveOnly(reason);
+}
+
+function armBrowserBackGuard() {
+  if (browserBackGuardActive) return;
+  if (!window.history || !window.history.pushState) return;
+
+  try {
+    window.history.pushState(
+      { mathnerRainRunGuard: true },
+      "",
+      window.location.href
+    );
+    browserBackGuardActive = true;
+  } catch (error) {
+    browserBackGuardActive = false;
+  }
+}
+
+function bindBrowserBackFinalize() {
+  if (browserBackHandlerBound) return;
+
+  browserBackHandlerBound = true;
+
+
+
+  window.addEventListener("popstate", () => {
+    if (
+      !browserBackGuardActive ||
+      !gameRunning ||
+      runSaved ||
+      finalizing ||
+      browserBackFinalizing
+    ) {
+      return;
+    }
+
+    browserBackFinalizing = true;
+    browserBackGuardActive = false;
+
+    finalizeRunForPageLeaving("browser_back");
+
+    setTimeout(() => {
+      try {
+        window.history.back();
+      } catch (error) {
+        window.location.href = "/";
+      }
+    }, 30);
+  });
+
+  window.addEventListener("pagehide", () => {
+    finalizeRunForPageLeaving("pagehide");
+  });
+
+  window.addEventListener("beforeunload", () => {
+    finalizeRunForPageLeaving("beforeunload");
+  });
 }
 
 async function startGame() {
@@ -887,6 +1205,7 @@ async function startGame() {
       ) {
         openNoKeyOverlay();
       }
+
       return;
     }
   } else {
@@ -894,6 +1213,7 @@ async function startGame() {
       openNoKeyOverlay();
       return;
     }
+
     remainingKeys -= 1;
     syncNavResources();
   }
@@ -913,12 +1233,15 @@ async function startGame() {
   finalizing = false;
   rankingRecorded = false;
 
+  armBrowserBackGuard();
   setOperationButtonsDisabled(true);
 
   if (startOverlay) startOverlay.classList.remove("show");
 
   updateUI();
+
   answerInput.value = "";
+
   if (!isMobileUI()) answerInput.focus();
 
   showLevelIntro(1, () => {
@@ -954,39 +1277,36 @@ async function resetGame() {
 
 function endGame() {
   if (!gameRunning) return;
+
   finalizeRun("game_over");
 }
 
 function bindLeaveSettlement() {
   const navLinks = document.querySelectorAll("a[href]");
+
   navLinks.forEach((link) => {
     link.addEventListener("click", async (e) => {
       if (!gameRunning || runSaved || finalizing) return;
       if (link.target === "_blank") return;
 
       const href = link.getAttribute("href") || "";
+
       if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
 
       e.preventDefault();
-      await finalizeRun("leave", { silent: true, keepalive: true });
+
+      await finalizeRun("leave", {
+        silent: true,
+        keepalive: true,
+      });
+
       window.location.href = href;
     });
   });
 
-  window.addEventListener("pagehide", () => {
-    if (!gameRunning || runSaved || finalizing) return;
-    finalizeRun("leave", { silent: true, keepalive: true });
-  });
-
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState !== "hidden") return;
-    if (!gameRunning || runSaved || finalizing) return;
-    finalizeRun("leave", { silent: true, keepalive: true });
-  });
-
-  window.addEventListener("beforeunload", () => {
-    if (!gameRunning || runSaved || finalizing) return;
-    finalizeRun("leave", { silent: true, keepalive: true });
+    finalizeRunForPageLeaving("visibility_hidden");
   });
 }
 
@@ -997,11 +1317,13 @@ function updateMobileInputMode() {
     answerInput.readOnly = true;
     answerInput.setAttribute("readonly", "readonly");
     answerInput.setAttribute("inputmode", "none");
+
     if (mobilePadWrap) mobilePadWrap.setAttribute("aria-hidden", "false");
   } else {
     answerInput.readOnly = false;
     answerInput.removeAttribute("readonly");
     answerInput.setAttribute("inputmode", "numeric");
+
     if (mobilePadWrap) mobilePadWrap.setAttribute("aria-hidden", "true");
   }
 }
@@ -1021,6 +1343,7 @@ function updateMobilePadState() {
   if (!mobilePad) return;
 
   const disabled = !gameRunning || finalizing || !answerInput || answerInput.disabled;
+
   mobilePad.querySelectorAll("[data-pad]").forEach((btn) => {
     btn.disabled = disabled;
   });
@@ -1029,18 +1352,21 @@ function updateMobilePadState() {
 function appendAnswerDigit(digit) {
   if (!answerInput || answerInput.disabled || !gameRunning) return;
   if (String(answerInput.value).length >= 4) return;
+
   answerInput.value = `${answerInput.value}${digit}`;
   updateMobilePadState();
 }
 
 function backspaceAnswerDigit() {
   if (!answerInput || answerInput.disabled || !gameRunning) return;
+
   answerInput.value = String(answerInput.value).slice(0, -1);
   updateMobilePadState();
 }
 
 function clearAnswerDigits() {
   if (!answerInput || answerInput.disabled || !gameRunning) return;
+
   answerInput.value = "";
   updateMobilePadState();
 }
@@ -1050,9 +1376,11 @@ function bindMobilePad() {
 
   mobilePad.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-pad]");
+
     if (!btn) return;
 
     const key = btn.getAttribute("data-pad");
+
     if (!key) return;
 
     if (key === "clear") {
@@ -1159,3 +1487,4 @@ setOperation("+");
 updateUI();
 bindMobilePad();
 bindLeaveSettlement();
+bindBrowserBackFinalize();

@@ -16,8 +16,17 @@ def math_rain_view(request):
         "isAuthenticated": request.user.is_authenticated,
         "initialStars": context.get("nav_star_count", context.get("total_stars", 0)),
         "initialKeys": context.get("nav_key_count", context.get("remaining_keys", 0)),
+
+        "gameName": "math_rain",
         "startRunUrl": reverse("core:start_game_run"),
         "finalizeRunUrl": reverse("core:save_game_result"),
         "recordRankingUrl": reverse("ranking:api_record_score"),
+
+        "rankingUrl": reverse("ranking:home"),
+        "rankingHomeUrl": reverse("ranking:home"),
+        "rankingPageUrl": reverse("ranking:home"),
+
+        "pricingUrl": reverse("core:landing") + "#pricing",
     }
+
     return render(request, "game/Math_rain.html", context)

@@ -1,11 +1,14 @@
 import json
 import re
 from datetime import timedelta
+from uuid import uuid4
 
 from django.db import transaction
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
+from django.utils.cache import patch_vary_headers
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from apps.avatar.models import UserAvatarProfile
@@ -15,6 +18,47 @@ from apps.core.models import (
     GameEventLog,
     VisitorLog,
 )
+
+
+def _set_no_store_headers(response):
+    """
+    브라우저 뒤로가기 / 앞으로가기 / bfcache / 일반 캐시 때문에
+    별/열쇠가 예전 값으로 보이는 문제를 막기 위한 공통 헤더.
+    게임 페이지와 게임 API 응답은 사용자별 상태값이 있으므로 캐시하면 안 된다.
+    """
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+    response["Pragma"] = "no-cache"
+    response["Expires"] = "0"
+    patch_vary_headers(response, ["Cookie"])
+    return response
+
+
+def _render_no_store(request, template_name, context=None, status=None):
+    response = render(request, template_name, context or {}, status=status)
+    return _set_no_store_headers(response)
+
+
+def _json_no_store(data, status=200):
+    response = JsonResponse(data, status=status)
+    return _set_no_store_headers(response)
+
+
+def _invalidate_request_state_cache(request):
+    """
+    같은 request 안에서 profile/nav context를 캐싱해두는 경우가 있어서,
+    별/열쇠를 변경한 직후에는 반드시 캐시를 비운다.
+    """
+    for attr in [
+        "_cached_game_profile",
+        "_cached_nav_context",
+        "_cached_avatar_profile",
+        "_mathner_payload_cache",
+    ]:
+        if hasattr(request, attr):
+            try:
+                delattr(request, attr)
+            except Exception:
+                pass
 
 
 def _get_client_ip(request):
@@ -36,13 +80,27 @@ def _clean_text(value):
     return str(value).strip()
 
 
+def _safe_int(value, default=0):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def _safe_game_name(value):
     value = (value or "").strip().lower()
-    allowed = {"aura", "math_rain", "rain", "unknown"}
+    value = value.replace("-", "_").replace(" ", "_")
+
+    if value in {"avatar_aura", "aura_play", "play_aura"}:
+        return "aura"
+
+    if value in {"rain", "mathrain", "math_rain"}:
+        return "math_rain"
+
+    allowed = {"aura", "math_rain", "unknown"}
     if value not in allowed:
         return "unknown"
-    if value == "rain":
-        return "math_rain"
+
     return value
 
 
@@ -68,9 +126,9 @@ def _create_game_event_log(
             user_agent=request.META.get("HTTP_USER_AGENT", ""),
             path=request.path[:500],
             session_key=_ensure_session_key(request),
-            score=max(0, int(score or 0)),
-            correct=max(0, int(correct or 0)),
-            gained_stars=max(0, int(gained_stars or 0)),
+            score=max(0, _safe_int(score, 0)),
+            correct=max(0, _safe_int(correct, 0)),
+            gained_stars=max(0, _safe_int(gained_stars, 0)),
             reason=(reason or "")[:100],
             meta=meta or {},
         )
@@ -78,6 +136,7 @@ def _create_game_event_log(
         return None
 
 
+@never_cache
 def visitor_stats(request):
     today = timezone.localdate()
 
@@ -99,19 +158,25 @@ def visitor_stats(request):
         "total_count": total_count,
     }
 
-    return render(request, "core/visitor_stats.html", context)
+    return _render_no_store(request, "core/visitor_stats.html", context)
 
 
+@never_cache
 def robots_txt(request):
     lines = [
         "User-agent: *",
         "Allow: /",
         "Sitemap: https://mathner.com/sitemap.xml",
     ]
-    return HttpResponse("\n".join(lines), content_type="text/plain")
+    response = HttpResponse("\n".join(lines), content_type="text/plain")
+    return response
 
 
 ACTIVE_RUN_SESSION_KEY = "active_math_run_consumed"
+ACTIVE_RUN_ID_SESSION_KEY = "active_math_run_id"
+ACTIVE_RUN_GAME_NAME_SESSION_KEY = "active_math_run_game_name"
+LAST_FINALIZED_RUN_ID_SESSION_KEY = "last_finalized_math_run_id"
+
 GUEST_KEYS_SESSION_KEY = "guest_remaining_keys"
 GUEST_KEYS_DATE_SESSION_KEY = "guest_keys_updated_at"
 GUEST_STARS_SESSION_KEY = "guest_total_stars"
@@ -189,10 +254,53 @@ def _apply_guest_run_result(request, gained_stars=0, correct=0, score=0):
     current_best = _get_guest_best_score(request)
     current_correct = _get_guest_total_correct(request)
 
-    request.session[GUEST_STARS_SESSION_KEY] = current_stars + max(0, int(gained_stars or 0))
-    request.session[GUEST_TOTAL_CORRECT_SESSION_KEY] = current_correct + max(0, int(correct or 0))
-    request.session[GUEST_BEST_SCORE_SESSION_KEY] = max(current_best, max(0, int(score or 0)))
+    request.session[GUEST_STARS_SESSION_KEY] = current_stars + max(0, _safe_int(gained_stars, 0))
+    request.session[GUEST_TOTAL_CORRECT_SESSION_KEY] = current_correct + max(0, _safe_int(correct, 0))
+    request.session[GUEST_BEST_SCORE_SESSION_KEY] = max(current_best, max(0, _safe_int(score, 0)))
     request.session.modified = True
+
+
+def _get_current_game_state(request, profile=None):
+    """
+    게임 JS가 어떤 게임이든 공통으로 믿을 수 있는 최신 상태.
+    앞으로 새 게임을 만들어도 start/save API에서 이 값을 그대로 쓰면 된다.
+    """
+    if request.user.is_authenticated:
+        profile = profile or _get_profile(request)
+        profile.refresh_daily_keys_if_needed()
+
+        return {
+            "total_stars": _profile_int(profile, "total_stars"),
+            "remaining_keys": int(profile.get_remaining_keys() or 0),
+            "best_score": _profile_int(profile, "best_score"),
+            "total_correct": _profile_int(profile, "total_correct"),
+            "nav_star_count": _profile_int(profile, "total_stars"),
+            "nav_key_count": int(profile.get_remaining_keys() or 0),
+            "is_authenticated_user": True,
+            "username": _get_username(request.user),
+            "my_nickname": profile.get_display_name(),
+        }
+
+    return {
+        "total_stars": _get_guest_total_stars(request),
+        "remaining_keys": _get_guest_remaining_keys(request),
+        "best_score": _get_guest_best_score(request),
+        "total_correct": _get_guest_total_correct(request),
+        "nav_star_count": _get_guest_total_stars(request),
+        "nav_key_count": _get_guest_remaining_keys(request),
+        "is_authenticated_user": False,
+        "username": "Guest",
+        "my_nickname": "Guest",
+    }
+
+
+def _build_game_api_payload(request, profile=None, **extra):
+    payload = {
+        "ok": True,
+        **_get_current_game_state(request, profile=profile),
+    }
+    payload.update(extra)
+    return payload
 
 
 def _build_nav_context(request, profile=None):
@@ -201,26 +309,16 @@ def _build_nav_context(request, profile=None):
         if cached is not None:
             return cached
 
-    if not request.user.is_authenticated:
-        context = {
-            "nav_star_count": _get_guest_total_stars(request),
-            "nav_key_count": _get_guest_remaining_keys(request),
-            "username": "Guest",
-            "my_nickname": "Guest",
-            "is_authenticated_user": False,
-        }
-        request._cached_nav_context = context
-        return context
-
-    profile = profile or _get_profile(request)
+    state = _get_current_game_state(request, profile=profile)
 
     context = {
-        "nav_star_count": _profile_int(profile, "total_stars"),
-        "nav_key_count": int(profile.get_remaining_keys() or 0),
-        "username": _get_username(request.user),
-        "my_nickname": profile.get_display_name(),
-        "is_authenticated_user": True,
+        "nav_star_count": state["nav_star_count"],
+        "nav_key_count": state["nav_key_count"],
+        "username": state["username"],
+        "my_nickname": state["my_nickname"],
+        "is_authenticated_user": state["is_authenticated_user"],
     }
+
     request._cached_nav_context = context
     return context
 
@@ -598,26 +696,28 @@ def _build_play_avatar_data(request):
 def _build_game_page_context(request, play_avatar_enabled=False):
     if request.user.is_authenticated:
         profile = _get_profile(request)
-        nav_context = _build_nav_context(request, profile=profile)
+        state = _get_current_game_state(request, profile=profile)
 
-        remaining_keys = int(profile.get_remaining_keys() or 0)
-        total_stars = _profile_int(profile, "total_stars")
-        best_score = _profile_int(profile, "best_score")
-        total_correct = _profile_int(profile, "total_correct")
-        username = _get_username(request.user)
-        my_nickname = profile.get_display_name()
+        total_stars = state["total_stars"]
+        remaining_keys = state["remaining_keys"]
+        best_score = state["best_score"]
+        total_correct = state["total_correct"]
+        username = state["username"]
+        my_nickname = state["my_nickname"]
 
         play_avatar_data = _build_play_avatar_data(request) if play_avatar_enabled else _empty_play_avatar_data()
     else:
-        nav_context = _build_nav_context(request)
+        state = _get_current_game_state(request)
 
-        remaining_keys = _get_guest_remaining_keys(request)
-        total_stars = _get_guest_total_stars(request)
-        best_score = _get_guest_best_score(request)
-        total_correct = _get_guest_total_correct(request)
+        total_stars = state["total_stars"]
+        remaining_keys = state["remaining_keys"]
+        best_score = state["best_score"]
+        total_correct = state["total_correct"]
         username = "Guest"
         my_nickname = "Guest"
         play_avatar_data = _empty_play_avatar_data()
+
+    nav_context = _build_nav_context(request)
 
     return {
         "user_stars": total_stars,
@@ -633,43 +733,125 @@ def _build_game_page_context(request, play_avatar_enabled=False):
     }
 
 
+@never_cache
 def landing_view(request):
     nav_context = _build_nav_context(request)
     context = {
         **nav_context,
     }
-    return render(request, "base_landing.html", context)
+    return _render_no_store(request, "base_landing.html", context)
 
 
+@never_cache
 def app_home_view(request):
     context = _build_game_page_context(request, play_avatar_enabled=False)
-    return render(request, "base_app.html", context)
+    return _render_no_store(request, "base_app.html", context)
 
 
+@never_cache
 def play_view(request):
     context = _build_game_page_context(request, play_avatar_enabled=True)
-    return render(request, "game/aura_play.html", context)
+    return _render_no_store(request, "game/aura_play.html", context)
 
 
-def _get_game_name_from_request(request, fallback="aura"):
-    value = ""
+def _read_request_payload(request):
+    """
+    JSON fetch, keepalive fetch, form POST를 모두 받기 위한 공통 파서.
+    """
+    if hasattr(request, "_mathner_payload_cache"):
+        return request._mathner_payload_cache
+
+    data = {}
 
     try:
-        if request.content_type and "application/json" in request.content_type:
-            data = json.loads(request.body.decode("utf-8") or "{}")
-            value = data.get("game_name", "")
-    except Exception:
-        value = ""
+        body_text = request.body.decode("utf-8") if request.body else ""
+        if body_text:
+            parsed = json.loads(body_text)
+            if isinstance(parsed, dict):
+                data = parsed
+    except (json.JSONDecodeError, UnicodeDecodeError, TypeError, ValueError):
+        data = {}
 
-    if not value:
-        value = request.POST.get("game_name", "")
+    if not data:
+        try:
+            data = request.POST.dict()
+        except Exception:
+            data = {}
 
+    request._mathner_payload_cache = data
+    return data
+
+
+def _get_payload_value(data, *keys, default=""):
+    for key in keys:
+        value = data.get(key)
+        if value is not None and str(value).strip() != "":
+            return value
+    return default
+
+
+def _get_game_name_from_payload(data, fallback="aura"):
+    value = _get_payload_value(
+        data,
+        "game_name",
+        "game",
+        "game_mode",
+        "mode_game",
+        default=fallback,
+    )
     return _safe_game_name(value or fallback)
 
 
+def _get_game_name_from_request(request, fallback="aura"):
+    return _get_game_name_from_payload(_read_request_payload(request), fallback=fallback)
+
+
+def _new_run_id():
+    return uuid4().hex
+
+
+def _clear_active_run(request, finalized_run_id=""):
+    if finalized_run_id:
+        request.session[LAST_FINALIZED_RUN_ID_SESSION_KEY] = finalized_run_id
+
+    request.session[ACTIVE_RUN_SESSION_KEY] = False
+    request.session[ACTIVE_RUN_ID_SESSION_KEY] = ""
+    request.session[ACTIVE_RUN_GAME_NAME_SESSION_KEY] = ""
+    request.session.modified = True
+
+
+def _already_finalized_response(request, profile=None, reason="already_finalized"):
+    return _json_no_store(
+        _build_game_api_payload(
+            request,
+            profile=profile,
+            already_finalized=True,
+            message="Run already finalized.",
+            reason=reason,
+        )
+    )
+
+
+def _stale_run_response(request, profile=None, reason="stale_run"):
+    return _json_no_store(
+        _build_game_api_payload(
+            request,
+            profile=profile,
+            ok=False,
+            error="Stale run.",
+            error_code="STALE_RUN",
+            message="This run is no longer active.",
+            reason=reason,
+        ),
+        status=409,
+    )
+
+
+@never_cache
 @require_POST
 def start_game_run(request):
-    game_name = _get_game_name_from_request(request, fallback="aura")
+    data = _read_request_payload(request)
+    game_name = _get_game_name_from_payload(data, fallback="aura")
 
     if request.user.is_authenticated:
         with transaction.atomic():
@@ -679,97 +861,120 @@ def start_game_run(request):
             request._cached_nav_context = None
 
             if request.session.get(ACTIVE_RUN_SESSION_KEY):
-                return JsonResponse(
-                    {
-                        "ok": True,
-                        "message": "Run already started.",
-                        "remaining_keys": profile.get_remaining_keys(),
-                        "total_stars": _profile_int(profile, "total_stars"),
-                        "already_started": True,
-                    }
+                stale_run_id = request.session.get(ACTIVE_RUN_ID_SESSION_KEY, "")
+
+                _clear_active_run(
+                    request,
+                    finalized_run_id=stale_run_id or _new_run_id(),
                 )
 
+                request.session[ACTIVE_RUN_SESSION_KEY] = False
+                request.session[ACTIVE_RUN_ID_SESSION_KEY] = ""
+                request.session[ACTIVE_RUN_GAME_NAME_SESSION_KEY] = ""
+                request.session.modified = True
+
             if profile.get_remaining_keys() <= 0:
-                return JsonResponse(
-                    {
-                        "ok": False,
-                        "error": "No keys remaining.",
-                        "message": "No keys remaining.",
-                        "remaining_keys": 0,
-                        "total_stars": _profile_int(profile, "total_stars"),
-                    },
+                return _json_no_store(
+                    _build_game_api_payload(
+                        request,
+                        profile=profile,
+                        ok=False,
+                        error="No keys remaining.",
+                        error_code="NO_KEYS",
+                        message="No keys remaining.",
+                    ),
                     status=400,
                 )
 
             if not profile.consume_key():
-                return JsonResponse(
-                    {
-                        "ok": False,
-                        "error": "No keys remaining.",
-                        "message": "No keys remaining.",
-                        "remaining_keys": 0,
-                        "total_stars": _profile_int(profile, "total_stars"),
-                    },
+                profile.refresh_from_db()
+                _invalidate_request_state_cache(request)
+
+                return _json_no_store(
+                    _build_game_api_payload(
+                        request,
+                        profile=profile,
+                        ok=False,
+                        error="No keys remaining.",
+                        error_code="NO_KEYS",
+                        message="No keys remaining.",
+                    ),
                     status=400,
                 )
 
+            active_run_id = _new_run_id()
             request.session[ACTIVE_RUN_SESSION_KEY] = True
+            request.session[ACTIVE_RUN_ID_SESSION_KEY] = active_run_id
+            request.session[ACTIVE_RUN_GAME_NAME_SESSION_KEY] = game_name
             request.session.modified = True
+
             profile.refresh_from_db()
             request._cached_game_profile = profile
+            request._cached_nav_context = None
 
         _create_game_event_log(
             request,
             event_type=GameEventLog.EVENT_GAME_START,
             game_name=game_name,
             reason="start_game_run",
+            meta={"run_id": active_run_id},
         )
 
-        return JsonResponse(
-            {
-                "ok": True,
-                "message": "Run started successfully.",
-                "remaining_keys": _profile_int(profile, "remaining_keys"),
-                "total_stars": _profile_int(profile, "total_stars"),
-            }
+        _invalidate_request_state_cache(request)
+
+        return _json_no_store(
+            _build_game_api_payload(
+                request,
+                profile=profile,
+                message="Run started successfully.",
+                run_id=active_run_id,
+            )
         )
 
     if request.session.get(ACTIVE_RUN_SESSION_KEY):
-        return JsonResponse(
-            {
-                "ok": True,
-                "message": "Run already started.",
-                "remaining_keys": _get_guest_remaining_keys(request),
-                "total_stars": _get_guest_total_stars(request),
-                "already_started": True,
-            }
+        stale_run_id = request.session.get(ACTIVE_RUN_ID_SESSION_KEY, "")
+
+        _clear_active_run(
+            request,
+            finalized_run_id=stale_run_id or _new_run_id(),
         )
 
+        request.session[ACTIVE_RUN_SESSION_KEY] = False
+        request.session[ACTIVE_RUN_ID_SESSION_KEY] = ""
+        request.session[ACTIVE_RUN_GAME_NAME_SESSION_KEY] = ""
+        request.session.modified = True
+        _invalidate_request_state_cache(request)
+
     if _get_guest_remaining_keys(request) <= 0:
-        return JsonResponse(
-            {
-                "ok": False,
-                "error": "No keys remaining.",
-                "message": "No keys remaining.",
-                "remaining_keys": 0,
-                "total_stars": _get_guest_total_stars(request),
-            },
+        return _json_no_store(
+            _build_game_api_payload(
+                request,
+                ok=False,
+                error="No keys remaining.",
+                error_code="NO_KEYS",
+                message="No keys remaining.",
+            ),
             status=400,
         )
 
     if not _consume_guest_key(request):
-        return JsonResponse(
-            {
-                "ok": False,
-                "error": "No keys remaining.",
-                "message": "No keys remaining.",
-                "remaining_keys": 0,
-                "total_stars": _get_guest_total_stars(request),
-            },
+        _invalidate_request_state_cache(request)
+
+        return _json_no_store(
+            _build_game_api_payload(
+                request,
+                ok=False,
+                error="No keys remaining.",
+                error_code="NO_KEYS",
+                message="No keys remaining.",
+            ),
             status=400,
         )
 
+    active_run_id = _new_run_id()
     request.session[ACTIVE_RUN_SESSION_KEY] = True
+    request.session[ACTIVE_RUN_ID_SESSION_KEY] = active_run_id
+    request.session[ACTIVE_RUN_GAME_NAME_SESSION_KEY] = game_name
     request.session.modified = True
 
     _create_game_event_log(
@@ -777,33 +982,40 @@ def start_game_run(request):
         event_type=GameEventLog.EVENT_GAME_START,
         game_name=game_name,
         reason="start_game_run",
+        meta={"run_id": active_run_id},
     )
 
-    return JsonResponse(
-        {
-            "ok": True,
-            "message": "Run started successfully.",
-            "remaining_keys": _get_guest_remaining_keys(request),
-            "total_stars": _get_guest_total_stars(request),
-        }
+    _invalidate_request_state_cache(request)
+
+    return _json_no_store(
+        _build_game_api_payload(
+            request,
+            message="Run started successfully.",
+            run_id=active_run_id,
+        )
     )
 
 
+@never_cache
 @require_POST
 def save_game_result(request):
-    try:
-        data = json.loads(request.body.decode("utf-8"))
-    except (json.JSONDecodeError, TypeError, ValueError):
-        return JsonResponse(
+    data = _read_request_payload(request)
+
+    if not isinstance(data, dict):
+        return _json_no_store(
             {"ok": False, "error": "Invalid JSON", "message": "Invalid JSON"},
             status=400,
         )
 
-    gained_stars = max(0, int(data.get("gained_stars", data.get("earned_stars", 0)) or 0))
-    score = max(0, int(data.get("score", 0) or 0))
-    correct = max(0, int(data.get("correct", data.get("correct_count", 0)) or 0))
-    reason = data.get("reason", "")
-    game_name = _safe_game_name(data.get("game_name", "aura"))
+    gained_stars = max(0, _safe_int(data.get("gained_stars", data.get("earned_stars", data.get("stars", 0))), 0))
+    score = max(0, _safe_int(data.get("score", data.get("correct", data.get("correct_count", 0))), 0))
+    correct = max(0, _safe_int(data.get("correct", data.get("correct_count", score)), 0))
+    reason = str(data.get("reason", "") or "")[:100]
+    game_name = _get_game_name_from_payload(
+        data,
+        fallback=request.session.get(ACTIVE_RUN_GAME_NAME_SESSION_KEY, "aura"),
+    )
+    client_run_id = _clean_text(data.get("run_id", data.get("game_run_id", "")))
 
     if request.user.is_authenticated:
         with transaction.atomic():
@@ -813,29 +1025,69 @@ def save_game_result(request):
             request._cached_nav_context = None
 
             active_run_consumed = bool(request.session.get(ACTIVE_RUN_SESSION_KEY))
+            active_run_id = _clean_text(request.session.get(ACTIVE_RUN_ID_SESSION_KEY, ""))
+            last_finalized_run_id = _clean_text(request.session.get(LAST_FINALIZED_RUN_ID_SESSION_KEY, ""))
+            effective_run_id = client_run_id or active_run_id
+
+            if client_run_id and last_finalized_run_id and client_run_id == last_finalized_run_id:
+                profile.refresh_from_db()
+                _invalidate_request_state_cache(request)
+                return _already_finalized_response(
+                    request,
+                    profile=profile,
+                    reason=reason or "already_finalized",
+                )
+
+            if client_run_id and active_run_id and client_run_id != active_run_id:
+                profile.refresh_from_db()
+                _invalidate_request_state_cache(request)
+                return _stale_run_response(
+                    request,
+                    profile=profile,
+                    reason=reason or "stale_run",
+                )
+
+            if (
+                effective_run_id
+                and last_finalized_run_id
+                and effective_run_id == last_finalized_run_id
+                and not active_run_consumed
+            ):
+                profile.refresh_from_db()
+                _invalidate_request_state_cache(request)
+                return _already_finalized_response(
+                    request,
+                    profile=profile,
+                    reason=reason or "already_finalized",
+                )
 
             if not active_run_consumed:
                 if profile.get_remaining_keys() <= 0:
-                    return JsonResponse(
-                        {
-                            "ok": False,
-                            "error": "No keys remaining.",
-                            "message": "No keys remaining.",
-                            "remaining_keys": 0,
-                            "total_stars": _profile_int(profile, "total_stars"),
-                        },
+                    return _json_no_store(
+                        _build_game_api_payload(
+                            request,
+                            profile=profile,
+                            ok=False,
+                            error="No keys remaining.",
+                            error_code="NO_KEYS",
+                            message="No keys remaining.",
+                        ),
                         status=400,
                     )
 
                 if not profile.consume_key():
-                    return JsonResponse(
-                        {
-                            "ok": False,
-                            "error": "No keys remaining.",
-                            "message": "No keys remaining.",
-                            "remaining_keys": 0,
-                            "total_stars": _profile_int(profile, "total_stars"),
-                        },
+                    profile.refresh_from_db()
+                    _invalidate_request_state_cache(request)
+
+                    return _json_no_store(
+                        _build_game_api_payload(
+                            request,
+                            profile=profile,
+                            ok=False,
+                            error="No keys remaining.",
+                            error_code="NO_KEYS",
+                            message="No keys remaining.",
+                        ),
                         status=400,
                     )
 
@@ -845,10 +1097,11 @@ def save_game_result(request):
                 score=score,
             )
 
-            request.session[ACTIVE_RUN_SESSION_KEY] = False
-            request.session.modified = True
+            finalized_run_id = effective_run_id or _new_run_id()
+            _clear_active_run(request, finalized_run_id=finalized_run_id)
             profile.refresh_from_db()
             request._cached_game_profile = profile
+            request._cached_nav_context = None
 
         _create_game_event_log(
             request,
@@ -858,44 +1111,79 @@ def save_game_result(request):
             correct=correct,
             gained_stars=gained_stars,
             reason=reason or "save_game_result",
+            meta={"run_id": finalized_run_id},
         )
 
-        return JsonResponse(
-            {
-                "ok": True,
-                "message": "Run saved successfully.",
-                "total_stars": _profile_int(profile, "total_stars"),
-                "best_score": _profile_int(profile, "best_score"),
-                "total_correct": _profile_int(profile, "total_correct"),
-                "remaining_keys": _profile_int(profile, "remaining_keys"),
-                "reason": reason,
-            }
+        _invalidate_request_state_cache(request)
+
+        return _json_no_store(
+            _build_game_api_payload(
+                request,
+                profile=profile,
+                message="Run saved successfully.",
+                reason=reason,
+                run_id=finalized_run_id,
+            )
         )
 
     active_run_consumed = bool(request.session.get(ACTIVE_RUN_SESSION_KEY))
+    active_run_id = _clean_text(request.session.get(ACTIVE_RUN_ID_SESSION_KEY, ""))
+    last_finalized_run_id = _clean_text(request.session.get(LAST_FINALIZED_RUN_ID_SESSION_KEY, ""))
+    effective_run_id = client_run_id or active_run_id
+
+    if client_run_id and last_finalized_run_id and client_run_id == last_finalized_run_id:
+        _invalidate_request_state_cache(request)
+        return _already_finalized_response(
+            request,
+            profile=None,
+            reason=reason or "already_finalized",
+        )
+
+    if client_run_id and active_run_id and client_run_id != active_run_id:
+        _invalidate_request_state_cache(request)
+        return _stale_run_response(
+            request,
+            profile=None,
+            reason=reason or "stale_run",
+        )
+
+    if (
+        effective_run_id
+        and last_finalized_run_id
+        and effective_run_id == last_finalized_run_id
+        and not active_run_consumed
+    ):
+        _invalidate_request_state_cache(request)
+        return _already_finalized_response(
+            request,
+            profile=None,
+            reason=reason or "already_finalized",
+        )
 
     if not active_run_consumed:
         if _get_guest_remaining_keys(request) <= 0:
-            return JsonResponse(
-                {
-                    "ok": False,
-                    "error": "No keys remaining.",
-                    "message": "No keys remaining.",
-                    "remaining_keys": 0,
-                    "total_stars": _get_guest_total_stars(request),
-                },
+            return _json_no_store(
+                _build_game_api_payload(
+                    request,
+                    ok=False,
+                    error="No keys remaining.",
+                    error_code="NO_KEYS",
+                    message="No keys remaining.",
+                ),
                 status=400,
             )
 
         if not _consume_guest_key(request):
-            return JsonResponse(
-                {
-                    "ok": False,
-                    "error": "No keys remaining.",
-                    "message": "No keys remaining.",
-                    "remaining_keys": 0,
-                    "total_stars": _get_guest_total_stars(request),
-                },
+            _invalidate_request_state_cache(request)
+
+            return _json_no_store(
+                _build_game_api_payload(
+                    request,
+                    ok=False,
+                    error="No keys remaining.",
+                    error_code="NO_KEYS",
+                    message="No keys remaining.",
+                ),
                 status=400,
             )
 
@@ -906,8 +1194,8 @@ def save_game_result(request):
         score=score,
     )
 
-    request.session[ACTIVE_RUN_SESSION_KEY] = False
-    request.session.modified = True
+    finalized_run_id = effective_run_id or _new_run_id()
+    _clear_active_run(request, finalized_run_id=finalized_run_id)
 
     _create_game_event_log(
         request,
@@ -917,33 +1205,31 @@ def save_game_result(request):
         correct=correct,
         gained_stars=gained_stars,
         reason=reason or "save_game_result",
+        meta={"run_id": finalized_run_id},
     )
 
-    return JsonResponse(
-        {
-            "ok": True,
-            "message": "Run saved successfully.",
-            "total_stars": _get_guest_total_stars(request),
-            "best_score": _get_guest_best_score(request),
-            "total_correct": _get_guest_total_correct(request),
-            "remaining_keys": _get_guest_remaining_keys(request),
-            "reason": reason,
-        }
+    _invalidate_request_state_cache(request)
+
+    return _json_no_store(
+        _build_game_api_payload(
+            request,
+            message="Run saved successfully.",
+            reason=reason,
+            run_id=finalized_run_id,
+        )
     )
 
 
+@never_cache
 @require_POST
 def track_game_event(request):
-    try:
-        data = json.loads(request.body.decode("utf-8"))
-    except (json.JSONDecodeError, TypeError, ValueError):
-        data = request.POST
+    data = _read_request_payload(request)
 
     event_type = data.get("event_type", "")
-    game_name = data.get("game_name", "unknown")
+    game_name = data.get("game_name", data.get("game", "unknown"))
 
     if event_type not in dict(GameEventLog.EVENT_CHOICES):
-        return JsonResponse({"ok": False, "error": "Invalid event_type"}, status=400)
+        return _json_no_store({"ok": False, "error": "Invalid event_type"}, status=400)
 
     log = _create_game_event_log(
         request,
@@ -956,22 +1242,26 @@ def track_game_event(request):
         meta={
             "source": data.get("source", "client"),
             "page": data.get("page", ""),
+            "run_id": data.get("run_id", data.get("game_run_id", "")),
         },
     )
 
-    return JsonResponse({"ok": True, "id": log.id if log else None})
+    return _json_no_store({"ok": True, "id": log.id if log else None})
 
 
+@never_cache
 def privacy_view(request):
     nav_context = _build_nav_context(request)
-    return render(request, "core/privacy.html", nav_context)
+    return _render_no_store(request, "core/privacy.html", nav_context)
 
 
+@never_cache
 def terms_view(request):
     nav_context = _build_nav_context(request)
-    return render(request, "core/terms.html", nav_context)
+    return _render_no_store(request, "core/terms.html", nav_context)
 
 
+@never_cache
 def refund_view(request):
     nav_context = _build_nav_context(request)
-    return render(request, "core/refund.html", nav_context)
+    return _render_no_store(request, "core/refund.html", nav_context)

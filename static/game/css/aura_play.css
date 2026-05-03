@@ -2053,3 +2053,381 @@ a {
     font-size: 68px;
   }
 }
+
+/* =========================================================
+   FINAL OVERRIDE - 모바일 게임 조작 버튼 3칸 + 하단 배경 완전 덮기
+   ========================================================= */
+
+/* 게임 페이지에서는 html/body/main까지 같은 배경을 적용해서
+   play-page 바깥으로 base_app 배경이 비치지 않게 한다. */
+html.mathner-game-html,
+html:has(#playPageRoot),
+html.mathner-game-html body,
+body.mathner-game-play-page,
+body:has(#playPageRoot) {
+  min-height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+  background-color: #F8F9FA !important;
+  background-image: radial-gradient(#E9ECEF 2px, transparent 2px) !important;
+  background-size: 20px 20px !important;
+}
+
+body.mathner-game-play-page main,
+body.mathner-game-play-page .app-main,
+body.mathner-game-play-page .page-main,
+body.mathner-game-play-page .site-main,
+body.mathner-game-play-page .content,
+body.mathner-game-play-page .page-content,
+body:has(#playPageRoot) main,
+body:has(#playPageRoot) .app-main,
+body:has(#playPageRoot) .page-main,
+body:has(#playPageRoot) .site-main,
+body:has(#playPageRoot) .content,
+body:has(#playPageRoot) .page-content {
+  min-height: 0 !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+  background-color: #F8F9FA !important;
+  background-image: radial-gradient(#E9ECEF 2px, transparent 2px) !important;
+  background-size: 20px 20px !important;
+}
+
+/* 콤보/바람 상태도 화면 하단까지 같은 배경 */
+html.mathner-game-html:has(.play-page[data-aura-state="combo"]),
+html:has(.play-page[data-aura-state="combo"]),
+body.mathner-game-play-page:has(.play-page[data-aura-state="combo"]),
+body:has(.play-page[data-aura-state="combo"]),
+body:has(.play-page[data-aura-state="combo"]) main,
+body:has(.play-page[data-aura-state="combo"]) .app-main,
+body:has(.play-page[data-aura-state="combo"]) .page-main,
+body:has(.play-page[data-aura-state="combo"]) .site-main,
+body:has(.play-page[data-aura-state="combo"]) .content,
+body:has(.play-page[data-aura-state="combo"]) .page-content {
+  background-color: #E0FFFF !important;
+  background-image: radial-gradient(#CCFBFB 2px, transparent 2px) !important;
+  background-size: 20px 20px !important;
+}
+
+/* 피버/슈퍼피버 상태도 화면 하단까지 같은 배경 */
+html.mathner-game-html:has(.play-page[data-aura-state="fever"]),
+html.mathner-game-html:has(.play-page[data-aura-state="super"]),
+html:has(.play-page[data-aura-state="fever"]),
+html:has(.play-page[data-aura-state="super"]),
+body.mathner-game-play-page:has(.play-page[data-aura-state="fever"]),
+body.mathner-game-play-page:has(.play-page[data-aura-state="super"]),
+body:has(.play-page[data-aura-state="fever"]),
+body:has(.play-page[data-aura-state="super"]),
+body:has(.play-page[data-aura-state="fever"]) main,
+body:has(.play-page[data-aura-state="super"]) main,
+body:has(.play-page[data-aura-state="fever"]) .app-main,
+body:has(.play-page[data-aura-state="super"]) .app-main,
+body:has(.play-page[data-aura-state="fever"]) .page-main,
+body:has(.play-page[data-aura-state="super"]) .page-main,
+body:has(.play-page[data-aura-state="fever"]) .site-main,
+body:has(.play-page[data-aura-state="super"]) .site-main,
+body:has(.play-page[data-aura-state="fever"]) .content,
+body:has(.play-page[data-aura-state="super"]) .content,
+body:has(.play-page[data-aura-state="fever"]) .page-content,
+body:has(.play-page[data-aura-state="super"]) .page-content {
+  background-color: #1A1C29 !important;
+  background-image: radial-gradient(#2A2D3E 2px, transparent 2px) !important;
+  background-size: 20px 20px !important;
+}
+
+/* footer는 게임 페이지에서 완전히 제거 */
+body.mathner-game-play-page footer,
+body.mathner-game-play-page .footer,
+body.mathner-game-play-page .site-footer,
+body.mathner-game-play-page .app-footer,
+body.mathner-game-play-page .mobile-footer,
+body.mathner-game-play-page #footer,
+body.mathner-game-play-page [class*="footer" i],
+body.mathner-game-play-page [id*="footer" i],
+body:has(#playPageRoot) footer,
+body:has(#playPageRoot) .footer,
+body:has(#playPageRoot) .site-footer,
+body:has(#playPageRoot) .app-footer,
+body:has(#playPageRoot) .mobile-footer,
+body:has(#playPageRoot) #footer,
+body:has(#playPageRoot) [class*="footer" i],
+body:has(#playPageRoot) [id*="footer" i] {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+}
+
+/* play-page가 마지막 픽셀까지 자연스럽게 내려가도록 */
+body.mathner-game-play-page #playPageRoot.play-page,
+body:has(#playPageRoot) #playPageRoot.play-page {
+  min-height: calc(100vh - 106px) !important;
+  min-height: calc(100dvh - 106px) !important;
+  margin: 0 !important;
+  padding: 20px 0 0 !important;
+  border-radius: 0 !important;
+  background-color: var(--theme-bg) !important;
+  background-image: radial-gradient(var(--theme-bg-2) 2px, transparent 2px) !important;
+  background-size: 20px 20px !important;
+}
+
+/* 게임 진행 버튼 줄: 설정 / 시작(게임 진행 중) / 다시하기 = 1행 3칸 */
+.play-page .play-control-row {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  margin: 0 0 12px !important;
+  padding: 0 !important;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.play-page .play-control-row .btn {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 52px;
+  height: 52px;
+  padding: 0 10px !important;
+  border-radius: 16px;
+  font-size: 16px;
+  line-height: 1.05;
+  white-space: normal;
+  word-break: keep-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.play-page .play-control-row #btnBackToSetup,
+.play-page .play-control-row #btnReset {
+  white-space: nowrap;
+}
+
+.play-page .play-control-row #btnStart {
+  font-size: 15px;
+}
+
+@media (max-width: 900px) {
+  html.mathner-game-html,
+  html:has(#playPageRoot),
+  html.mathner-game-html body,
+  body.mathner-game-play-page,
+  body:has(#playPageRoot) {
+    min-height: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: #F8F9FA !important;
+    background-image: radial-gradient(#E9ECEF 2px, transparent 2px) !important;
+    background-size: 20px 20px !important;
+  }
+
+  body.mathner-game-play-page #playPageRoot.play-page,
+  body:has(#playPageRoot) #playPageRoot.play-page {
+    min-height: calc(100vh - 66px) !important;
+    min-height: calc(100dvh - 66px) !important;
+    padding: 10px 0 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .play-page .wrap,
+  .play-page .wrap-compact,
+  .play-page .grid,
+  .play-page .play-layout,
+  .play-page .screen,
+  .play-page .screen.on {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .play-page .play-control-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 0 8px !important;
+  }
+
+  .play-page .play-control-row .btn {
+    min-height: 44px !important;
+    height: 44px !important;
+    padding: 0 4px !important;
+    border-radius: 12px !important;
+    font-size: 13px !important;
+    line-height: 1.02;
+  }
+
+  .play-page .play-control-row #btnBackToSetup {
+    font-size: 14px !important;
+  }
+
+  .play-page .play-control-row #btnStart {
+    font-size: 12px !important;
+  }
+
+  .play-page .play-control-row #btnReset {
+    font-size: 12px !important;
+  }
+
+  .play-page .question {
+    margin-bottom: 0 !important;
+  }
+}
+
+/* 아주 작은 모바일에서 3칸 유지 */
+@media (max-width: 390px) {
+  .play-page .play-control-row {
+    gap: 6px;
+  }
+
+  .play-page .play-control-row .btn {
+    font-size: 12px !important;
+    min-height: 42px !important;
+    height: 42px !important;
+    padding: 0 3px !important;
+  }
+
+  .play-page .play-control-row #btnStart,
+  .play-page .play-control-row #btnReset {
+    font-size: 11px !important;
+  }
+}
+
+
+
+/* =========================================================
+   FINAL EDGE FIX v2
+   - 데스크톱/모바일 하단에 남는 흰색/노란색 잔여 배경 제거
+   - data-aura-state를 JS가 html/body에도 복사하므로 :has 의존도를 낮춤
+   ========================================================= */
+
+html.mathner-game-html,
+body.mathner-game-play-page {
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+}
+
+html.mathner-game-html,
+html.mathner-game-html[data-aura-state="idle"],
+body.mathner-game-play-page,
+body.mathner-game-play-page[data-aura-state="idle"],
+body.mathner-game-play-page main,
+body.mathner-game-play-page .app-main,
+body.mathner-game-play-page .page-main,
+body.mathner-game-play-page .site-main,
+body.mathner-game-play-page .content,
+body.mathner-game-play-page .page-content {
+  background-color: #F8F9FA !important;
+  background-image: radial-gradient(#E9ECEF 2px, transparent 2px) !important;
+  background-size: 20px 20px !important;
+}
+
+html.mathner-game-html[data-aura-state="combo"],
+body.mathner-game-play-page[data-aura-state="combo"],
+body.mathner-game-play-page[data-aura-state="combo"] main,
+body.mathner-game-play-page[data-aura-state="combo"] .app-main,
+body.mathner-game-play-page[data-aura-state="combo"] .page-main,
+body.mathner-game-play-page[data-aura-state="combo"] .site-main,
+body.mathner-game-play-page[data-aura-state="combo"] .content,
+body.mathner-game-play-page[data-aura-state="combo"] .page-content {
+  background-color: #E0FFFF !important;
+  background-image: radial-gradient(#CCFBFB 2px, transparent 2px) !important;
+  background-size: 20px 20px !important;
+}
+
+html.mathner-game-html[data-aura-state="fever"],
+html.mathner-game-html[data-aura-state="super"],
+body.mathner-game-play-page[data-aura-state="fever"],
+body.mathner-game-play-page[data-aura-state="super"],
+body.mathner-game-play-page[data-aura-state="fever"] main,
+body.mathner-game-play-page[data-aura-state="super"] main,
+body.mathner-game-play-page[data-aura-state="fever"] .app-main,
+body.mathner-game-play-page[data-aura-state="super"] .app-main,
+body.mathner-game-play-page[data-aura-state="fever"] .page-main,
+body.mathner-game-play-page[data-aura-state="super"] .page-main,
+body.mathner-game-play-page[data-aura-state="fever"] .site-main,
+body.mathner-game-play-page[data-aura-state="super"] .site-main,
+body.mathner-game-play-page[data-aura-state="fever"] .content,
+body.mathner-game-play-page[data-aura-state="super"] .content,
+body.mathner-game-play-page[data-aura-state="fever"] .page-content,
+body.mathner-game-play-page[data-aura-state="super"] .page-content {
+  background-color: #1A1C29 !important;
+  background-image: radial-gradient(#2A2D3E 2px, transparent 2px) !important;
+  background-size: 20px 20px !important;
+}
+
+body.mathner-game-play-page main,
+body.mathner-game-play-page .app-main,
+body.mathner-game-play-page .page-main,
+body.mathner-game-play-page .site-main,
+body.mathner-game-play-page .content,
+body.mathner-game-play-page .page-content {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+  min-height: 0 !important;
+}
+
+body.mathner-game-play-page #playPageRoot.play-page,
+body:has(#playPageRoot) #playPageRoot.play-page {
+  min-height: calc(100vh - var(--mathner-header-h, 66px) + 2px) !important;
+  min-height: calc(100dvh - var(--mathner-header-h, 66px) + 2px) !important;
+  margin: 0 !important;
+  padding: 20px 0 0 !important;
+  border-radius: 0 !important;
+  background-color: var(--theme-bg) !important;
+  background-image: radial-gradient(var(--theme-bg-2) 2px, transparent 2px) !important;
+  background-size: 20px 20px !important;
+}
+
+body.mathner-game-play-page[data-aura-state="combo"] #playPageRoot.play-page {
+  --theme-bg: #E0FFFF;
+  --theme-bg-2: #CCFBFB;
+}
+
+body.mathner-game-play-page[data-aura-state="fever"] #playPageRoot.play-page,
+body.mathner-game-play-page[data-aura-state="super"] #playPageRoot.play-page {
+  --theme-bg: #1A1C29;
+  --theme-bg-2: #2A2D3E;
+}
+
+body.mathner-game-play-page footer,
+body.mathner-game-play-page .footer,
+body.mathner-game-play-page .site-footer,
+body.mathner-game-play-page .app-footer,
+body.mathner-game-play-page .mobile-footer,
+body.mathner-game-play-page #footer,
+body.mathner-game-play-page [class*="footer" i],
+body.mathner-game-play-page [id*="footer" i] {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+}
+
+@media (max-width: 900px) {
+  body.mathner-game-play-page #playPageRoot.play-page,
+  body:has(#playPageRoot) #playPageRoot.play-page {
+    min-height: calc(100vh - var(--mathner-header-h, 66px) + 2px) !important;
+    min-height: calc(100dvh - var(--mathner-header-h, 66px) + 2px) !important;
+    padding: 10px 0 0 !important;
+  }
+}

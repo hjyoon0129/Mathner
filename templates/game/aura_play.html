@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Boogaloo&family=Bubblegum+Sans&family=Cabin+Sketch:wght@400;700&family=Capriola&family=Chewy&family=Coming+Soon&family=Delius+Swash+Caps&family=Dokdo&family=Dongle:wght@400;700&family=Gaegu:wght@400;700&family=Gowun+Batang:wght@400;700&family=Life+Savers:wght@400;700;800&family=Londrina+Shadow&family=Love+Ya+Like+A+Sister&family=Luckiest+Guy&family=McLaren&family=Modak&family=Mouse+Memoirs&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
-<link rel="stylesheet" href="{% static 'game/css/aura_play.css' %}?v=20260506_v30_modes_mobile">
+<link rel="stylesheet" href="{% static 'game/css/aura_play.css' %}?v=20260507_v31_no_footer_mobile">
 
 <link rel="preload" as="image" href="{% static 'avatar/img/base/male/body.webp' %}">
 <link rel="preload" as="image" href="{% static 'avatar/img/base/male/head.webp' %}">
@@ -19,6 +19,85 @@
 {% endblock %}
 
 {% block content %}
+<script>
+  (function () {
+    function markAuraPlayPage() {
+      document.documentElement.classList.add("mathner-game-html");
+
+      if (document.body) {
+        document.body.classList.add("mathner-game-play-page");
+      }
+    }
+
+    function hideGameFooter() {
+      markAuraPlayPage();
+
+      var footerSelectors = [
+        "footer",
+        ".footer",
+        ".site-footer",
+        ".app-footer",
+        ".mobile-footer",
+        "#footer",
+        "[class*='footer' i]",
+        "[id*='footer' i]"
+      ];
+
+      footerSelectors.forEach(function (selector) {
+        document.querySelectorAll(selector).forEach(function (el) {
+          el.setAttribute("aria-hidden", "true");
+          el.style.setProperty("display", "none", "important");
+          el.style.setProperty("visibility", "hidden", "important");
+          el.style.setProperty("height", "0", "important");
+          el.style.setProperty("min-height", "0", "important");
+          el.style.setProperty("max-height", "0", "important");
+          el.style.setProperty("margin", "0", "important");
+          el.style.setProperty("padding", "0", "important");
+          el.style.setProperty("overflow", "hidden", "important");
+        });
+      });
+
+      var compactSelectors = [
+        "body",
+        "main",
+        ".app-main",
+        ".page-main",
+        ".site-main",
+        ".content",
+        ".page-content",
+        "#playPageRoot",
+        ".play-page",
+        ".wrap",
+        ".wrap-compact",
+        ".play-layout"
+      ];
+
+      compactSelectors.forEach(function (selector) {
+        document.querySelectorAll(selector).forEach(function (el) {
+          el.style.setProperty("margin-bottom", "0", "important");
+          el.style.setProperty("padding-bottom", "0", "important");
+        });
+      });
+    }
+
+    markAuraPlayPage();
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", hideGameFooter);
+    } else {
+      hideGameFooter();
+    }
+
+    window.addEventListener("load", hideGameFooter);
+
+    if ("MutationObserver" in window) {
+      new MutationObserver(hideGameFooter).observe(document.documentElement, {
+        childList: true,
+        subtree: true
+      });
+    }
+  })();
+</script>
 <div class="play-page" id="playPageRoot"
      data-aura-state="idle"
      data-play-avatar-json='{{ play_avatar_data_json|default:"{}"|safe }}'

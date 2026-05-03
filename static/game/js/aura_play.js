@@ -9,24 +9,24 @@
       key: "practice",
       label: "🌱 연습 모드",
       shortLabel: "연습 모드",
-      rewardText: '기본 1개 →<br><strong>피버 3개!</strong>',
-      ruleText: '연속으로 맞추면<br><strong>마법이 강해져요!</strong>',
+      rewardText: "기본 1개 →<br><strong>피버 3개!</strong>",
+      ruleText: "연속으로 맞추면<br><strong>마법이 강해져요!</strong>",
       operationLabel: "어떤 기호를 연습할까? ➕ ➖ ✖️ ➗",
     },
     classic: {
       key: "classic",
       label: "🌟 클래식",
       shortLabel: "클래식",
-      rewardText: '기본 2개 →<br><strong>피버 4개!</strong>',
-      ruleText: '처음엔 쉽고<br><strong>점점 섞여서 나와요!</strong>',
+      rewardText: "기본 2개 →<br><strong>피버 4개!</strong>",
+      ruleText: "처음엔 쉽고<br><strong>점점 섞여서 나와요!</strong>",
       operationLabel: "어떤 기호로 도전할까? ➕ ➖ ✖️ ➗",
     },
     challenge: {
       key: "challenge",
       label: "🔥 챌린지",
       shortLabel: "챌린지",
-      rewardText: '기본 3개 →<br><strong>피버 5개!</strong>',
-      ruleText: '클래식 문제가<br><strong>사칙연산으로 섞여요!</strong>',
+      rewardText: "기본 3개 →<br><strong>피버 5개!</strong>",
+      ruleText: "클래식 문제가<br><strong>사칙연산으로 섞여요!</strong>",
       operationLabel: "",
     },
   };
@@ -195,48 +195,48 @@
     neonblue: "neon_blue",
     neon_blue: "neon_blue",
     "neon blue": "neon_blue",
-    "네온블루": "neon_blue",
+    네온블루: "neon_blue",
     "네온 블루": "neon_blue",
 
     rainbow: "rainbow_flow",
     rainbowflow: "rainbow_flow",
     rainbow_flow: "rainbow_flow",
     "rainbow flow": "rainbow_flow",
-    "레인보우": "rainbow_flow",
-    "무지개": "rainbow_flow",
+    레인보우: "rainbow_flow",
+    무지개: "rainbow_flow",
 
     gold: "gold_glow",
     goldglow: "gold_glow",
     gold_glow: "gold_glow",
     "gold glow": "gold_glow",
-    "골드글로우": "gold_glow",
+    골드글로우: "gold_glow",
     "골드 글로우": "gold_glow",
-    "금빛": "gold_glow",
+    금빛: "gold_glow",
 
     sparkle: "sparkle",
-    "스파클": "sparkle",
-    "반짝이": "sparkle",
+    스파클: "sparkle",
+    반짝이: "sparkle",
 
     glitch: "glitch",
-    "글리치": "glitch",
+    글리치: "glitch",
 
     float: "float_wave",
     floatwave: "float_wave",
     float_wave: "float_wave",
     "float wave": "float_wave",
-    "물결": "float_wave",
+    물결: "float_wave",
 
     fire: "fire_glow",
     fireglow: "fire_glow",
     fire_glow: "fire_glow",
     "fire glow": "fire_glow",
-    "불꽃": "fire_glow",
+    불꽃: "fire_glow",
 
     ice: "ice_glow",
     iceglow: "ice_glow",
     ice_glow: "ice_glow",
     "ice glow": "ice_glow",
-    "얼음": "ice_glow",
+    얼음: "ice_glow",
   };
 
   let screenSelect, screenSetup, screenPlay;
@@ -277,6 +277,12 @@
   let avatarDataCache = null;
   let finalizedLock = false;
   let keySyncInProgress = false;
+  let startRunPromise = null;
+  let finalizePromise = null;
+  let navigationFinalizeSeq = 0;
+  let browserBackGuardActive = false;
+  let browserBackFinalizing = false;
+  let browserBackHandlerBound = false;
 
   let nicknameStyleInjected = false;
   let nicknameObserverStarted = false;
@@ -298,7 +304,9 @@
     modeBandNow = qs("modeBandNow");
     setupRewardText = qs("setupRewardText");
     setupRuleText = qs("setupRuleText");
-    sectionLabel = document.querySelector("#practiceOperationWrap .sectionLabel");
+    sectionLabel = document.querySelector(
+      "#practiceOperationWrap .sectionLabel",
+    );
 
     btnBackToModes = qs("btnBackToModes");
     btnGoPlay = qs("btnGoPlay");
@@ -509,15 +517,71 @@
     msg.className = "msg";
   }
 
+  function updateTextForSelectors(selectors, value) {
+    const text = String(value);
+
+    selectors.forEach(function (selector) {
+      document.querySelectorAll(selector).forEach(function (el) {
+        if (!el) return;
+        el.textContent = text;
+      });
+    });
+  }
+
   function renderTopStatus() {
+    if (Number.isNaN(totalStars)) totalStars = 0;
+    if (Number.isNaN(remainingKeys)) remainingKeys = 0;
+
     if (statStars) statStars.textContent = String(totalStars);
     if (statKeys) statKeys.textContent = String(remainingKeys);
 
-    const navStar = qs("navStarCount");
-    const navKey = qs("navKeyCount");
+    updateTextForSelectors(
+      [
+        "#navStarCount",
+        "#navStarsCount",
+        "#navbarStarCount",
+        "#navbarStarsCount",
+        "#topStarCount",
+        "#topStarsCount",
+        "#headerStarCount",
+        "#headerStarsCount",
+        "#mobileStarCount",
+        "#mobileStarsCount",
+        ".nav-star-count",
+        ".nav-stars-count",
+        ".navbar-star-count",
+        ".navbar-stars-count",
+        ".top-star-count",
+        ".top-stars-count",
+        "[data-nav-star-count]",
+        "[data-star-count]",
+      ],
+      totalStars
+    );
 
-    if (navStar) navStar.textContent = String(totalStars);
-    if (navKey) navKey.textContent = String(remainingKeys);
+    updateTextForSelectors(
+      [
+        "#navKeyCount",
+        "#navKeysCount",
+        "#navbarKeyCount",
+        "#navbarKeysCount",
+        "#topKeyCount",
+        "#topKeysCount",
+        "#headerKeyCount",
+        "#headerKeysCount",
+        "#mobileKeyCount",
+        "#mobileKeysCount",
+        ".nav-key-count",
+        ".nav-keys-count",
+        ".navbar-key-count",
+        ".navbar-keys-count",
+        ".top-key-count",
+        ".top-keys-count",
+        "[data-nav-key-count]",
+        "[data-key-count]",
+      ],
+      remainingKeys
+    );
 
     if (!isAuthenticatedUser()) {
       localStorage.setItem("mathner_guest_stars", String(totalStars));
@@ -530,8 +594,14 @@
       const savedStars = localStorage.getItem("mathner_guest_stars");
       const savedKeys = localStorage.getItem("mathner_guest_keys");
 
-      totalStars = savedStars !== null ? Number(savedStars) : Number(PAGE_CFG.initialStars || 0);
-      remainingKeys = savedKeys !== null ? Number(savedKeys) : Number(PAGE_CFG.initialKeys || 3);
+      totalStars =
+        savedStars !== null
+          ? Number(savedStars)
+          : Number(PAGE_CFG.initialStars || 0);
+      remainingKeys =
+        savedKeys !== null
+          ? Number(savedKeys)
+          : Number(PAGE_CFG.initialKeys || 3);
     } else {
       totalStars = Number(PAGE_CFG.initialStars || 0);
       remainingKeys = Number(PAGE_CFG.initialKeys || 3);
@@ -555,7 +625,9 @@
       tile.className = "tile";
       tile.innerHTML =
         '<div class="k">모드 선택</div>' +
-        '<div class="v">' + mode.label + '</div>';
+        '<div class="v">' +
+        mode.label +
+        "</div>";
 
       tile.addEventListener("click", function () {
         selectedGameMode = mode.key;
@@ -578,7 +650,9 @@
       const btn = document.createElement("button");
 
       btn.type = "button";
-      btn.className = "btn " + (selectedPracticeOperation === key ? "btn-primary" : "secondary");
+      btn.className =
+        "btn " +
+        (selectedPracticeOperation === key ? "btn-primary" : "secondary");
       btn.textContent = OPERATION_META[key].label;
 
       btn.addEventListener("click", function () {
@@ -601,7 +675,8 @@
     if (sectionLabel) sectionLabel.textContent = mode.operationLabel;
 
     if (practiceOperationWrap) {
-      practiceOperationWrap.style.display = selectedGameMode === "challenge" ? "none" : "block";
+      practiceOperationWrap.style.display =
+        selectedGameMode === "challenge" ? "none" : "block";
     }
 
     requestAnimationFrame(applyAllNicknameStyles);
@@ -628,7 +703,7 @@
     if (statusAvatarCanvas) {
       statusAvatarCanvas.classList.toggle(
         "is-fever-canvas",
-        stateKey === "fever" || stateKey === "super"
+        stateKey === "fever" || stateKey === "super",
       );
     }
 
@@ -672,6 +747,8 @@
     maxCombo = 0;
     activeRunId = null;
     finalizedLock = false;
+    finalizePromise = null;
+    startRunPromise = null;
     running = false;
     currentQuestionText = "";
     currentOperation = "add";
@@ -860,7 +937,13 @@
     }
 
     const dividend = divisor * quotient;
-    setQuestion(dividend, divisor, quotient, "div", `${dividend} ÷ ${divisor} = ?`);
+    setQuestion(
+      dividend,
+      divisor,
+      quotient,
+      "div",
+      `${dividend} ÷ ${divisor} = ?`,
+    );
   }
 
   function makeClassicQuestion(opKey) {
@@ -941,8 +1024,8 @@
   }
 
   async function syncStartRunInBackground() {
-    if (keySyncInProgress) return;
-    if (!isAuthenticatedUser() || !PAGE_CFG.startRunUrl) return;
+    if (keySyncInProgress) return null;
+    if (!PAGE_CFG.startRunUrl) return null;
 
     keySyncInProgress = true;
 
@@ -951,28 +1034,55 @@
         game: PAGE_CFG.gameName || "aura",
         game_name: PAGE_CFG.gameName || "aura",
         mode: selectedGameMode,
-        operation: selectedGameMode === "challenge" ? "mixed" : selectedPracticeOperation,
+        operation:
+          selectedGameMode === "challenge"
+            ? "mixed"
+            : selectedPracticeOperation,
       });
 
-      if (data && (data.ok === false || data.allowed === false || data.error === "NO_KEYS")) {
-        return;
+      if (
+        data &&
+        (data.ok === false ||
+          data.allowed === false ||
+          data.error === "NO_KEYS")
+      ) {
+        if (data.remaining_keys !== undefined) {
+          remainingKeys = Number(data.remaining_keys);
+        } else if (data.nav_key_count !== undefined) {
+          remainingKeys = Number(data.nav_key_count);
+        }
+
+        if (data.total_stars !== undefined) {
+          totalStars = Number(data.total_stars);
+        } else if (data.nav_star_count !== undefined) {
+          totalStars = Number(data.nav_star_count);
+        }
+
+        if (Number.isNaN(remainingKeys)) remainingKeys = 0;
+        if (Number.isNaN(totalStars)) totalStars = 0;
+
+        renderTopStatus();
+        return data;
       }
 
-      activeRunId = data && (data.run_id || data.game_run_id || data.id)
-        ? data.run_id || data.game_run_id || data.id
-        : activeRunId;
+      activeRunId =
+        data && (data.run_id || data.game_run_id || data.id)
+          ? data.run_id || data.game_run_id || data.id
+          : activeRunId;
 
       if (data && data.remaining_keys !== undefined) {
         remainingKeys = Number(data.remaining_keys);
+      } else if (data && data.nav_key_count !== undefined) {
+        remainingKeys = Number(data.nav_key_count);
       } else if (data && data.keys !== undefined) {
         remainingKeys = Number(data.keys);
       }
 
-      if (data && data.total_stars !== undefined) {
+      if (!finalizedLock && data && data.total_stars !== undefined) {
         totalStars = Number(data.total_stars);
-      }
-
-      if (data && data.stars !== undefined && data.total_stars === undefined) {
+      } else if (!finalizedLock && data && data.nav_star_count !== undefined) {
+        totalStars = Number(data.nav_star_count);
+      } else if (!finalizedLock && data && data.stars !== undefined) {
         totalStars = Number(data.stars);
       }
 
@@ -980,8 +1090,10 @@
       if (Number.isNaN(totalStars)) totalStars = 0;
 
       renderTopStatus();
+      return data;
     } catch (e) {
       console.warn("start run sync failed:", e);
+      return null;
     } finally {
       keySyncInProgress = false;
     }
@@ -990,16 +1102,19 @@
   function startGame() {
     if (running) return;
 
+    navigationFinalizeSeq += 1;
+
     if (remainingKeys <= 0) {
       if (keyExhaustedModal) keyExhaustedModal.classList.add("on");
       return;
     }
 
-    optimisticConsumeKey();
-    syncStartRunInBackground();
+    startRunPromise = syncStartRunInBackground();
 
     running = true;
+    armBrowserBackGuard();
     finalizedLock = false;
+    finalizePromise = null;
     timeLeft = 60;
     correct = 0;
     wrong = 0;
@@ -1107,7 +1222,10 @@
       wrong += 1;
       combo = 0;
 
-      setMessage("앗! 정답은 " + String(currentAnswer) + " 였어! 다시 해보자!", "bad");
+      setMessage(
+        "앗! 정답은 " + String(currentAnswer) + " 였어! 다시 해보자!",
+        "bad",
+      );
     }
 
     if (earnedStarsEl) earnedStarsEl.textContent = String(earnedStars);
@@ -1122,7 +1240,8 @@
       game: PAGE_CFG.gameName || "aura",
       game_name: PAGE_CFG.gameName || "aura",
       mode: selectedGameMode,
-      operation: selectedGameMode === "challenge" ? "mixed" : selectedPracticeOperation,
+      operation:
+        selectedGameMode === "challenge" ? "mixed" : selectedPracticeOperation,
       current_operation: currentOperation,
       score: correct,
       correct: correct,
@@ -1138,13 +1257,15 @@
   }
 
   async function saveGameResultToServer(payload) {
-    if (!isAuthenticatedUser() || !PAGE_CFG.finalizeRunUrl) return null;
+    if (!PAGE_CFG.finalizeRunUrl) return null;
 
     try {
       const data = await postJson(PAGE_CFG.finalizeRunUrl, payload);
 
       if (data && data.total_stars !== undefined) {
         totalStars = Number(data.total_stars);
+      } else if (data && data.nav_star_count !== undefined) {
+        totalStars = Number(data.nav_star_count);
       } else if (data && data.stars_total !== undefined) {
         totalStars = Number(data.stars_total);
       } else if (data && data.user_total_stars !== undefined) {
@@ -1153,6 +1274,8 @@
 
       if (data && data.remaining_keys !== undefined) {
         remainingKeys = Number(data.remaining_keys);
+      } else if (data && data.nav_key_count !== undefined) {
+        remainingKeys = Number(data.nav_key_count);
       } else if (data && data.keys !== undefined) {
         remainingKeys = Number(data.keys);
       }
@@ -1164,6 +1287,7 @@
 
       return data;
     } catch (e) {
+      console.warn("save game result failed:", e);
       return null;
     }
   }
@@ -1181,19 +1305,24 @@
   function extractRank(data) {
     if (!data) return null;
 
-    return data.my_rank ||
+    return (
+      data.my_rank ||
       data.rank ||
       data.ranking ||
       data.friend_rank ||
       data.position ||
-      null;
+      null
+    );
   }
 
   function updateRankingLink() {
     if (!btnOpenRanking) return;
 
     try {
-      const base = PAGE_CFG.rankingHomeUrlBase || btnOpenRanking.getAttribute("href") || "/";
+      const base =
+        PAGE_CFG.rankingHomeUrlBase ||
+        btnOpenRanking.getAttribute("href") ||
+        "/";
       const url = new URL(base, window.location.origin);
 
       url.searchParams.set("game", PAGE_CFG.gameName || "aura");
@@ -1303,15 +1432,20 @@
       star.style.left = String(randInt(0, 100)) + "%";
       star.style.setProperty("--drift", String(randInt(-90, 90)) + "px");
       star.style.setProperty("--size", String(randInt(14, 34)) + "px");
-      star.style.setProperty("--dur", String((randInt(190, 330) / 100).toFixed(2)) + "s");
-      star.style.animationDelay = String((randInt(0, 85) / 100).toFixed(2)) + "s";
+      star.style.setProperty(
+        "--dur",
+        String((randInt(190, 330) / 100).toFixed(2)) + "s",
+      );
+      star.style.animationDelay =
+        String((randInt(0, 85) / 100).toFixed(2)) + "s";
 
       rewardConfetti.appendChild(star);
     }
   }
 
-  function showRewardOverlay() {
+  function showRewardOverlay(openResultModal) {
     const rewardAmount = qs("rewardAmount");
+    const shouldOpenModal = openResultModal !== false;
 
     if (rewardAmount) rewardAmount.textContent = "+" + String(earnedStars);
 
@@ -1323,14 +1457,27 @@
       if (rewardOverlay) rewardOverlay.classList.remove("show");
       clearRewardRain();
 
-      if (modal) modal.classList.add("on");
+      if (shouldOpenModal && modal) modal.classList.add("on");
 
       requestAnimationFrame(applyAllNicknameStyles);
     }, 2800);
   }
 
-  async function finalizeRun() {
-    if (finalizedLock) return;
+  function normalizeFinalizeOptions(options) {
+    const opts = options || {};
+
+    return {
+      showReward: opts.showReward !== false,
+      showModal: opts.showModal !== false,
+    };
+  }
+
+  async function finalizeRun(options) {
+    if (finalizedLock) {
+      return finalizePromise || Promise.resolve(null);
+    }
+
+    const finalizeOptions = normalizeFinalizeOptions(options);
 
     finalizedLock = true;
     running = false;
@@ -1339,6 +1486,8 @@
       clearInterval(timerId);
       timerId = null;
     }
+
+    const payload = buildResultPayload();
 
     totalStars += earnedStars;
     renderTopStatus();
@@ -1370,14 +1519,199 @@
 
     updateRankingLink();
 
-    const rankingPromise = syncResultAndRanking();
+    finalizePromise = (async function () {
+      try {
+        if (startRunPromise) {
+          await startRunPromise.catch(function () {
+            return null;
+          });
+        }
 
-    showRewardOverlay();
+        if (!payload.run_id && activeRunId) {
+          payload.run_id = activeRunId;
+        }
 
-    await rankingPromise;
+        await saveGameResultToServer(payload);
+        await recordRankingScore(payload);
+        await loadSimpleFriendRanking();
+      } finally {
+        applyAllNicknameStyles();
+      }
 
-    applyAllNicknameStyles();
+      return payload;
+    })();
+
+    if (finalizeOptions.showReward) {
+      showRewardOverlay(finalizeOptions.showModal);
+    } else {
+      if (rewardOverlay) rewardOverlay.classList.remove("show");
+      if (modal) modal.classList.remove("on");
+      clearRewardRain();
+      requestAnimationFrame(applyAllNicknameStyles);
+    }
+
+    return finalizePromise;
   }
+
+  function settleCurrentRunBeforeNavigation(navigateFn) {
+    const seq = navigationFinalizeSeq + 1;
+
+    navigationFinalizeSeq = seq;
+
+    if (!running) {
+      if (typeof navigateFn === "function") navigateFn();
+      requestAnimationFrame(applyAllNicknameStyles);
+      return;
+    }
+
+    const finishing = finalizeRun({
+      showReward: false,
+      showModal: false,
+    });
+
+    Promise.resolve(finishing)
+      .catch(function () {
+        return null;
+      })
+      .finally(function () {
+        if (typeof navigateFn === "function") navigateFn();
+
+        if (seq === navigationFinalizeSeq && !running) {
+          resetGameUI();
+        }
+
+        requestAnimationFrame(applyAllNicknameStyles);
+      });
+  }
+  function armBrowserBackGuard() {
+    if (browserBackGuardActive) return;
+    if (!window.history || !window.history.pushState) return;
+
+    try {
+      window.history.pushState(
+        { mathnerAuraRunGuard: true },
+        "",
+        window.location.href
+      );
+      browserBackGuardActive = true;
+    } catch (e) {
+      browserBackGuardActive = false;
+    }
+  }
+
+  function saveGameResultWithKeepalive(payload) {
+    if (!PAGE_CFG.finalizeRunUrl) return;
+
+    try {
+      fetch(PAGE_CFG.finalizeRunUrl, {
+        method: "POST",
+        credentials: "same-origin",
+        keepalive: true,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: JSON.stringify(payload || {}),
+      }).catch(function () {
+        return null;
+      });
+    } catch (e) {
+      try {
+        const formBody = new URLSearchParams();
+
+        Object.entries(payload || {}).forEach(function ([key, value]) {
+          if (value !== undefined && value !== null) {
+            formBody.append(key, String(value));
+          }
+        });
+
+        fetch(PAGE_CFG.finalizeRunUrl, {
+          method: "POST",
+          credentials: "same-origin",
+          keepalive: true,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "X-Requested-With": "XMLHttpRequest",
+            "X-CSRFToken": getCookie("csrftoken"),
+          },
+          body: formBody.toString(),
+        }).catch(function () {
+          return null;
+        });
+      } catch (fallbackError) {
+        return null;
+      }
+    }
+  }
+
+  function finalizeRunForPageLeaving() {
+    if (!running || finalizedLock) return;
+
+    finalizedLock = true;
+    running = false;
+
+    if (timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+
+    const payload = buildResultPayload();
+
+    totalStars += earnedStars;
+    renderTopStatus();
+
+    saveGameResultWithKeepalive(payload);
+  }
+
+  function bindBrowserBackFinalize() {
+    if (browserBackHandlerBound) return;
+
+    browserBackHandlerBound = true;
+
+    window.addEventListener("popstate", function () {
+      if (!browserBackGuardActive || !running || finalizedLock || browserBackFinalizing) {
+        return;
+      }
+
+      browserBackFinalizing = true;
+
+      const finishing = finalizeRun({
+        showReward: false,
+        showModal: false,
+      });
+
+      Promise.resolve(finishing)
+        .catch(function () {
+          return null;
+        })
+        .finally(function () {
+          browserBackGuardActive = false;
+          browserBackFinalizing = false;
+
+          setTimeout(function () {
+            try {
+              window.history.back();
+            } catch (e) {
+              window.location.href = "/";
+            }
+          }, 30);
+        });
+    });
+
+    window.addEventListener("pagehide", function () {
+      finalizeRunForPageLeaving();
+    });
+
+    window.addEventListener("beforeunload", function () {
+      finalizeRunForPageLeaving();
+    });
+  }
+
+
+
+
+
 
   function normalizePlainKey(value) {
     return String(value || "")
@@ -1470,22 +1804,24 @@
   function getCurrentNickname() {
     const avatarData = getAvatarData();
 
-    return cleanValue(
-      PAGE_CFG.nickname ||
-      PAGE_CFG.myNickname ||
-      PAGE_CFG.displayName ||
-      PAGE_CFG.username ||
-      pickValue(avatarData, [
-        "nickname",
-        "display_name",
-        "displayName",
-        "username",
-        "user.username",
-        "owner.display_name",
-        "owner.nickname",
-        "owner.username",
-      ])
-    ) || "마법사님";
+    return (
+      cleanValue(
+        PAGE_CFG.nickname ||
+          PAGE_CFG.myNickname ||
+          PAGE_CFG.displayName ||
+          PAGE_CFG.username ||
+          pickValue(avatarData, [
+            "nickname",
+            "display_name",
+            "displayName",
+            "username",
+            "user.username",
+            "owner.display_name",
+            "owner.nickname",
+            "owner.username",
+          ]),
+      ) || "마법사님"
+    );
   }
 
   function getNicknameStyleInfo() {
@@ -1523,9 +1859,9 @@
         "equipped_font.key",
         "equipped_font.font_key",
       ]) ||
-      PAGE_CFG.nicknameFontKey ||
-      PAGE_CFG.fontKey ||
-      ""
+        PAGE_CFG.nicknameFontKey ||
+        PAGE_CFG.fontKey ||
+        "",
     );
 
     const rawEffectKey = cleanValue(
@@ -1560,64 +1896,68 @@
         "equipped_effect.key",
         "equipped_effect.effect_key",
       ]) ||
-      PAGE_CFG.nicknameEffectKey ||
-      PAGE_CFG.effectKey ||
-      "none"
+        PAGE_CFG.nicknameEffectKey ||
+        PAGE_CFG.effectKey ||
+        "none",
     );
 
-    const rawFontClass = cleanClassString(String(
-      pickValue(avatarData, [
-        "nickname_font_class",
-        "nicknameFontClass",
-        "font_class",
-        "fontClass",
-        "font_css_class",
-        "fontCssClass",
-        "font.preview_class",
-        "font.previewClass",
-        "font.css_class",
-        "font.cssClass",
-        "font.class_name",
-        "font.className",
-        "nickname_font.preview_class",
-        "nickname_font.previewClass",
-        "nickname_font.css_class",
-        "nickname_font.cssClass",
-        "nickname_font.class_name",
-        "nickname_font.className",
-      ]) ||
-      PAGE_CFG.nicknameFontClass ||
-      PAGE_CFG.fontClass ||
-      ""
-    ));
+    const rawFontClass = cleanClassString(
+      String(
+        pickValue(avatarData, [
+          "nickname_font_class",
+          "nicknameFontClass",
+          "font_class",
+          "fontClass",
+          "font_css_class",
+          "fontCssClass",
+          "font.preview_class",
+          "font.previewClass",
+          "font.css_class",
+          "font.cssClass",
+          "font.class_name",
+          "font.className",
+          "nickname_font.preview_class",
+          "nickname_font.previewClass",
+          "nickname_font.css_class",
+          "nickname_font.cssClass",
+          "nickname_font.class_name",
+          "nickname_font.className",
+        ]) ||
+          PAGE_CFG.nicknameFontClass ||
+          PAGE_CFG.fontClass ||
+          "",
+      ),
+    );
 
-    const rawEffectClass = cleanClassString(String(
-      pickValue(avatarData, [
-        "nickname_effect_class",
-        "nicknameEffectClass",
-        "font_effect_class",
-        "fontEffectClass",
-        "effect_class",
-        "effectClass",
-        "effect_css_class",
-        "effectCssClass",
-        "effect.preview_class",
-        "effect.previewClass",
-        "effect.css_class",
-        "effect.cssClass",
-        "effect.class_name",
-        "effect.className",
-        "nickname_effect.preview_class",
-        "nickname_effect.previewClass",
-        "nickname_effect.css_class",
-        "nickname_effect.cssClass",
-        "nickname_effect.class_name",
-        "nickname_effect.className",
-      ]) ||
-      PAGE_CFG.nicknameEffectClass ||
-      PAGE_CFG.effectClass ||
-      ""
-    ));
+    const rawEffectClass = cleanClassString(
+      String(
+        pickValue(avatarData, [
+          "nickname_effect_class",
+          "nicknameEffectClass",
+          "font_effect_class",
+          "fontEffectClass",
+          "effect_class",
+          "effectClass",
+          "effect_css_class",
+          "effectCssClass",
+          "effect.preview_class",
+          "effect.previewClass",
+          "effect.css_class",
+          "effect.cssClass",
+          "effect.class_name",
+          "effect.className",
+          "nickname_effect.preview_class",
+          "nickname_effect.previewClass",
+          "nickname_effect.css_class",
+          "nickname_effect.cssClass",
+          "nickname_effect.class_name",
+          "nickname_effect.className",
+        ]) ||
+          PAGE_CFG.nicknameEffectClass ||
+          PAGE_CFG.effectClass ||
+          "",
+      ),
+    );
 
     const rawScale = pickValue(avatarData, [
       "nickname_scale",
@@ -1660,8 +2000,8 @@
         "font_pref.nickname_color",
         "fontPref.nickname_color",
       ]) ||
-      PAGE_CFG.nicknameColor ||
-      "#fff8ea"
+        PAGE_CFG.nicknameColor ||
+        "#fff8ea",
     );
 
     const fontKey = normalizeFontKey(rawFontKey);
@@ -1673,8 +2013,12 @@
     return {
       fontKey,
       effectKey,
-      fontClass: cleanClassString([rawFontClass, keyFontClass].filter(Boolean).join(" ")),
-      effectClass: cleanClassString([rawEffectClass, keyEffectClass].filter(Boolean).join(" ")),
+      fontClass: cleanClassString(
+        [rawFontClass, keyFontClass].filter(Boolean).join(" "),
+      ),
+      effectClass: cleanClassString(
+        [rawEffectClass, keyEffectClass].filter(Boolean).join(" "),
+      ),
       scale: clampValue(rawScale, 0.8, 1.6, 1),
       spacing: clampValue(rawSpacing, -1, 6, 0),
       color,
@@ -1822,7 +2166,9 @@
 
     if (!root) return null;
 
-    let layer = qs("statusAvatarNameText") || root.querySelector(".status-avatar-name-text");
+    let layer =
+      qs("statusAvatarNameText") ||
+      root.querySelector(".status-avatar-name-text");
 
     if (!layer) {
       const currentText = String(root.textContent || "").trim();
@@ -1903,7 +2249,9 @@
 
     const info = getNicknameStyleInfo();
     const visual = buildNicknameInlineStyle(info);
-    const hasRainbow = info.effectKey === "rainbow_flow" || info.effectClass.indexOf("rainbow") >= 0;
+    const hasRainbow =
+      info.effectKey === "rainbow_flow" ||
+      info.effectClass.indexOf("rainbow") >= 0;
 
     clearFontEffectClasses(el);
     clearNicknameVisualInline(el);
@@ -1933,7 +2281,11 @@
     el.style.setProperty("font-family", visual.family, "important");
     el.style.setProperty("font-size", String(visual.size) + "px", "important");
     el.style.setProperty("font-weight", String(visual.weight), "important");
-    el.style.setProperty("letter-spacing", String(visual.spacing) + "px", "important");
+    el.style.setProperty(
+      "letter-spacing",
+      String(visual.spacing) + "px",
+      "important",
+    );
     el.style.setProperty("line-height", "1.05", "important");
     el.style.setProperty("white-space", "nowrap", "important");
     el.style.setProperty("display", "inline-block", "important");
@@ -1942,17 +2294,25 @@
 
     if (hasRainbow) {
       el.style.setProperty("color", "transparent", "important");
-      el.style.setProperty("-webkit-text-fill-color", "transparent", "important");
+      el.style.setProperty(
+        "-webkit-text-fill-color",
+        "transparent",
+        "important",
+      );
       el.style.setProperty("background-clip", "text", "important");
       el.style.setProperty("-webkit-background-clip", "text", "important");
-    } else if (info.effectKey === "none" || info.effectKey === "default" || info.effectKey === "normal") {
+    } else if (
+      info.effectKey === "none" ||
+      info.effectKey === "default" ||
+      info.effectKey === "normal"
+    ) {
       const color = info.color || "#fff8ea";
       el.style.setProperty("color", color, "important");
       el.style.setProperty("-webkit-text-fill-color", color, "important");
       el.style.setProperty(
         "text-shadow",
         "0 0 6px rgba(255,211,123,0.55), 0 1px 2px rgba(0,0,0,0.32)",
-        "important"
+        "important",
       );
     }
   }
@@ -1962,7 +2322,20 @@
 
     const tag = el.tagName.toLowerCase();
 
-    if (["script", "style", "input", "textarea", "select", "option", "canvas", "img", "svg", "path"].indexOf(tag) >= 0) {
+    if (
+      [
+        "script",
+        "style",
+        "input",
+        "textarea",
+        "select",
+        "option",
+        "canvas",
+        "img",
+        "svg",
+        "path",
+      ].indexOf(tag) >= 0
+    ) {
       return false;
     }
 
@@ -2008,7 +2381,7 @@
       "#nicknameLabel",
       "#myNickname",
       "#statusAvatarNickname",
-      "#auraPlayerNickname"
+      "#auraPlayerNickname",
     ];
 
     selectors.forEach(function (selector) {
@@ -2090,13 +2463,27 @@
       const genderRaw = cleanValue(avatarData.gender || "male");
       const gender = genderRaw || "male";
 
-      const baseBody = getDataAttr("data-base-body-" + gender) || getDataAttr("data-base-body-male");
-      const baseHead = getDataAttr("data-base-head-" + gender) || getDataAttr("data-base-head-male");
-      const baseHairBack = getDataAttr("data-base-hair-back-" + gender) || getDataAttr("data-base-hair-back-male");
-      const baseHairFront = getDataAttr("data-base-hair-front-" + gender) || getDataAttr("data-base-hair-front-male");
-      const baseEyes = getDataAttr("data-base-eyes-" + gender) || getDataAttr("data-base-eyes-male");
-      const baseEyebrow = getDataAttr("data-base-eyebrow-" + gender) || getDataAttr("data-base-eyebrow-male");
-      const baseMouth = getDataAttr("data-base-mouth-" + gender) || getDataAttr("data-base-mouth-male");
+      const baseBody =
+        getDataAttr("data-base-body-" + gender) ||
+        getDataAttr("data-base-body-male");
+      const baseHead =
+        getDataAttr("data-base-head-" + gender) ||
+        getDataAttr("data-base-head-male");
+      const baseHairBack =
+        getDataAttr("data-base-hair-back-" + gender) ||
+        getDataAttr("data-base-hair-back-male");
+      const baseHairFront =
+        getDataAttr("data-base-hair-front-" + gender) ||
+        getDataAttr("data-base-hair-front-male");
+      const baseEyes =
+        getDataAttr("data-base-eyes-" + gender) ||
+        getDataAttr("data-base-eyes-male");
+      const baseEyebrow =
+        getDataAttr("data-base-eyebrow-" + gender) ||
+        getDataAttr("data-base-eyebrow-male");
+      const baseMouth =
+        getDataAttr("data-base-mouth-" + gender) ||
+        getDataAttr("data-base-mouth-male");
       const windAuraUrl = getDataAttr("data-wind-aura-url");
 
       const auraLayer = document.createElement("div");
@@ -2104,7 +2491,9 @@
 
       if (windAuraUrl) {
         auraLayer.innerHTML =
-          '<img class="status-avatar-foot-aura-img" src="' + windAuraUrl + '" alt="">';
+          '<img class="status-avatar-foot-aura-img" src="' +
+          windAuraUrl +
+          '" alt="">';
       }
 
       stack.appendChild(auraLayer);
@@ -2185,16 +2574,41 @@
       ]);
 
       addAvatarLayer(stack, customUnique, "status-avatar-layer-unique-back", 8);
-      addAvatarLayer(stack, customRearHair || baseHairBack, "status-avatar-layer-hair-rear", 20);
+      addAvatarLayer(
+        stack,
+        customRearHair || baseHairBack,
+        "status-avatar-layer-hair-rear",
+        20,
+      );
       addAvatarLayer(stack, baseBody, "status-avatar-layer-body", 30);
       addAvatarLayer(stack, customPants, "status-avatar-layer-pants", 34);
       addAvatarLayer(stack, customShoes, "status-avatar-layer-shoes", 35);
       addAvatarLayer(stack, customCloth, "status-avatar-layer-cloth", 40);
       addAvatarLayer(stack, baseHead, "status-avatar-layer-head", 50);
-      addAvatarLayer(stack, customEyebrow || baseEyebrow, "status-avatar-layer-eyebrow", 60);
-      addAvatarLayer(stack, customEyes || baseEyes, "status-avatar-layer-eyes", 70);
-      addAvatarLayer(stack, customMouth || baseMouth, "status-avatar-layer-mouth", 80);
-      addAvatarLayer(stack, customFrontHair || baseHairFront, "status-avatar-layer-hair-front", 90);
+      addAvatarLayer(
+        stack,
+        customEyebrow || baseEyebrow,
+        "status-avatar-layer-eyebrow",
+        60,
+      );
+      addAvatarLayer(
+        stack,
+        customEyes || baseEyes,
+        "status-avatar-layer-eyes",
+        70,
+      );
+      addAvatarLayer(
+        stack,
+        customMouth || baseMouth,
+        "status-avatar-layer-mouth",
+        80,
+      );
+      addAvatarLayer(
+        stack,
+        customFrontHair || baseHairFront,
+        "status-avatar-layer-hair-front",
+        90,
+      );
       addAvatarLayer(stack, customHat, "status-avatar-layer-hat", 100);
 
       applyAllNicknameStyles();
@@ -2206,7 +2620,9 @@
   function bindEvents() {
     if (btnBackToModes) {
       btnBackToModes.addEventListener("click", function () {
-        show(screenSelect);
+        settleCurrentRunBeforeNavigation(function () {
+          show(screenSelect);
+        });
       });
     }
 
@@ -2220,7 +2636,9 @@
 
     if (btnBackToSetup) {
       btnBackToSetup.addEventListener("click", function () {
-        show(screenSetup);
+        settleCurrentRunBeforeNavigation(function () {
+          show(screenSetup);
+        });
       });
     }
 
@@ -2297,17 +2715,70 @@
   function initPage() {
     bindElements();
 
-    try { initData(); } catch (e) { console.error("initData error:", e); }
-    try { injectNicknameStylePatch(); } catch (e) { console.error("injectNicknameStylePatch error:", e); }
-    try { ensureStatusNicknameTextLayer(); } catch (e) { console.error("ensureStatusNicknameTextLayer error:", e); }
-    try { renderModeTiles(); } catch (e) { console.error("renderModeTiles error:", e); }
-    try { renderPracticeOperations(); } catch (e) { console.error("renderPracticeOperations error:", e); }
-    try { updateSetupPanel(); } catch (e) { console.error("updateSetupPanel error:", e); }
-    try { updateRankingLink(); } catch (e) { console.error("updateRankingLink error:", e); }
-    try { show(screenSelect); } catch (e) { console.error("show screen error:", e); }
-    try { renderStatusAvatar(); } catch (e) { console.error("renderStatusAvatar outer error:", e); }
-    try { bindEvents(); } catch (e) { console.error("bindEvents error:", e); }
-    try { observeNicknameTargets(); } catch (e) { console.error("observeNicknameTargets error:", e); }
+    try {
+      initData();
+    } catch (e) {
+      console.error("initData error:", e);
+    }
+    try {
+      injectNicknameStylePatch();
+    } catch (e) {
+      console.error("injectNicknameStylePatch error:", e);
+    }
+    try {
+      ensureStatusNicknameTextLayer();
+    } catch (e) {
+      console.error("ensureStatusNicknameTextLayer error:", e);
+    }
+    try {
+      renderModeTiles();
+    } catch (e) {
+      console.error("renderModeTiles error:", e);
+    }
+    try {
+      renderPracticeOperations();
+    } catch (e) {
+      console.error("renderPracticeOperations error:", e);
+    }
+    try {
+      updateSetupPanel();
+    } catch (e) {
+      console.error("updateSetupPanel error:", e);
+    }
+    try {
+      updateRankingLink();
+    } catch (e) {
+      console.error("updateRankingLink error:", e);
+    }
+    try {
+      show(screenSelect);
+    } catch (e) {
+      console.error("show screen error:", e);
+    }
+    try {
+      renderStatusAvatar();
+    } catch (e) {
+      console.error("renderStatusAvatar outer error:", e);
+    }
+
+
+    try {
+      bindEvents();
+    } catch (e) {
+      console.error("bindEvents error:", e);
+    }
+    try {
+      bindBrowserBackFinalize();
+    } catch (e) {
+      console.error("bindBrowserBackFinalize error:", e);
+    }
+    try {
+      observeNicknameTargets();
+    } catch (e) {
+      console.error("observeNicknameTargets error:", e);
+    }
+
+
 
     try {
       updateTimerUI();
