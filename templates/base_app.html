@@ -7,7 +7,113 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}매스너: 마법 산수 탐험대!{% endblock %}</title>
+
+  <title>{% block title %}Mathner(매스너) - 초등 수학 게임, 사칙연산 연습 웹앱{% endblock %}</title>
+
+  <meta name="description" content="{% block meta_description %}Mathner(매스너)는 초등학생이 덧셈, 뺄셈, 곱셈, 나눗셈을 게임처럼 연습하는 사칙연산 수학 웹앱입니다. 매쓰너, 초등 수학 게임, 연산 연습 사이트를 찾는 부모님과 아이들을 위한 아바타 성장형 수학 게임입니다.{% endblock %}">
+  <meta name="keywords" content="Mathner, 매스너, 매쓰너, 초등 수학 게임, 초등학생 수학 게임, 사칙연산 게임, 덧셈 게임, 뺄셈 게임, 곱셈 게임, 나눗셈 게임, 연산 연습, 초등 연산, 수학 웹앱, 아바타 수학 게임, 매스 레인, Math Rain">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="author" content="Mathner">
+  <meta name="application-name" content="Mathner(매스너)">
+  <meta name="theme-color" content="#FFCB3C">
+  <meta name="naver-site-verification" content="">
+  <meta name="google-site-verification" content="">
+
+  <link rel="canonical" href="https://www.mathner.com/">
+  <link rel="alternate" hreflang="ko-KR" href="https://www.mathner.com/">
+  <link rel="alternate" hreflang="x-default" href="https://www.mathner.com/">
+
+  <meta property="og:locale" content="ko_KR">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Mathner(매스너)">
+  <meta property="og:title" content="{% block og_title %}Mathner(매스너) - 초등 수학 게임, 사칙연산 연습{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}매스너(Mathner)는 초등학생이 사칙연산을 게임처럼 풀고, 별을 모아 아바타를 꾸미는 초등 수학 게임 웹앱입니다. 매쓰너로 검색해도 찾을 수 있어요.{% endblock %}">
+  <meta property="og:url" content="https://www.mathner.com/">
+  <meta property="og:image" content="https://www.mathner.com{% static 'img/landing/avatar.png' %}">
+  <meta property="og:image:alt" content="Mathner 매스너 초등 수학 게임 아바타">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Mathner(매스너) - 초등 수학 게임">
+  <meta name="twitter:description" content="초등학생을 위한 사칙연산 게임 웹앱. 덧셈, 뺄셈, 곱셈, 나눗셈을 게임처럼 연습하고 아바타를 꾸며보세요.">
+  <meta name="twitter:image" content="https://www.mathner.com{% static 'img/landing/avatar.png' %}">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://www.mathner.com/#organization",
+        "name": "Mathner",
+        "alternateName": [
+          "매스너",
+          "매쓰너",
+          "Mathner Math",
+          "Mathner Game"
+        ],
+        "url": "https://www.mathner.com/",
+        "logo": "https://www.mathner.com{% static 'img/landing/avatar.png' %}",
+        "description": "Mathner(매스너)는 초등학생을 위한 사칙연산 수학 게임 웹앱입니다."
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://www.mathner.com/#website",
+        "url": "https://www.mathner.com/",
+        "name": "Mathner(매스너)",
+        "alternateName": [
+          "매스너",
+          "매쓰너",
+          "초등 수학 게임 매스너",
+          "사칙연산 게임 매스너"
+        ],
+        "publisher": {
+          "@id": "https://www.mathner.com/#organization"
+        },
+        "inLanguage": "ko-KR",
+        "description": "Mathner(매스너)는 초등학생이 사칙연산을 게임처럼 연습하는 아바타 성장형 수학 웹앱입니다."
+      },
+      {
+        "@type": "WebApplication",
+        "@id": "https://www.mathner.com/#webapp",
+        "name": "Mathner(매스너)",
+        "alternateName": [
+          "매스너",
+          "매쓰너",
+          "Mathner"
+        ],
+        "url": "https://www.mathner.com/",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Web",
+        "inLanguage": "ko-KR",
+        "description": "초등학생이 덧셈, 뺄셈, 곱셈, 나눗셈을 게임처럼 연습하는 사칙연산 수학 게임 웹앱입니다.",
+        "keywords": [
+          "Mathner",
+          "매스너",
+          "매쓰너",
+          "초등 수학 게임",
+          "초등학생 수학 게임",
+          "사칙연산 게임",
+          "연산 연습",
+          "덧셈 게임",
+          "뺄셈 게임",
+          "곱셈 게임",
+          "나눗셈 게임",
+          "아바타 수학 게임",
+          "매스 레인"
+        ],
+        "publisher": {
+          "@id": "https://www.mathner.com/#organization"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "KRW",
+          "availability": "https://schema.org/InStock"
+        }
+      }
+    ]
+  }
+  </script>
 
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
 
@@ -349,7 +455,7 @@
       font-weight: 900;
       letter-spacing: -0.6px;
       color: var(--brand-orange);
-      margin: 0 0 40px;
+      margin: 0 0 14px;
       text-shadow:
         2px 2px 0px #fff,
         -1px -1px 0 #fff,
@@ -357,6 +463,49 @@
         -1px 1px 0 #fff;
       line-height: 1.15;
       font-family: var(--main-font);
+    }
+
+    .seo-intro-card {
+      max-width: 860px;
+      margin: 0 auto 34px;
+      padding: 14px 18px;
+      border: 3px solid rgba(255, 203, 60, 0.65);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.82);
+      color: #6B5A4E;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.55;
+      text-align: center;
+      box-shadow: 0 5px 0 rgba(255, 203, 60, 0.18);
+      word-break: keep-all;
+      font-family: var(--main-font);
+    }
+
+    .seo-intro-card strong {
+      color: var(--brand-orange);
+      font-weight: 900;
+    }
+
+    .seo-keyword-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .seo-keyword-row span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #FFF3C7;
+      color: #8A6500;
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
     }
 
     .main-grid {
@@ -911,9 +1060,27 @@
 
       .game-first-title {
         font-size: 31px;
-        margin-bottom: 26px;
+        margin-bottom: 12px;
         line-height: 1.18;
         padding: 0 4px;
+      }
+
+      .seo-intro-card {
+        margin-bottom: 24px;
+        padding: 12px 13px;
+        border-radius: 20px;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .seo-keyword-row {
+        gap: 6px;
+        margin-top: 9px;
+      }
+
+      .seo-keyword-row span {
+        font-size: 12px;
+        padding: 5px 8px;
       }
 
       .main-grid {
@@ -1052,7 +1219,12 @@
 
       .game-first-title {
         font-size: 28px;
-        margin-bottom: 22px;
+        margin-bottom: 10px;
+      }
+
+      .seo-intro-card {
+        font-size: 13px;
+        margin-bottom: 20px;
       }
 
       .game-carousel-card {
@@ -1096,6 +1268,10 @@
         font-size: 26px;
       }
 
+      .seo-intro-card {
+        font-size: 12.5px;
+      }
+
       .game-card h3 {
         font-size: 26px;
       }
@@ -1109,12 +1285,12 @@
 <body>
   <header class="site-header">
     <div class="nav-wrap">
-      <a href="{{ mathner_app_home_url }}" class="brand">
+      <a href="{{ mathner_app_home_url }}" class="brand" aria-label="Mathner 매스너 메인으로 이동">
         <span class="brand-logo">m</span>
         <span>매스너</span>
       </a>
 
-      <nav class="main-nav">
+      <nav class="main-nav" aria-label="매스너 주요 메뉴">
         <a href="/landing/">소개</a>
         <a href="/landing/#pricing">이용요금</a>
 
@@ -1130,7 +1306,7 @@
       </nav>
 
       <div class="nav-actions">
-        <div class="nav-chip">
+        <div class="nav-chip" aria-label="매스너 별과 열쇠 보유량">
           <span class="nav-status-item">
             <span>⭐</span>
             <span id="navStarCount">{{ nav_star_count|default_if_none:0 }}</span>
@@ -1205,15 +1381,28 @@
     {% block content %}
     <div class="app-shell">
       <h1 class="game-first-title">
-        어떤 마법 놀이를 해볼까? 🚀
+        Mathner(매스너) 초등 수학 게임 🚀
       </h1>
+
+      <section class="seo-intro-card" aria-label="Mathner 매스너 서비스 소개">
+        <strong>Mathner(매스너)</strong>는 초등학생이 덧셈, 뺄셈, 곱셈, 나눗셈을 게임처럼 연습하는
+        <strong>사칙연산 수학 웹앱</strong>입니다. 매쓰너, 초등 수학 게임, 연산 연습 사이트를 찾는 부모님과 아이들이
+        아바타를 키우며 재미있게 수학을 시작할 수 있어요.
+        <div class="seo-keyword-row" aria-label="매스너 주요 키워드">
+          <span>초등 수학 게임</span>
+          <span>사칙연산 게임</span>
+          <span>연산 연습</span>
+          <span>아바타 수학 게임</span>
+          <span>매스 레인</span>
+        </div>
+      </section>
 
       <div class="main-grid">
         <aside class="avatar-dashboard">
           <div class="avatar-title">✨ 내 마법사 ✨</div>
           <div class="avatar-stage">
             <div class="magic-circle"></div>
-            <img src="{% static 'img/landing/avatar.png' %}" alt="내 아바타" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <img src="{% static 'img/landing/avatar.png' %}" alt="Mathner 매스너 초등 수학 게임 아바타 꾸미기" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
             <div style="display:none; font-size:60px; z-index:2;">🧙‍♂️</div>
           </div>
 
@@ -1244,15 +1433,16 @@
               <article class="game-card" data-card-link="{% url 'core:play' %}?mode=avatar-aura">
                 <span class="game-badge">⭐ 제일 재미있어요!</span>
                 <h3>✨ 마법 오라 키우기</h3>
-                <p>빨리 문제를 풀고 내 아바타에게 멋진 마법의 힘을 주세요!</p>
+                <p>매스너 대표 사칙연산 게임! 빠르게 문제를 풀고 내 아바타에게 멋진 마법의 힘을 주세요.</p>
 
                 <div class="game-points">
                   <span>#아바타쑥쑥</span>
+                  <span>#초등연산</span>
                   <span>#반짝효과</span>
                 </div>
 
                 <div class="game-inline-media">
-                  <img src="{% static 'img/games/avatar-aura.png' %}" alt="아바타 오라 게임" onerror="this.style.display='none'; this.closest('.game-inline-media').classList.add('is-missing');">
+                  <img src="{% static 'img/games/avatar-aura.png' %}" alt="매스너 Mathner 마법 오라 키우기 초등 사칙연산 게임" onerror="this.style.display='none'; this.closest('.game-inline-media').classList.add('is-missing');">
                 </div>
 
                 <div class="game-actions">
@@ -1264,15 +1454,16 @@
               <article class="game-card" data-card-link="{% url 'game:math_rain' %}">
                 <span class="game-badge badge-blue">⚡ 두근두근 순발력</span>
                 <h3>☔ 쏟아지는 수학 비</h3>
-                <p>비가 내리기 전에 정답을 맞혀서 살아남으세요! 두근두근 조심해!</p>
+                <p>매스 레인(Math Rain)에서 비가 내리기 전에 정답을 맞혀보세요. 덧셈과 연산 감각을 빠르게 연습할 수 있어요.</p>
 
                 <div class="game-points">
                   <span style="color:#4834D4; background:#EAE6FF;">#스피드</span>
                   <span style="color:#4834D4; background:#EAE6FF;">#살아남기</span>
+                  <span style="color:#4834D4; background:#EAE6FF;">#수학비</span>
                 </div>
 
                 <div class="game-inline-media math-rain-media">
-                  <img src="{% static 'img/games/math-rain.png' %}" alt="매스 레인 게임" onerror="this.style.display='none'; this.closest('.game-inline-media').classList.add('is-missing');">
+                  <img src="{% static 'img/games/math-rain.png' %}" alt="매스너 매쓰너 Math Rain 매스 레인 초등 수학 게임" onerror="this.style.display='none'; this.closest('.game-inline-media').classList.add('is-missing');">
                 </div>
 
                 <div class="game-actions">
