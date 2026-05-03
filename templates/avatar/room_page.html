@@ -1,14 +1,10 @@
 ﻿{% extends "base_app.html" %}
 {% load static %}
 
-{% block title %}My Avatar - mathner{% endblock %}
+{% block title %}내 방 - 매스너{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'avatar/css/room-main.css' %}">
-<link rel="stylesheet" href="{% static 'avatar/css/room-guestbook.css' %}">
-<link rel="stylesheet" href="{% static 'avatar/css/room-diary.css' %}">
-<link rel="stylesheet" href="{% static 'avatar/css/room-avatar-edit.css' %}">
-<link rel="stylesheet" href="{% static 'avatar/css/room-font-edit.css' %}">
+<link rel="stylesheet" href="{% static 'avatar/css/kids-room-main.css' %}">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,19 +16,20 @@
 
 {% block content %}
 <div
-  class="avatar-page"
+  class="avatar-page kids-theme"
   id="avatarPage"
+
   data-avatar-owner="{{ room_owner.username }}"
   data-avatar-owner-username="{{ room_owner.username }}"
   data-avatar-owner-display-name="{{ room_owner_name|default:room_owner.username }}"
   data-owner-display-name="{{ room_owner_name|default:room_owner.username }}"
   data-display-name="{{ room_owner_name|default:room_owner.username }}"
   data-is-owner="{% if is_owner %}true{% else %}false{% endif %}"
+
   data-avatar-json='{{ avatar_data_json|safe }}'
   data-owned-avatar-item-json='{{ inventory_items_json|safe }}'
   data-owned-effect-json='{{ owned_effect_items_json|safe }}'
   data-inventory-items-json='{{ inventory_items_json|safe }}'
-  data-avatar-inventory-url="{% url 'avatar:avatar_inventory' %}"
 
   data-font-pref-json='{{ viewer_font_pref_json|safe }}'
   data-viewer-font-pref-json='{{ viewer_font_pref_json|safe }}'
@@ -54,9 +51,11 @@
   data-diary-update-url-base="/social/api/diary/"
   data-diary-delete-url-base="/social/api/diary/"
 
+  data-avatar-inventory-url="{% url 'avatar:avatar_inventory' %}"
   data-avatar-save-url="{% url 'avatar:save_avatar_state' %}"
   data-avatar-save-font-url="{% url 'avatar:save_font_preference' %}"
   data-avatar-reset-url="{% url 'avatar:reset_avatar_state' %}"
+
   data-friend-avatar-base="/avatar/room/"
   data-my-room-url="/avatar/my-room/"
   data-social-friend-list-url="{% url 'social:friend_list' %}"
@@ -64,6 +63,7 @@
   data-social-room-visit-url-base="/social/api/rooms/"
   data-social-room-like-url-base="/social/api/rooms/"
   data-social-friend-request-url-base="/social/api/friends/request/"
+  data-social-friend-respond-url-base="/social/api/friends/respond/"
 
   data-base-body-male="{% static 'avatar/img/base/male/body.webp' %}"
   data-base-head-male="{% static 'avatar/img/base/male/head.webp' %}"
@@ -72,6 +72,7 @@
   data-base-eyes-male="{% static 'avatar/img/base/male/eyes.webp' %}"
   data-base-eyebrow-male="{% static 'avatar/img/base/male/eyebrow.webp' %}"
   data-base-mouth-male="{% static 'avatar/img/base/male/mouth.webp' %}"
+
   data-base-body-female="{% static 'avatar/img/base/female/body.webp' %}"
   data-base-head-female="{% static 'avatar/img/base/female/head.webp' %}"
   data-base-hair-back-female="{% static 'avatar/img/base/female/rear_hair.webp' %}"
@@ -80,54 +81,51 @@
   data-base-eyebrow-female="{% static 'avatar/img/base/female/eyebrow.webp' %}"
   data-base-mouth-female="{% static 'avatar/img/base/female/mouth.webp' %}"
 >
-  <div class="wrap wrap-compact">
+  <div class="wrap kids-wrap">
     <div class="avatar-shell">
-      <div class="avatar-layout avatar-layout-room" id="avatarLayout">
+      <div class="avatar-layout kids-layout" id="avatarLayout">
 
         <section class="avatar-col avatar-col-main">
-          <div class="avatar-card avatar-hero-card is-visible" id="avatarHeroCard">
-            <div class="avatar-card-head">
-              <h2>Avatar Status</h2>
+          <div class="cute-card avatar-hero-card is-visible" id="avatarHeroCard">
+            <div class="cute-card-head">
+              <h2>✨ {{ room_owner_name|default:room_owner.username }}의 방</h2>
             </div>
 
-            <div class="avatar-card-body avatar-status-body">
+            <div class="cute-card-body">
               <div class="avatar-status-panel">
-                <div class="avatar-stage-shell">
-                  <div class="avatar-stage-fixed">
-                    <div class="avatar-stage-wrap">
-                      <div class="avatar-canvas avatar-canvas-main" id="avatarCanvasView"></div>
-                    </div>
-                  </div>
+                <div class="avatar-stage">
+                  <div class="avatar-canvas avatar-canvas-main" id="avatarCanvasView"></div>
                 </div>
 
-                <div class="avatar-status-name-wrap">
-                  <div class="owner-name avatar-status-name font-default" id="roomOwnerName">
+                <div class="avatar-info-box">
+                  <div class="owner-name font-default" id="roomOwnerName">
                     {{ room_owner_name|default:room_owner.username }}
                   </div>
 
-                  <div class="room-row-sub" id="roomOwnerUsername" style="display:none;">
+                  <div class="room-row-sub" id="roomOwnerUsername" hidden>
                     @{{ room_owner.username }}
                   </div>
 
                   {% if request.user.is_authenticated %}
-                  <div class="owner-stats-line owner-stats-inline avatar-status-stats">
-                    <span class="owner-stat-pill">Today <strong id="roomTodayVisits">0</strong></span>
-                    <span class="owner-stat-pill">Total <strong id="roomTotalVisits">0</strong></span>
-                    <span class="owner-stat-pill">Like <strong id="roomLikeCount">0</strong></span>
+                  <div class="kids-stats-row">
+                    <span class="cute-pill">👀 방문자 <strong id="roomTotalVisits">0</strong></span>
+                    <span class="cute-pill" hidden>오늘 <strong id="roomTodayVisits">0</strong></span>
+                    <span class="cute-pill">💖 좋아요 <strong id="roomLikeCount">0</strong></span>
 
                     {% if not is_owner %}
-                    <button type="button" class="avatar-btn avatar-btn-secondary social-like-btn" id="toggleRoomLikeBtn">
-                      👍 <span id="toggleRoomLikeBtnText">Like</span>
+                    <button type="button" class="btn-cute btn-pink social-like-btn" id="toggleRoomLikeBtn">
+                      👍 <span id="toggleRoomLikeBtnText">좋아요!</span>
                     </button>
+
                     <button
                       type="button"
-                      class="avatar-btn avatar-btn-primary"
+                      class="btn-cute btn-blue"
                       id="sendFriendRequestBtn"
                       data-friendship-status="{{ friendship_status|default:'none' }}"
                       data-friendship-direction="{{ friendship_direction|default:'none' }}"
                       data-friendship-id="{{ friendship_id|default:'' }}"
                     >
-                      Add Friend
+                      친구 추가
                     </button>
                     {% endif %}
                   </div>
@@ -137,25 +135,31 @@
             </div>
           </div>
 
-          <div class="avatar-card avatar-stage-content-card" id="avatarStageContentCard">
-            <div class="avatar-card-head">
-              <h2 id="dynamicPanelTitle">Guestbook</h2>
+          <div class="cute-card avatar-stage-content-card" id="avatarStageContentCard">
+            <div class="cute-card-head">
+              <h2 id="dynamicPanelTitle">💌 방명록</h2>
             </div>
 
-            <div class="avatar-card-body" id="avatarStageCardBody">
-              <div class="tab-pane" id="tab-guestbook">
+            <div class="cute-card-body" id="avatarStageCardBody">
+              <div class="tab-pane active" id="tab-guestbook">
                 <div class="panel-block">
-                  <h3 class="panel-title">Leave a message</h3>
+                  <h3 class="panel-title">친구에게 한마디 남기기</h3>
                   <div class="guestbook-form">
-                    <textarea id="guestbookContent" class="avatar-textarea font-default" placeholder="Write your guestbook message..."></textarea>
-                    <button type="button" class="avatar-btn avatar-btn-primary" id="guestbookSubmitBtn">Leave Message</button>
+                    <textarea
+                      id="guestbookContent"
+                      class="cute-textarea avatar-textarea font-default"
+                      placeholder="친구에게 예쁜 말을 남겨주세요!"
+                    ></textarea>
+                    <button type="button" class="btn-cute btn-yellow full-width" id="guestbookSubmitBtn">
+                      글 남기기
+                    </button>
                   </div>
                 </div>
 
                 <div class="panel-block">
-                  <h3 class="panel-title">Messages</h3>
+                  <h3 class="panel-title">방명록</h3>
                   <div class="message-list" id="guestbookList">
-                    <div class="empty-text">Loading guestbook...</div>
+                    <div class="empty-text">방명록을 불러오는 중...</div>
                   </div>
                 </div>
               </div>
@@ -163,52 +167,62 @@
               <div class="tab-pane" id="tab-diary">
                 <div class="diary-calendar-shell">
                   <div class="diary-calendar-header">
-                    <button type="button" class="calendar-nav-btn" id="calendarPrevBtn">‹</button>
+                    <button type="button" class="calendar-nav-btn btn-cute btn-gray" id="calendarPrevBtn">‹</button>
                     <div class="calendar-month-label" id="calendarMonthLabel">2026.04</div>
-                    <button type="button" class="calendar-nav-btn" id="calendarNextBtn">›</button>
+                    <button type="button" class="calendar-nav-btn btn-cute btn-gray" id="calendarNextBtn">›</button>
                   </div>
 
                   <div class="calendar-weekdays">
-                    <span>Sun</span>
-                    <span>Mon</span>
-                    <span>Tue</span>
-                    <span>Wed</span>
-                    <span>Thu</span>
-                    <span>Fri</span>
-                    <span>Sat</span>
+                    <span>일</span>
+                    <span>월</span>
+                    <span>화</span>
+                    <span>수</span>
+                    <span>목</span>
+                    <span>금</span>
+                    <span>토</span>
                   </div>
 
                   <div class="calendar-grid" id="calendarGrid"></div>
                 </div>
 
                 <div class="panel-block">
-                  <h3 class="panel-title">Selected date</h3>
+                  <h3 class="panel-title">선택한 날짜</h3>
                   <div class="diary-form">
-                    <input type="date" id="diaryDate" class="avatar-input">
-                    <div class="message-meta" id="diarySelectedDateText">Choose a date from the calendar.</div>
+                    <input type="date" id="diaryDate" class="avatar-input cute-input">
+                    <div class="message-meta" id="diarySelectedDateText">날짜를 선택하세요.</div>
                   </div>
                 </div>
 
                 {% if is_owner %}
                 <div class="panel-block">
-                  <h3 class="panel-title">Write diary</h3>
+                  <h3 class="panel-title">그림일기 쓰기</h3>
                   <div class="diary-form">
                     <input type="hidden" id="diaryEntryId" value="">
-                    <input type="text" id="diaryTitle" class="avatar-input font-default" placeholder="Diary title">
-                    <textarea id="diaryContent" class="avatar-textarea font-default" placeholder="Write your diary..."></textarea>
+                    <input
+                      type="text"
+                      id="diaryTitle"
+                      class="avatar-input cute-input font-default"
+                      placeholder="일기 제목"
+                    >
+                    <textarea
+                      id="diaryContent"
+                      class="cute-textarea avatar-textarea font-default"
+                      placeholder="오늘의 일기를 적어주세요!"
+                    ></textarea>
+
                     <div class="diary-action-row">
-                      <button type="button" class="avatar-btn avatar-btn-primary" id="diarySubmitBtn">Save Diary</button>
-                      <button type="button" class="avatar-btn avatar-btn-secondary" id="diaryClearBtn">Clear</button>
-                      <button type="button" class="avatar-btn avatar-btn-secondary" id="diaryDeleteBtn">Delete</button>
+                      <button type="button" class="btn-cute btn-blue" id="diarySubmitBtn">저장</button>
+                      <button type="button" class="btn-cute btn-gray" id="diaryClearBtn">새로쓰기</button>
+                      <button type="button" class="btn-cute btn-red" id="diaryDeleteBtn">지우기</button>
                     </div>
                   </div>
                 </div>
                 {% endif %}
 
                 <div class="panel-block">
-                  <h3 class="panel-title">Diary list</h3>
+                  <h3 class="panel-title">일기 목록</h3>
                   <div class="message-list" id="diaryList">
-                    <div class="empty-text">Choose a date to load diary.</div>
+                    <div class="empty-text">날짜를 선택하면 일기를 볼 수 있어요.</div>
                   </div>
                 </div>
               </div>
@@ -218,33 +232,43 @@
 
         <aside class="avatar-col avatar-col-side">
           <div class="avatar-side-stack">
-            <div class="avatar-card avatar-tab-card">
-              <div class="avatar-card-body">
-                <div class="side-tab-grid">
-                  <button type="button" class="side-tab-btn active" data-tab-target="avatar">Avatar</button>
-                  <button type="button" class="side-tab-btn" data-tab-target="guestbook">Guestbook</button>
-                  <button type="button" class="side-tab-btn" data-tab-target="diary">Diary</button>
+            <div class="cute-card avatar-tab-card menu-card">
+              <div class="cute-card-body">
+                <div class="kids-menu-grid side-tab-grid">
+                  <button type="button" class="btn-menu side-tab-btn active" data-tab-target="avatar">
+                    🏠 내 방
+                  </button>
+
+                  <button type="button" class="btn-menu side-tab-btn" data-tab-target="guestbook">
+                    💌 방명록
+                  </button>
+
+                  <button type="button" class="btn-menu side-tab-btn" data-tab-target="diary">
+                    📖 다이어리
+                  </button>
 
                   {% if is_owner %}
-                  <a href="/shop/" class="side-tab-btn side-tab-link-btn">Shop</a>
+                  <a href="/shop/" class="btn-menu side-tab-btn side-tab-link-btn menu-link">
+                    🛒 상점 가기
+                  </a>
 
                   <button
                     type="button"
-                    class="side-tab-btn"
+                    class="btn-menu side-tab-btn btn-edit-mode"
                     data-tab-target="edit"
                     id="openAvatarEditBtn"
                     onclick="window.switchRightEditPanel && window.switchRightEditPanel('avatar');"
                   >
-                    Avatar Edit
+                    👗 옷 갈아입기
                   </button>
 
                   <button
                     type="button"
-                    class="side-tab-btn"
+                    class="btn-menu side-tab-btn btn-edit-mode"
                     id="openFontEditBtn"
                     onclick="window.switchRightEditPanel && window.switchRightEditPanel('font');"
                   >
-                    Font Edit
+                    🎨 글씨체 바꾸기
                   </button>
                   {% endif %}
                 </div>
@@ -252,17 +276,24 @@
             </div>
 
             {% if request.user.is_authenticated %}
-            <div class="avatar-card utility-card utility-card-visit" id="visitFriendCard">
-              <div class="avatar-card-head">
-                <h2>Visit Friend</h2>
+            <div class="cute-card utility-card utility-card-visit visit-card" id="visitFriendCard">
+              <div class="cute-card-head">
+                <h2>🚀 친구 방 놀러가기</h2>
               </div>
-              <div class="avatar-card-body">
+
+              <div class="cute-card-body">
                 <div class="visit-friend-box">
-                  <select id="friendSelect" class="avatar-select">
-                    <option value="">Choose friend</option>
+                  <select id="friendSelect" class="avatar-select cute-select">
+                    <option value="">누구 방에 놀러갈까?</option>
                   </select>
-                  <button type="button" class="avatar-btn avatar-btn-primary visit-btn-full" id="visitFriendBtn">Visit</button>
-                  <button type="button" class="avatar-btn avatar-btn-secondary visit-btn-full" id="goMyRoomBtn">My Avatar Room</button>
+
+                  <button type="button" class="btn-cute btn-green full-width visit-btn-full" id="visitFriendBtn">
+                    출발!
+                  </button>
+
+                  <button type="button" class="btn-cute btn-gray full-width visit-btn-full" id="goMyRoomBtn">
+                    내 방으로 돌아오기
+                  </button>
                 </div>
               </div>
             </div>
@@ -271,147 +302,190 @@
         </aside>
 
         {% if is_owner %}
-        <aside class="avatar-side-edit" id="avatarSideEdit" aria-hidden="true">
-          <div class="avatar-card avatar-edit-card" id="avatarEditPanel">
-            <div class="avatar-card-head avatar-edit-head">
-              <div><h2>Avatar Edit</h2></div>
+        <aside class="avatar-side-edit" id="avatarSideEdit" hidden aria-hidden="true">
+          <div class="cute-card avatar-edit-card edit-panel" id="avatarEditPanel">
+            <div class="cute-card-head avatar-edit-head">
+              <h2>👗 옷 갈아입기</h2>
+
               <button
                 type="button"
-                class="avatar-btn avatar-btn-secondary avatar-edit-close-btn"
+                class="btn-cute btn-gray avatar-edit-close-btn"
                 id="closeEditDrawerBtn"
                 onclick="window.closeRightEditPanels && window.closeRightEditPanels();"
               >
-                Close
+                닫기 ❌
               </button>
             </div>
 
-            <div class="avatar-card-body">
-              <div class="avatar-edit-layout">
+            <div class="cute-card-body">
+              <div class="kids-edit-layout avatar-edit-layout">
                 <div class="avatar-edit-left">
                   <div class="edit-card edit-card-base">
-                    <div class="edit-card-title">Base</div>
+                    <div class="edit-card-title">내 아바타</div>
+
                     <div class="switch-row compact-switch-row">
-                      <button type="button" class="avatar-btn avatar-btn-secondary gender-btn" data-gender="male">Male</button>
-                      <button type="button" class="avatar-btn avatar-btn-secondary gender-btn" data-gender="female">Female</button>
+                      <button type="button" class="btn-cute btn-blue gender-btn" data-gender="male">남자</button>
+                      <button type="button" class="btn-cute btn-gray gender-btn" data-gender="female">여자</button>
                     </div>
                   </div>
 
                   <div class="edit-card edit-card-apply">
-                    <div class="edit-card-title">Apply</div>
-                    <button type="button" class="avatar-btn avatar-btn-primary save-btn-full" id="saveAvatarChangesBtn">
-                      Save Avatar
+                    <div class="edit-card-title">저장하기</div>
+
+                    <button type="button" class="btn-cute btn-yellow full-width save-btn-full" id="saveAvatarChangesBtn">
+                      저장하기
                     </button>
 
-                    <div class="avatar-reset-section" data-reset-section>
-                      <button type="button" class="avatar-btn avatar-btn-secondary save-btn-full" id="resetAvatarBtn" style="margin-top:8px;">
-                        Reset Avatar
-                      </button>
-                    </div>
+                    <button type="button" class="btn-cute btn-red full-width save-btn-full" id="resetAvatarBtn">
+                      다 벗기
+                    </button>
 
                     <div class="save-hint" id="saveHint"></div>
                   </div>
 
                   <div class="edit-card edit-card-equipped">
-                    <div class="edit-card-title">Equipped</div>
+                    <div class="edit-card-title">입고 있는 옷</div>
+
                     <div class="equipped-list compact-equipped-grid">
-                      <div class="equipped-slot-card" data-slot-card="head"><div class="equipped-label">Head</div><button type="button" class="slot-clear-btn" data-clear-slot="head">Clear</button></div>
-                      <div class="equipped-slot-card" data-slot-card="eyes"><div class="equipped-label">Eyes</div><button type="button" class="slot-clear-btn" data-clear-slot="eyes">Clear</button></div>
-                      <div class="equipped-slot-card" data-slot-card="mouth"><div class="equipped-label">Mouth</div><button type="button" class="slot-clear-btn" data-clear-slot="mouth">Clear</button></div>
-                      <div class="equipped-slot-card" data-slot-card="eyebrow"><div class="equipped-label">Eyebrow</div><button type="button" class="slot-clear-btn" data-clear-slot="eyebrow">Clear</button></div>
-                      <div class="equipped-slot-card" data-slot-card="front_hair"><div class="equipped-label">Front Hair</div><button type="button" class="slot-clear-btn" data-clear-slot="front_hair">Clear</button></div>
-                      <div class="equipped-slot-card" data-slot-card="rear_hair"><div class="equipped-label">Rear Hair</div><button type="button" class="slot-clear-btn" data-clear-slot="rear_hair">Clear</button></div>
-                      <div class="equipped-slot-card" data-slot-card="body"><div class="equipped-label">Body</div><button type="button" class="slot-clear-btn" data-clear-slot="body">Clear</button></div>
-                      <div class="equipped-slot-card" data-slot-card="top"><div class="equipped-label">Top</div><button type="button" class="slot-clear-btn" data-clear-slot="top">Clear</button></div>
-                      <div class="equipped-slot-card" data-slot-card="cloth"><div class="equipped-label">Cloth</div><button type="button" class="slot-clear-btn" data-clear-slot="cloth">Clear</button></div>
-                      <div class="equipped-slot-card" data-slot-card="pants"><div class="equipped-label">Pants</div><button type="button" class="slot-clear-btn" data-clear-slot="pants">Clear</button></div>
-                      <div class="equipped-slot-card" data-slot-card="shoes"><div class="equipped-label">Shoes</div><button type="button" class="slot-clear-btn" data-clear-slot="shoes">Clear</button></div>
-                      <div class="equipped-slot-card" data-slot-card="hat"><div class="equipped-label">Hat</div><button type="button" class="slot-clear-btn" data-clear-slot="hat">Clear</button></div>
+                      <div class="equipped-slot-card" data-slot-card="head">
+                        <div class="equipped-label">얼굴</div>
+                        <button type="button" class="slot-clear-btn" data-clear-slot="head">빼기</button>
+                      </div>
+
+                      <div class="equipped-slot-card" data-slot-card="eyes">
+                        <div class="equipped-label">눈</div>
+                        <button type="button" class="slot-clear-btn" data-clear-slot="eyes">빼기</button>
+                      </div>
+
+                      <div class="equipped-slot-card" data-slot-card="mouth">
+                        <div class="equipped-label">입</div>
+                        <button type="button" class="slot-clear-btn" data-clear-slot="mouth">빼기</button>
+                      </div>
+
+                      <div class="equipped-slot-card" data-slot-card="eyebrow">
+                        <div class="equipped-label">눈썹</div>
+                        <button type="button" class="slot-clear-btn" data-clear-slot="eyebrow">빼기</button>
+                      </div>
+
+                      <div class="equipped-slot-card" data-slot-card="front_hair">
+                        <div class="equipped-label">앞머리</div>
+                        <button type="button" class="slot-clear-btn" data-clear-slot="front_hair">빼기</button>
+                      </div>
+
+                      <div class="equipped-slot-card" data-slot-card="rear_hair">
+                        <div class="equipped-label">뒷머리</div>
+                        <button type="button" class="slot-clear-btn" data-clear-slot="rear_hair">빼기</button>
+                      </div>
+
+                      <div class="equipped-slot-card" data-slot-card="body">
+                        <div class="equipped-label">몸</div>
+                        <button type="button" class="slot-clear-btn" data-clear-slot="body">빼기</button>
+                      </div>
+
+                      <div class="equipped-slot-card" data-slot-card="top">
+                        <div class="equipped-label">상의</div>
+                        <button type="button" class="slot-clear-btn" data-clear-slot="top">빼기</button>
+                      </div>
+
+                      <div class="equipped-slot-card" data-slot-card="cloth">
+                        <div class="equipped-label">전신옷</div>
+                        <button type="button" class="slot-clear-btn" data-clear-slot="cloth">빼기</button>
+                      </div>
+
+                      <div class="equipped-slot-card" data-slot-card="pants">
+                        <div class="equipped-label">하의</div>
+                        <button type="button" class="slot-clear-btn" data-clear-slot="pants">빼기</button>
+                      </div>
+
+                      <div class="equipped-slot-card" data-slot-card="shoes">
+                        <div class="equipped-label">신발</div>
+                        <button type="button" class="slot-clear-btn" data-clear-slot="shoes">빼기</button>
+                      </div>
+
+                      <div class="equipped-slot-card" data-slot-card="hat">
+                        <div class="equipped-label">모자</div>
+                        <button type="button" class="slot-clear-btn" data-clear-slot="hat">빼기</button>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 <div class="avatar-edit-right">
-                  <div class="edit-card avatar-inventory-card">
+                  <div class="edit-card inventory-box avatar-inventory-card">
                     <div class="inventory-head-row">
-                      <div class="edit-card-title inventory-title">Inventory</div>
+                      <div class="edit-card-title inventory-title">옷장</div>
                     </div>
 
-                    <div class="avatar-edit-subtabs">
-                      <button type="button" class="avatar-edit-subtab-btn is-active" data-edit-subtab="avatar">Avatar</button>
-                      <button type="button" class="avatar-edit-subtab-btn" data-edit-subtab="set">Set</button>
-                      <button type="button" class="avatar-edit-subtab-btn" data-edit-subtab="unique">Unique</button>
+                    <div class="kids-tabs avatar-edit-subtabs">
+                      <button type="button" class="kids-tab-btn avatar-edit-subtab-btn is-active" data-edit-subtab="avatar">
+                        기본 옷
+                      </button>
+                      <button type="button" class="kids-tab-btn avatar-edit-subtab-btn" data-edit-subtab="set">
+                        세트 옷
+                      </button>
+                      <button type="button" class="kids-tab-btn avatar-edit-subtab-btn" data-edit-subtab="unique">
+                        스페셜
+                      </button>
                     </div>
 
                     <div class="avatar-edit-subpanel is-active" id="avatarEditSubpanelAvatar">
                       <div class="inventory-filter-section">
                         <div class="inventory-filter-bar" id="inventoryGenderFilterBar">
-                          <button type="button" class="inventory-filter-btn is-active" data-filter-group="gender" data-filter="all">All</button>
-                          <button type="button" class="inventory-filter-btn" data-filter-group="gender" data-filter="male">Male</button>
-                          <button type="button" class="inventory-filter-btn" data-filter-group="gender" data-filter="female">Female</button>
-                          <button type="button" class="inventory-filter-btn" data-filter-group="gender" data-filter="common">Common</button>
+                          <button type="button" class="inventory-filter-btn is-active" data-filter-group="gender" data-filter="all">전체</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="gender" data-filter="male">남자</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="gender" data-filter="female">여자</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="gender" data-filter="common">공용</button>
                         </div>
                       </div>
 
                       <div class="inventory-filter-section">
                         <div class="inventory-filter-bar" id="inventoryTypeFilterBar">
-                          <button type="button" class="inventory-filter-btn is-active" data-filter-group="type" data-filter="all">All</button>
-                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="face">Face</button>
-                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="hair">Hair</button>
-                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="body">Body</button>
-                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="top">Top</button>
-                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="cloth">Cloth</button>
-                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="pants">Pants</button>
-                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="shoes">Shoes</button>
-                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="hat">Hat</button>
+                          <button type="button" class="inventory-filter-btn is-active" data-filter-group="type" data-filter="all">전체</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="face">얼굴</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="hair">머리</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="body">몸</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="top">상의</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="cloth">전신옷</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="pants">하의</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="shoes">신발</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="type" data-filter="hat">모자</button>
                         </div>
                       </div>
 
-                      <div class="inventory-slider-viewport">
-                        <div id="inventoryWrap" class="inventory-grid inventory-grid-wide inventory-grid-slider">
-                          <div class="empty-text">Open Avatar Edit to load inventory.</div>
-                        </div>
+                      <div id="inventoryWrap" class="kids-inventory-grid inventory-grid inventory-grid-wide">
+                        <div class="empty-text">옷장을 여는 중...</div>
                       </div>
                     </div>
 
                     <div class="avatar-edit-subpanel" id="avatarEditSubpanelSet">
-                      <div class="edit-subpanel-empty">
-                        <div class="edit-subpanel-empty-title">Set Inventory</div>
-                        <div class="edit-subpanel-empty-text">Set items will appear here after you purchase or unlock them.</div>
-
-                        <div class="inventory-filter-section set-subfilter-section">
-                          <div class="inventory-filter-bar" id="setTypeFilterBar">
-                            <button type="button" class="inventory-filter-btn is-active" data-filter-group="set-type" data-filter="all">All</button>
-                            <button type="button" class="inventory-filter-btn" data-filter-group="set-type" data-filter="cloth">Cloth</button>
-                            <button type="button" class="inventory-filter-btn" data-filter-group="set-type" data-filter="pants">Pants</button>
-                            <button type="button" class="inventory-filter-btn" data-filter-group="set-type" data-filter="shoes">Shoes</button>
-                            <button type="button" class="inventory-filter-btn" data-filter-group="set-type" data-filter="hat">Hat</button>
-                          </div>
+                      <div class="inventory-filter-section">
+                        <div class="inventory-filter-bar" id="setTypeFilterBar">
+                          <button type="button" class="inventory-filter-btn is-active" data-filter-group="set-type" data-filter="all">전체</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="set-type" data-filter="cloth">전신옷</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="set-type" data-filter="pants">하의</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="set-type" data-filter="shoes">신발</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="set-type" data-filter="hat">모자</button>
                         </div>
+                      </div>
 
-                        <div id="setInventoryWrap" class="inventory-grid inventory-grid-wide inventory-grid-slider">
-                          <div class="empty-text">No set items yet.</div>
-                        </div>
+                      <div id="setInventoryWrap" class="kids-inventory-grid inventory-grid inventory-grid-wide">
+                        <div class="empty-text">세트 옷이 아직 없어요.</div>
                       </div>
                     </div>
 
                     <div class="avatar-edit-subpanel" id="avatarEditSubpanelUnique">
-                      <div class="edit-subpanel-empty">
-                        <div class="edit-subpanel-empty-title">Unique Inventory</div>
-                        <div class="edit-subpanel-empty-text">Unique items will appear here after you purchase or unlock them.</div>
-
-                        <div class="inventory-filter-section unique-subfilter-section">
-                          <div class="inventory-filter-bar" id="uniqueTypeFilterBar">
-                            <button type="button" class="inventory-filter-btn is-active" data-filter-group="unique-type" data-filter="all">All</button>
-                            <button type="button" class="inventory-filter-btn" data-filter-group="unique-type" data-filter="cloth">Cloth</button>
-                            <button type="button" class="inventory-filter-btn" data-filter-group="unique-type" data-filter="pants">Pants</button>
-                            <button type="button" class="inventory-filter-btn" data-filter-group="unique-type" data-filter="shoes">Shoes</button>
-                            <button type="button" class="inventory-filter-btn" data-filter-group="unique-type" data-filter="hat">Hat</button>
-                          </div>
+                      <div class="inventory-filter-section">
+                        <div class="inventory-filter-bar" id="uniqueTypeFilterBar">
+                          <button type="button" class="inventory-filter-btn is-active" data-filter-group="unique-type" data-filter="all">전체</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="unique-type" data-filter="cloth">전신옷</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="unique-type" data-filter="pants">하의</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="unique-type" data-filter="shoes">신발</button>
+                          <button type="button" class="inventory-filter-btn" data-filter-group="unique-type" data-filter="hat">모자</button>
                         </div>
+                      </div>
 
-                        <div id="uniqueInventoryWrap" class="inventory-grid inventory-grid-wide inventory-grid-slider">
-                          <div class="empty-text">No unique items yet.</div>
-                        </div>
+                      <div id="uniqueInventoryWrap" class="kids-inventory-grid inventory-grid inventory-grid-wide">
+                        <div class="empty-text">스페셜 옷이 아직 없어요.</div>
                       </div>
                     </div>
                   </div>
@@ -421,59 +495,63 @@
             </div>
           </div>
 
-          <div class="avatar-card avatar-edit-card" id="fontEditPanel" hidden>
-            <div class="avatar-card-head avatar-edit-head">
-              <div><h2>Font Edit</h2></div>
+          <div class="cute-card avatar-edit-card edit-panel" id="fontEditPanel" hidden>
+            <div class="cute-card-head avatar-edit-head">
+              <h2>🎨 글씨체 바꾸기</h2>
+
               <button
                 type="button"
-                class="avatar-btn avatar-btn-secondary"
+                class="btn-cute btn-gray"
                 id="closeFontDrawerBtn"
                 onclick="window.closeRightEditPanels && window.closeRightEditPanels();"
               >
-                Close
+                닫기 ❌
               </button>
             </div>
 
-            <div class="avatar-card-body">
+            <div class="cute-card-body">
               <div class="font-editor-layout font-editor-layout-vertical">
-
                 <div class="font-editor-top">
                   <div class="edit-card">
                     <div class="font-slider-head">
-                      <div class="edit-card-title">Font Inventory</div>
+                      <div class="edit-card-title">글씨체 고르기</div>
                     </div>
 
                     <div class="font-carousel" id="fontInventoryCarousel">
-                      <button type="button" class="font-carousel-nav font-carousel-nav-prev" id="fontPrevBtn" aria-label="Previous fonts">
-                        <span>‹</span>
+                      <button type="button" class="font-carousel-nav btn-cute btn-gray" id="fontPrevBtn" aria-label="이전 글씨체">
+                        ‹
                       </button>
+
                       <div class="font-carousel-viewport">
                         <div class="font-grid-wrap font-grid-track" id="fontInventoryWrap">
-                          <div class="empty-text">Open Font Edit to load fonts.</div>
+                          <div class="empty-text">글씨체를 불러오는 중...</div>
                         </div>
                       </div>
-                      <button type="button" class="font-carousel-nav font-carousel-nav-next" id="fontNextBtn" aria-label="Next fonts">
-                        <span>›</span>
+
+                      <button type="button" class="font-carousel-nav btn-cute btn-gray" id="fontNextBtn" aria-label="다음 글씨체">
+                        ›
                       </button>
                     </div>
                   </div>
 
-                  <div class="edit-card" style="margin-top:16px;">
+                  <div class="edit-card">
                     <div class="font-slider-head">
-                      <div class="edit-card-title">Effect Inventory</div>
+                      <div class="edit-card-title">반짝이 효과</div>
                     </div>
 
                     <div class="font-carousel" id="effectInventoryCarousel">
-                      <button type="button" class="font-carousel-nav font-carousel-nav-prev" id="effectPrevBtn" aria-label="Previous effects">
-                        <span>‹</span>
+                      <button type="button" class="font-carousel-nav btn-cute btn-gray" id="effectPrevBtn" aria-label="이전 효과">
+                        ‹
                       </button>
+
                       <div class="font-carousel-viewport">
                         <div class="font-grid-wrap font-grid-track" id="effectInventoryWrap">
-                          <div class="empty-text">Open Font Edit to load effects.</div>
+                          <div class="empty-text">효과를 불러오는 중...</div>
                         </div>
                       </div>
-                      <button type="button" class="font-carousel-nav font-carousel-nav-next" id="effectNextBtn" aria-label="Next effects">
-                        <span>›</span>
+
+                      <button type="button" class="font-carousel-nav btn-cute btn-gray" id="effectNextBtn" aria-label="다음 효과">
+                        ›
                       </button>
                     </div>
                   </div>
@@ -481,43 +559,43 @@
 
                 <div class="font-editor-bottom">
                   <div class="edit-card edit-card-font">
-                    <div class="edit-card-title">Current Font</div>
+                    <div class="edit-card-title">현재 글씨 설정</div>
 
                     <div class="font-current-simple">
                       <div class="font-nickname-tools">
                         <div class="font-nickname-tool-group">
-                          <div class="font-tool-label">Nickname Size</div>
+                          <div class="font-tool-label">닉네임 크기</div>
                           <div class="font-tool-row">
                             <button type="button" class="font-tool-btn" id="nicknameSizeDownBtn">A-</button>
-                            <div class="font-tool-value" id="nicknameSizeValue">Default</div>
+                            <div class="font-tool-value" id="nicknameSizeValue">기본</div>
                             <button type="button" class="font-tool-btn" id="nicknameSizeUpBtn">A+</button>
                           </div>
                         </div>
 
                         <div class="font-nickname-tool-group">
-                          <div class="font-tool-label">Nickname Spacing</div>
+                          <div class="font-tool-label">닉네임 간격</div>
                           <div class="font-tool-row">
                             <button type="button" class="font-tool-btn" id="nicknameSpacingDownBtn">-</button>
-                            <div class="font-tool-value" id="nicknameSpacingValue">Default</div>
+                            <div class="font-tool-value" id="nicknameSpacingValue">기본</div>
                             <button type="button" class="font-tool-btn" id="nicknameSpacingUpBtn">+</button>
                           </div>
                         </div>
 
                         <button
                           type="button"
-                          class="avatar-btn avatar-btn-secondary font-default-btn"
+                          class="btn-cute btn-gray font-default-btn"
                           id="resetFontDefaultBtn"
                           data-reset-mode="false"
                         >
-                          Default
+                          기본으로
                         </button>
 
                         <button
                           type="button"
-                          class="avatar-btn avatar-btn-primary font-apply-btn-inline"
+                          class="btn-cute btn-yellow font-apply-btn-inline"
                           id="saveFontPreferenceBtn"
                         >
-                          Apply
+                          글씨체 저장하기
                         </button>
                       </div>
 
@@ -530,7 +608,6 @@
               </div>
             </div>
           </div>
-
         </aside>
         {% endif %}
 
@@ -542,20 +619,20 @@
 <div class="confirm-modal" id="confirmModal" aria-hidden="true">
   <div class="confirm-modal-backdrop" data-close-confirm></div>
   <div class="confirm-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
-    <div class="confirm-modal-icon">✦</div>
-    <h3 class="confirm-modal-title" id="confirmModalTitle">Reset Avatar?</h3>
+    <div class="confirm-modal-icon">✨</div>
+    <h3 class="confirm-modal-title" id="confirmModalTitle">아바타를 초기화할까요?</h3>
     <p class="confirm-modal-text">
-      All equipped avatar items will be cleared, but your owned inventory will remain safe.
+      입고 있는 아이템만 해제되고, 가지고 있는 아이템은 그대로 남아있어요.
     </p>
     <div class="confirm-modal-actions">
-      <button type="button" class="avatar-btn avatar-btn-secondary confirm-cancel-btn" id="confirmCancelBtn">Cancel</button>
-      <button type="button" class="avatar-btn avatar-btn-primary confirm-ok-btn" id="confirmOkBtn">Reset</button>
+      <button type="button" class="btn-cute btn-gray confirm-cancel-btn" id="confirmCancelBtn">취소</button>
+      <button type="button" class="btn-cute btn-yellow confirm-ok-btn" id="confirmOkBtn">초기화</button>
     </div>
   </div>
 </div>
 
 <div class="name-visit-popover is-hidden" id="nameVisitPopover">
-  <button type="button" class="avatar-btn avatar-btn-primary" id="popoverVisitBtn">Visit</button>
+  <button type="button" class="btn-cute btn-blue" id="popoverVisitBtn">방문하기</button>
 </div>
 {% endblock %}
 
@@ -564,57 +641,7 @@
 {% block extra_js %}
 <script>
   window.CSRF_TOKEN = "{{ csrf_token }}";
-
-  window.switchRightEditPanel = function(panelName) {
-    const avatarLayout = document.getElementById("avatarLayout");
-    const avatarHeroCard = document.getElementById("avatarHeroCard");
-    const avatarStageContentCard = document.getElementById("avatarStageContentCard");
-    const avatarEditPanel = document.getElementById("avatarEditPanel");
-    const fontEditPanel = document.getElementById("fontEditPanel");
-    const allSideBtns = document.querySelectorAll(".side-tab-btn");
-
-    if (avatarLayout) avatarLayout.classList.add("is-editing");
-    if (avatarHeroCard) avatarHeroCard.classList.add("is-visible");
-    if (avatarStageContentCard) avatarStageContentCard.classList.remove("is-visible");
-
-    if (avatarEditPanel) {
-      if (panelName === "avatar") avatarEditPanel.removeAttribute("hidden");
-      else avatarEditPanel.setAttribute("hidden", "hidden");
-    }
-
-    if (fontEditPanel) {
-      if (panelName === "font") fontEditPanel.removeAttribute("hidden");
-      else fontEditPanel.setAttribute("hidden", "hidden");
-    }
-
-    allSideBtns.forEach(btn => btn.classList.remove("active"));
-
-    if (panelName === "avatar") {
-      document.getElementById("openAvatarEditBtn")?.classList.add("active");
-    } else if (panelName === "font") {
-      document.getElementById("openFontEditBtn")?.classList.add("active");
-    }
-  };
-
-  window.closeRightEditPanels = function() {
-    const avatarLayout = document.getElementById("avatarLayout");
-    const avatarHeroCard = document.getElementById("avatarHeroCard");
-    const avatarStageContentCard = document.getElementById("avatarStageContentCard");
-    const avatarEditPanel = document.getElementById("avatarEditPanel");
-    const fontEditPanel = document.getElementById("fontEditPanel");
-    const allSideBtns = document.querySelectorAll(".side-tab-btn");
-    const avatarBtn = document.querySelector('.side-tab-btn[data-tab-target="avatar"]');
-
-    if (avatarLayout) avatarLayout.classList.remove("is-editing");
-    if (avatarHeroCard) avatarHeroCard.classList.add("is-visible");
-    if (avatarStageContentCard) avatarStageContentCard.classList.remove("is-visible");
-    if (avatarEditPanel) avatarEditPanel.setAttribute("hidden", "hidden");
-    if (fontEditPanel) fontEditPanel.setAttribute("hidden", "hidden");
-
-    allSideBtns.forEach(btn => btn.classList.remove("active"));
-    avatarBtn?.classList.add("active");
-  };
+  document.body.classList.add("kids-theme-body");
 </script>
-
-<script src="{% static 'avatar/js/room.js' %}?v=6"></script>
+<script src="{% static 'avatar/js/kids-room.js' %}?v=1"></script>
 {% endblock %}

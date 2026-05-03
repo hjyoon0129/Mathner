@@ -1,0 +1,1146 @@
+/* =========================================================
+   kids-room-layout.css
+   Mathner Kids Avatar Room Layout
+   - Base layout
+   - Room card
+   - Avatar canvas
+   - Buttons / forms
+   - Responsive
+   ========================================================= */
+
+@import url("https://fonts.googleapis.com/css2?family=Jua&display=swap");
+
+/* =========================================================
+   1. RESET / BASE
+   ========================================================= */
+
+html,
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #eef8ff !important;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+body.kids-theme-body {
+  background: #eef8ff !important;
+  font-family:
+    "Jua",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif !important;
+  color: #4b3f36;
+}
+
+:root {
+  --kids-bg: #eef8ff;
+  --kids-card: #ffffff;
+  --kids-cream: #fff9cf;
+  --kids-orange: #ff9900;
+  --kids-yellow: #ffe43b;
+  --kids-blue: #6fc6ff;
+  --kids-blue-soft: #eaf7ff;
+  --kids-pink: #ff98c8;
+  --kids-red: #ff7b7b;
+  --kids-green: #9be2a1;
+  --kids-gray: #dedede;
+  --kids-text: #4b3f36;
+  --kids-muted: #82786e;
+  --kids-border: #eeeeee;
+  --kids-shadow: 0 14px 32px rgba(58, 91, 120, 0.12);
+  --kids-radius: 24px;
+
+  --app-header-h: 88px;
+  --app-header-gap: 18px;
+}
+
+/* =========================================================
+   2. HEADER GAP FIX
+   ========================================================= */
+
+main,
+#content,
+.content,
+.content-wrapper,
+.page-wrapper,
+.site-main,
+.wrap,
+.wrap-compact,
+.kids-wrap {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.navbar,
+.site-header,
+header.site-header,
+header.navbar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  margin-top: 0 !important;
+  transform: none !important;
+  z-index: 10000 !important;
+}
+
+.site-header-wrap,
+.navbar-wrap,
+.header-wrap,
+.header-outer,
+.topbar,
+.top-header {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  top: 0 !important;
+}
+
+/* =========================================================
+   3. PAGE LAYOUT
+   ========================================================= */
+
+.avatar-page.kids-theme {
+  min-height: 100vh;
+  padding: calc(var(--app-header-h) + var(--app-header-gap)) 0 34px !important;
+  margin: 0 !important;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.98) 0, transparent 34%),
+    radial-gradient(circle at 92% 10%, rgba(255, 244, 179, 0.68) 0, transparent 28%),
+    linear-gradient(180deg, #eef8ff 0%, #f7fcff 45%, #eef8ff 100%);
+  color: var(--kids-text);
+  overflow-x: hidden;
+}
+
+.avatar-shell {
+  width: min(1120px, calc(100vw - 56px));
+  margin: 0 auto;
+}
+
+.avatar-layout,
+.kids-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 690px) 285px;
+  gap: 24px;
+  align-items: start;
+  justify-content: center;
+}
+
+.avatar-layout.is-editing,
+.kids-layout.is-editing {
+  width: min(1380px, calc(100vw - 56px));
+  grid-template-columns: minmax(0, 620px) minmax(0, 720px);
+  margin: 0 auto;
+}
+
+.avatar-col {
+  min-width: 0;
+}
+
+.avatar-col-main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.avatar-col-side {
+  min-width: 0;
+}
+
+.avatar-side-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: sticky;
+  top: calc(var(--app-header-h) + 28px);
+}
+
+.avatar-side-edit {
+  display: none;
+  min-width: 0;
+  width: 100%;
+}
+
+.avatar-side-edit[hidden] {
+  display: none !important;
+}
+
+.avatar-layout.is-editing .avatar-col-side {
+  display: none !important;
+}
+
+.avatar-layout.is-editing .avatar-side-edit {
+  display: block;
+}
+
+.avatar-layout.is-editing .avatar-side-edit[hidden] {
+  display: none !important;
+}
+
+/* =========================================================
+   4. CARD BASE
+   ========================================================= */
+
+.cute-card,
+.avatar-card {
+  background: var(--kids-card);
+  border-radius: var(--kids-radius);
+  border: 0;
+  box-shadow: var(--kids-shadow);
+  overflow: hidden;
+}
+
+.cute-card-head,
+.avatar-card-head {
+  min-height: 56px;
+  padding: 14px 20px;
+  background: linear-gradient(90deg, #fff7bf 0%, #fffde8 70%, #ffffff 100%);
+  border-bottom: 1px dashed #eadfbe;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.cute-card-head h2,
+.avatar-card-head h2 {
+  margin: 0;
+  color: #ff8a00;
+  font-size: 19px;
+  line-height: 1.15;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.cute-card-body,
+.avatar-card-body {
+  padding: 18px 20px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   5. HERO ROOM CARD
+   ========================================================= */
+
+.avatar-hero-card {
+  display: none;
+}
+
+.avatar-hero-card.is-visible {
+  display: block;
+}
+
+.avatar-hero-card,
+.avatar-hero-card.avatar-card,
+.avatar-hero-card.cute-card,
+#avatarHeroCard {
+  border-radius: 28px !important;
+  overflow: hidden !important;
+  background: linear-gradient(180deg, #ffffff 0%, #fffdfa 100%) !important;
+  box-shadow:
+    0 18px 40px rgba(43, 74, 102, 0.13),
+    0 5px 12px rgba(43, 74, 102, 0.05) !important;
+}
+
+.avatar-hero-card .avatar-card-head,
+.avatar-hero-card .cute-card-head,
+#avatarHeroCard .avatar-card-head,
+#avatarHeroCard .cute-card-head {
+  min-height: 58px !important;
+  padding: 15px 22px !important;
+  background:
+    linear-gradient(90deg, #fff0b8 0%, #fff8d9 58%, #fffef7 100%) !important;
+  border-bottom: 1px dashed #e7d79e !important;
+}
+
+.avatar-hero-card .avatar-card-head h2,
+.avatar-hero-card .cute-card-head h2,
+#avatarHeroCard .avatar-card-head h2,
+#avatarHeroCard .cute-card-head h2 {
+  font-size: 20px !important;
+  color: #ff9300 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.avatar-hero-card .avatar-card-body,
+.avatar-hero-card .cute-card-body,
+#avatarHeroCard .avatar-card-body,
+#avatarHeroCard .cute-card-body {
+  padding: 22px 24px 34px !important;
+}
+
+/* PC에서 Tom의 방 전체 높이를 오른쪽 친구방 놀러가기 카드 하단과 맞춤 */
+@media (min-width: 1301px) {
+  .avatar-hero-card .avatar-card-body,
+  .avatar-hero-card .cute-card-body,
+  #avatarHeroCard .avatar-card-body,
+  #avatarHeroCard .cute-card-body {
+    min-height: 590px !important;
+  }
+}
+
+/* =========================================================
+   6. AVATAR STATUS / STAGE
+   ========================================================= */
+
+.avatar-stage-content-card {
+  display: none;
+}
+
+.avatar-stage-content-card.is-visible {
+  display: block;
+}
+
+.avatar-status-panel {
+  min-height: 470px !important;
+  display: grid !important;
+  align-content: start !important;
+  justify-items: center !important;
+  gap: 22px !important;
+  padding-top: 2px !important;
+}
+
+.avatar-stage {
+  width: min(100%, 610px) !important;
+  height: 400px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  border-radius: 30px !important;
+  border: none !important;
+  outline: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(90, 168, 255, 0.17) 0, transparent 27%),
+    radial-gradient(circle at 50% 78%, rgba(255, 205, 120, 0.10) 0, transparent 34%),
+    linear-gradient(180deg, #071225 0%, #081a38 48%, #07101f 100%) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 18px 34px rgba(255, 255, 255, 0.025),
+    inset 0 -26px 52px rgba(0, 0, 0, 0.36),
+    0 16px 34px rgba(16, 42, 69, 0.16) !important;
+}
+
+/* 별 배경 */
+.avatar-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.95;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.96) 0 1.2px, transparent 1.8px),
+    radial-gradient(circle, rgba(255, 223, 135, 0.84) 0 1.1px, transparent 1.8px),
+    radial-gradient(circle, rgba(127, 228, 255, 0.76) 0 1px, transparent 1.6px);
+  background-size: 84px 84px, 124px 124px, 156px 156px;
+  background-position: 8px 10px, 38px 24px, 66px 12px;
+  animation: avatarStageStarFloat 6s ease-in-out infinite alternate;
+}
+
+/* 안쪽 프레임: 하늘색 테두리 제거, 아주 얇은 흰색 광택만 남김 */
+.avatar-stage::after {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes avatarStageStarFloat {
+  0% {
+    opacity: 0.65;
+    transform: translateY(0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}
+
+/* =========================================================
+   7. AVATAR LAYER POSITION FIX
+   ========================================================= */
+
+.avatar-canvas.avatar-canvas-main,
+.avatar-canvas-main,
+#avatarCanvasView {
+  position: relative !important;
+  z-index: 2 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+
+.avatar-stack,
+#avatarCanvasView .avatar-stack,
+.avatar-canvas-main .avatar-stack {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: 238px !important;
+  height: 238px !important;
+  margin: 0 auto !important;
+  transform: translateY(-8px) !important;
+  pointer-events: none !important;
+  flex: 0 0 auto !important;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.22)) !important;
+}
+
+.avatar-layer,
+#avatarCanvasView .avatar-layer,
+.avatar-canvas-main .avatar-layer {
+  position: absolute !important;
+  inset: 0 !important;
+  left: 0 !important;
+  top: 0 !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  image-rendering: pixelated !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
+  transform: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* 기존 레이어별 위치값 강제 초기화 */
+.avatar-layer-hair-rear,
+.avatar-layer-body,
+.avatar-layer-pants,
+.avatar-layer-shoes,
+.avatar-layer-cloth,
+.avatar-layer-top,
+.avatar-layer-head,
+.avatar-layer-eyebrow,
+.avatar-layer-eyes,
+.avatar-layer-mouth,
+.avatar-layer-hair-front,
+.avatar-layer-hat {
+  left: 0 !important;
+  top: 0 !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: none !important;
+}
+
+/* 레이어 순서 */
+.avatar-layer-hair-rear {
+  z-index: 5 !important;
+}
+
+.avatar-layer-body {
+  z-index: 10 !important;
+}
+
+.avatar-layer-pants {
+  z-index: 14 !important;
+}
+
+.avatar-layer-shoes {
+  z-index: 18 !important;
+}
+
+.avatar-layer-cloth {
+  z-index: 22 !important;
+}
+
+.avatar-layer-top {
+  z-index: 26 !important;
+}
+
+.avatar-layer-head {
+  z-index: 30 !important;
+}
+
+.avatar-layer-eyebrow {
+  z-index: 40 !important;
+}
+
+.avatar-layer-eyes {
+  z-index: 45 !important;
+}
+
+.avatar-layer-mouth {
+  z-index: 50 !important;
+}
+
+.avatar-layer-hair-front {
+  z-index: 60 !important;
+}
+
+.avatar-layer-hat {
+  z-index: 70 !important;
+}
+
+/* 유니크 오라 정렬 */
+#avatarCanvasView .avatar-unique-aura,
+.avatar-canvas-main .avatar-unique-aura,
+.avatar-stack .avatar-unique-aura {
+  position: absolute !important;
+  inset: 0 !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: none !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+}
+
+/* =========================================================
+   8. OWNER INFO / STATS
+   ========================================================= */
+
+.avatar-info-box {
+  text-align: center;
+  display: grid;
+  gap: 20px !important;
+  justify-items: center;
+  padding-bottom: 4px !important;
+}
+
+/* 캔버스와 방문자 사이에서 닉네임이 중앙에 보이도록 위치 보정 */
+.owner-name,
+.avatar-status-name {
+  font-family: "Jua", system-ui, sans-serif;
+  font-weight: 400;
+  word-break: break-word;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 46px !important;
+  padding: 6px 20px 7px !important;
+  border-radius: 999px !important;
+  background:
+    linear-gradient(180deg, #13233f 0%, #091427 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.13) !important;
+  color: #fff8ea !important;
+  font-size: 21px !important;
+  line-height: 1.08 !important;
+  max-width: 100%;
+  box-shadow:
+    0 7px 15px rgba(8, 21, 42, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+  text-shadow:
+    0 0 7px rgba(255, 211, 123, 0.75),
+    0 0 16px rgba(255, 181, 83, 0.38),
+    0 1px 0 rgba(0, 0, 0, 0.55) !important;
+  letter-spacing: -0.01em !important;
+}
+
+.room-row-sub {
+  font-size: 12px;
+  color: var(--kids-muted);
+}
+
+.kids-stats-row,
+.owner-stats-line,
+.owner-stats-inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 0 !important;
+}
+
+.cute-pill,
+.owner-stat-pill {
+  min-height: 36px !important;
+  padding: 0 16px !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, #f8fbff 0%, #edf2fb 100%) !important;
+  border: 1px solid rgba(180, 196, 220, 0.34) !important;
+  color: #3f3934 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 4px 10px rgba(71, 94, 120, 0.06) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.cute-pill strong,
+.owner-stat-pill strong {
+  font-weight: 400;
+}
+
+/* =========================================================
+   9. BUTTONS
+   ========================================================= */
+
+.btn-cute,
+.avatar-btn {
+  min-height: 42px;
+  border: none;
+  border-radius: 17px;
+  padding: 10px 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: "Jua", system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+  text-decoration: none;
+  box-sizing: border-box;
+  white-space: nowrap;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    border-color 0.16s ease,
+    opacity 0.16s ease;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.09);
+}
+
+.btn-cute:hover,
+.avatar-btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-cute:active,
+.avatar-btn:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.btn-cute:disabled,
+.avatar-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.btn-blue,
+.avatar-btn-primary {
+  background: var(--kids-blue);
+  color: #ffffff;
+}
+
+.btn-pink {
+  background: var(--kids-pink);
+  color: #ffffff;
+}
+
+.btn-yellow {
+  background: var(--kids-yellow);
+  color: #654200;
+}
+
+.btn-green {
+  background: var(--kids-green);
+  color: #ffffff;
+}
+
+.btn-gray,
+.avatar-btn-secondary {
+  background: var(--kids-gray);
+  color: #625b55;
+}
+
+.btn-red {
+  background: var(--kids-red);
+  color: #ffffff;
+}
+
+.full-width,
+.save-btn-full,
+.visit-btn-full {
+  width: 100%;
+}
+
+/* =========================================================
+   10. SIDE MENU
+   ========================================================= */
+
+.kids-menu-grid,
+.side-tab-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 11px;
+}
+
+.btn-menu,
+.side-tab-btn {
+  width: 100%;
+  min-height: 52px;
+  border-radius: 18px;
+  border: 2px solid #ededed;
+  background: #ffffff;
+  color: #413a34;
+  font-family: "Jua", system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 11px 17px;
+  text-align: left;
+  text-decoration: none;
+  box-sizing: border-box;
+  box-shadow: none;
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    background 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.btn-menu:hover,
+.side-tab-btn:hover {
+  transform: translateY(-1px);
+  border-color: #b9e5ff;
+  background: #f5fbff;
+  box-shadow: 0 8px 16px rgba(77, 150, 206, 0.09);
+}
+
+.btn-menu.active,
+.side-tab-btn.active {
+  border-color: #72c7ff;
+  background: #edf9ff;
+  color: #33312e;
+}
+
+.btn-edit-mode {
+  background: #fff7bf;
+  border-color: #ffd665;
+}
+
+.menu-link {
+  color: #413a34;
+}
+
+/* =========================================================
+   11. FORM
+   ========================================================= */
+
+.avatar-input,
+.avatar-select,
+.avatar-textarea,
+.cute-input,
+.cute-select,
+.cute-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 18px;
+  border: 2px solid #eeeeee;
+  background: #ffffff;
+  color: #403932;
+  outline: none;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-weight: 400;
+  font-family: "Jua", system-ui, sans-serif;
+}
+
+.avatar-input:focus,
+.avatar-select:focus,
+.avatar-textarea:focus,
+.cute-input:focus,
+.cute-select:focus,
+.cute-textarea:focus {
+  border-color: var(--kids-blue);
+  box-shadow: 0 0 0 4px rgba(114, 199, 255, 0.18);
+}
+
+.avatar-textarea,
+.cute-textarea {
+  min-height: 104px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.visit-friend-box {
+  display: grid;
+  gap: 10px;
+}
+
+.panel-block + .panel-block {
+  margin-top: 20px;
+}
+
+.panel-title {
+  margin: 0 0 10px;
+  font-size: 16px;
+  color: #4c423b;
+  font-weight: 400;
+}
+
+.empty-text {
+  color: #91877d;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.tab-pane {
+  display: none;
+}
+
+.tab-pane.active {
+  display: block;
+}
+
+/* =========================================================
+   12. CONFIRM MODAL
+   ========================================================= */
+
+.confirm-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 12000;
+}
+
+.confirm-modal.is-open {
+  display: block;
+}
+
+.confirm-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(40, 34, 28, 0.45);
+}
+
+.confirm-modal-dialog {
+  position: relative;
+  width: min(420px, calc(100% - 24px));
+  margin: 130px auto 0;
+  padding: 24px 20px 20px;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.22);
+  text-align: center;
+}
+
+.confirm-modal-icon {
+  font-size: 34px;
+}
+
+.confirm-modal-title {
+  margin: 8px 0 8px;
+  color: #ff8a00;
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.confirm-modal-text {
+  margin: 0 0 18px;
+  color: #6e6259;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* =========================================================
+   13. NAME VISIT POPOVER
+   ========================================================= */
+
+.name-visit-popover {
+  position: absolute;
+  z-index: 13000;
+  min-width: 126px;
+  padding: 8px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 2px solid #dff3ff;
+  box-shadow: 0 18px 34px rgba(54, 104, 142, 0.22);
+}
+
+.name-visit-popover.is-hidden {
+  display: none !important;
+}
+
+.name-visit-popover .btn-cute,
+.name-visit-popover .avatar-btn {
+  min-height: 38px;
+  width: 100%;
+}
+
+/* =========================================================
+   14. RESPONSIVE - TABLET
+   ========================================================= */
+
+@media (max-width: 1300px) {
+  .avatar-shell {
+    width: min(960px, calc(100vw - 32px));
+  }
+
+  .avatar-layout,
+  .kids-layout,
+  .avatar-layout.is-editing,
+  .kids-layout.is-editing {
+    grid-template-columns: 1fr;
+    width: min(960px, calc(100vw - 32px));
+    justify-content: stretch;
+  }
+
+  .avatar-side-stack {
+    position: static;
+  }
+
+  .avatar-layout.is-editing .avatar-col-side {
+    display: block !important;
+  }
+
+  .avatar-layout.is-editing .avatar-side-edit {
+    max-width: none;
+  }
+
+  .avatar-stage {
+    width: min(100%, 610px) !important;
+  }
+
+  .avatar-hero-card .avatar-card-body,
+  .avatar-hero-card .cute-card-body,
+  #avatarHeroCard .avatar-card-body,
+  #avatarHeroCard .cute-card-body {
+    min-height: auto !important;
+  }
+}
+
+/* =========================================================
+   15. RESPONSIVE - MOBILE
+   ========================================================= */
+
+@media (max-width: 768px) {
+  :root {
+    --app-header-h: 74px;
+    --app-header-gap: 16px;
+  }
+
+  .avatar-page.kids-theme {
+    padding: calc(var(--app-header-h) + var(--app-header-gap)) 0 18px !important;
+  }
+
+  .avatar-shell {
+    width: 100% !important;
+    padding: 12px 10px 0 !important;
+    box-sizing: border-box;
+  }
+
+  .avatar-layout,
+  .kids-layout,
+  .avatar-layout.is-editing,
+  .kids-layout.is-editing {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 12px !important;
+    align-items: stretch !important;
+    padding: 0 !important;
+  }
+
+  .avatar-col-main,
+  .avatar-col-side {
+    display: contents !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .avatar-side-stack {
+    display: contents !important;
+    position: static !important;
+  }
+
+  .avatar-hero-card {
+    order: 1 !important;
+  }
+
+  .avatar-tab-card {
+    order: 2 !important;
+  }
+
+  .avatar-stage-content-card {
+    order: 3 !important;
+  }
+
+  .avatar-side-edit {
+    order: 3 !important;
+  }
+
+  .utility-card-visit {
+    order: 4 !important;
+  }
+
+  .avatar-layout.is-editing .avatar-col-side {
+    display: contents !important;
+  }
+
+  .avatar-layout.is-editing .avatar-side-edit {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .cute-card,
+  .avatar-card {
+    border-radius: 20px !important;
+    box-shadow: 0 8px 18px rgba(58, 91, 120, 0.1) !important;
+  }
+
+  .cute-card-head,
+  .avatar-card-head {
+    padding: 13px 14px;
+  }
+
+  .cute-card-head h2,
+  .avatar-card-head h2 {
+    font-size: 18px;
+  }
+
+  .cute-card-body,
+  .avatar-card-body {
+    padding: 14px;
+  }
+
+  .avatar-hero-card .avatar-card-body,
+  .avatar-hero-card .cute-card-body,
+  #avatarHeroCard .avatar-card-body,
+  #avatarHeroCard .cute-card-body {
+    min-height: auto !important;
+    padding: 16px 14px 22px !important;
+  }
+
+  .avatar-status-panel {
+    min-height: auto !important;
+    gap: 16px !important;
+    padding-top: 0 !important;
+  }
+
+  .avatar-stage {
+    width: min(100%, 330px) !important;
+    height: 210px !important;
+    border-radius: 24px !important;
+    border: none !important;
+  }
+
+  .avatar-stage::after {
+    inset: 9px;
+    border-radius: 18px;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .avatar-stack,
+  #avatarCanvasView .avatar-stack,
+  .avatar-canvas-main .avatar-stack {
+    width: 182px !important;
+    height: 182px !important;
+    transform: translateY(-5px) !important;
+  }
+
+  .avatar-info-box {
+    gap: 14px !important;
+  }
+
+  .owner-name,
+  .avatar-status-name {
+    min-height: 40px !important;
+    padding: 6px 15px 7px !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
+  }
+
+  .cute-pill,
+  .owner-stat-pill {
+    min-height: 32px !important;
+    padding: 0 12px !important;
+    font-size: 12px !important;
+  }
+
+  .kids-menu-grid,
+  .side-tab-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .btn-menu,
+  .side-tab-btn {
+    min-height: 48px !important;
+    border-radius: 16px !important;
+    font-size: 13px !important;
+    padding: 10px 10px !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  .confirm-modal-dialog {
+    margin-top: 100px;
+  }
+}
+
+/* =========================================================
+   16. RESPONSIVE - SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 420px) {
+  .avatar-shell {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .avatar-stage {
+    width: min(100%, 310px) !important;
+    height: 190px !important;
+  }
+
+  .avatar-stack,
+  #avatarCanvasView .avatar-stack,
+  .avatar-canvas-main .avatar-stack {
+    width: 170px !important;
+    height: 170px !important;
+    transform: translateY(-4px) !important;
+  }
+
+  .kids-menu-grid,
+  .side-tab-grid {
+    gap: 8px !important;
+  }
+
+  .btn-menu,
+  .side-tab-btn {
+    font-size: 12px !important;
+    padding: 9px 8px !important;
+  }
+}
+

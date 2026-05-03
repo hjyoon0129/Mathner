@@ -2,7 +2,11 @@
 {% load static %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'game/css/aura_play.css' %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Boogaloo&family=Bubblegum+Sans&family=Cabin+Sketch:wght@400;700&family=Capriola&family=Chewy&family=Coming+Soon&family=Delius+Swash+Caps&family=Dokdo&family=Dongle:wght@400;700&family=Gaegu:wght@400;700&family=Gowun+Batang:wght@400;700&family=Life+Savers:wght@400;700;800&family=Londrina+Shadow&family=Love+Ya+Like+A+Sister&family=Luckiest+Guy&family=McLaren&family=Modak&family=Mouse+Memoirs&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+<link rel="stylesheet" href="{% static 'game/css/aura_play.css' %}?v=20260506_v30_modes_mobile">
 
 <link rel="preload" as="image" href="{% static 'avatar/img/base/male/body.webp' %}">
 <link rel="preload" as="image" href="{% static 'avatar/img/base/male/head.webp' %}">
@@ -11,139 +15,107 @@
 <link rel="preload" as="image" href="{% static 'avatar/img/base/male/eyes.webp' %}">
 <link rel="preload" as="image" href="{% static 'avatar/img/base/male/eyebrow.webp' %}">
 <link rel="preload" as="image" href="{% static 'avatar/img/base/male/mouth.webp' %}">
-
-<link rel="preload" as="image" href="{% static 'avatar/img/base/female/body.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/female/head.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/female/rear_hair.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/female/front_hair.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/female/eyes.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/female/eyebrow.webp' %}">
-<link rel="preload" as="image" href="{% static 'avatar/img/base/female/mouth.webp' %}">
 <link rel="preload" as="image" href="{% static 'img/effects/wind_aura_base.png' %}">
 {% endblock %}
 
 {% block content %}
-<div
-    class="play-page"
-    id="playPageRoot"
-    data-play-avatar-json='{{ play_avatar_data_json|safe }}'
-    data-base-body-male="{% static 'avatar/img/base/male/body.webp' %}"
-    data-base-head-male="{% static 'avatar/img/base/male/head.webp' %}"
-    data-base-hair-back-male="{% static 'avatar/img/base/male/rear_hair.webp' %}"
-    data-base-hair-front-male="{% static 'avatar/img/base/male/front_hair.webp' %}"
-    data-base-eyes-male="{% static 'avatar/img/base/male/eyes.webp' %}"
-    data-base-eyebrow-male="{% static 'avatar/img/base/male/eyebrow.webp' %}"
-    data-base-mouth-male="{% static 'avatar/img/base/male/mouth.webp' %}"
-
-    data-base-body-female="{% static 'avatar/img/base/female/body.webp' %}"
-    data-base-head-female="{% static 'avatar/img/base/female/head.webp' %}"
-    data-base-hair-back-female="{% static 'avatar/img/base/female/rear_hair.webp' %}"
-    data-base-hair-front-female="{% static 'avatar/img/base/female/front_hair.webp' %}"
-    data-base-eyes-female="{% static 'avatar/img/base/female/eyes.webp' %}"
-    data-base-eyebrow-female="{% static 'avatar/img/base/female/eyebrow.webp' %}"
-    data-base-mouth-female="{% static 'avatar/img/base/female/mouth.webp' %}"
-    data-wind-aura-url="{% static 'img/effects/wind_aura_base.png' %}"
->
-    <div id="playRunBanner" class="play-run-banner">
-        <span class="play-run-dot"></span>
-        <span>Run in progress · Finish with Submit / Reset / Timeout</span>
-    </div>
+<div class="play-page" id="playPageRoot"
+     data-aura-state="idle"
+     data-play-avatar-json='{{ play_avatar_data_json|default:"{}"|safe }}'
+     data-base-body-male="{% static 'avatar/img/base/male/body.webp' %}"
+     data-base-head-male="{% static 'avatar/img/base/male/head.webp' %}"
+     data-base-hair-back-male="{% static 'avatar/img/base/male/rear_hair.webp' %}"
+     data-base-hair-front-male="{% static 'avatar/img/base/male/front_hair.webp' %}"
+     data-base-eyes-male="{% static 'avatar/img/base/male/eyes.webp' %}"
+     data-base-eyebrow-male="{% static 'avatar/img/base/male/eyebrow.webp' %}"
+     data-base-mouth-male="{% static 'avatar/img/base/male/mouth.webp' %}"
+     data-wind-aura-url="{% static 'img/effects/wind_aura_base.png' %}">
 
     <div class="wrap wrap-compact">
         <div class="grid grid-tight play-layout">
+
             <section class="card play-main-card">
                 <div class="card-h play-main-head">
-                    <div class="play-head-copy">
-                        <h2 id="leftTitle">Choose Mode</h2>
-                        <div class="sub" id="leftSub">Pick Practice, Classic, or Challenge.</div>
-                    </div>
+                    <h2 id="leftTitle">어떤 마법을 연습할까? ✨</h2>
                 </div>
 
                 <div class="card-b play-main-body">
+
                     <div class="screen on" id="screenSelect">
                         <div class="tiles mode-tiles-3" id="gameModeTiles"></div>
-                        <div class="spacer-12"></div>
-                        <div class="modeBand" id="modeBandSummary"></div>
                     </div>
 
                     <div class="screen" id="screenSetup">
-                        <div class="modeBand" id="modeBandNow"></div>
-
-                        <div class="spacer-12"></div>
+                        <div class="modeBand" id="modeBandNow">🌱 연습 모드</div>
 
                         <div id="practiceOperationWrap">
-                            <div class="sectionLabel">Practice Operation</div>
-                            <div class="seg" id="practiceOpSeg"></div>
+                            <div class="sectionLabel">어떤 기호를 연습할까? ➕ ➖ ✖️ ➗</div>
+                            <div class="seg operation-seg" id="practiceOpSeg"></div>
                         </div>
 
                         <div class="spacer-12"></div>
 
                         <div class="setup-grid">
                             <div class="setup-card">
-                                <div class="setup-k">Star Reward</div>
-                                <div class="setup-v" id="setupRewardText">1 star / correct</div>
+                                <div class="setup-k">보상 별 ⭐</div>
+                                <div class="setup-v" id="setupRewardText">
+                                    기본 1개 →
+                                    <br>
+                                    <strong>피버 3개!</strong>
+                                </div>
                             </div>
+
                             <div class="setup-card">
-                                <div class="setup-k">Question Rule</div>
-                                <div class="setup-v" id="setupRuleText">Manual operation</div>
-                            </div>
-                            <div class="setup-card">
-                                <div class="setup-k">Difficulty</div>
-                                <div class="setup-v" id="setupDifficultyText">Easy</div>
-                            </div>
-                            <div class="setup-card">
-                                <div class="setup-k">Range</div>
-                                <div class="setup-v" id="setupRangeText">1 ~ 9</div>
+                                <div class="setup-k">규칙 🎯</div>
+                                <div class="setup-v" id="setupRuleText">
+                                    연속으로 맞추면
+                                    <br>
+                                    <strong>마법이 강해져요!</strong>
+                                </div>
                             </div>
                         </div>
 
                         <div class="spacer-12"></div>
 
-                        <div class="seg">
-                            <button class="btn secondary" id="btnBackToModes" type="button">← Back</button>
-                            <button class="btn" id="btnGoPlay" type="button">Start Game</button>
+                        <div class="seg setup-action-seg">
+                            <button class="btn secondary" id="btnBackToModes" type="button">⬅️ 뒤로 가기</button>
+                            <button class="btn btn-primary" id="btnGoPlay" type="button">🚀 게임 화면으로!</button>
                         </div>
-
-                        <div class="spacer-10"></div>
-                        <div class="sub" id="setupHint"></div>
                     </div>
 
                     <div class="screen" id="screenPlay">
-                        <div class="gameTop">
-                            <div class="timerBox" id="timerBox">
-                                <div class="timerRing" id="timerRing" aria-hidden="true"></div>
-                                <div class="timerInfo">
-                                    <div class="timerText">⏱ <span id="timeLeft">60</span>s</div>
-                                    <div class="sub" id="playDesc">—</div>
+                        <div class="top-nav-action">
+                            <button class="btn secondary" id="btnBackToSetup" type="button">⬅️ 설정으로 돌아가기</button>
+                        </div>
+
+                        <div class="question" id="questionBox">
+                            <div class="live-effects" id="liveEffects" aria-hidden="true"></div>
+
+                            <div class="game-status-bar">
+                                <div class="timerBox">
+                                    ⏱ <span id="timeLeft">60</span>초
+                                </div>
+                                <div class="scoreBox">
+                                    ⭐ <span id="earnedStars">0</span>개
                                 </div>
                             </div>
 
-                            <div class="seg seg-right top-actions">
-                                <button class="btn secondary" id="btnReset" type="button">Reset</button>
-                                <button class="btn" id="btnStart" type="button">Start</button>
+                            <div class="bar">
+                                <i id="progressFill"></i>
                             </div>
-                        </div>
 
-                        <div class="bar"><i id="progressFill"></i></div>
-
-                        <div class="question" id="questionBox">
-                            <div class="question-stage-glow" id="questionStageGlow"></div>
-                            <div class="live-effects" id="liveEffects"></div>
-
-                            <div class="bigMath" id="mathText">Press start!</div>
+                            <div class="bigMath" id="mathText">준비됐나요? 🙂</div>
 
                             <div class="answerRow">
-                                <input
-                                    id="answerInput"
-                                    class="answerInput"
-                                    type="text"
-                                    inputmode="numeric"
-                                    pattern="[0-9]*"
-                                    placeholder="Type your answer"
-                                    autocomplete="off"
-                                    disabled
-                                >
-                                <button class="btn submitBtn" id="btnSubmit" type="button" disabled>Submit</button>
+                                <input id="answerInput"
+                                       class="answerInput"
+                                       type="text"
+                                       inputmode="numeric"
+                                       pattern="[0-9]*"
+                                       placeholder="정답은?"
+                                       autocomplete="off"
+                                       disabled>
+                                <button class="btn btn-primary submitBtn" id="btnSubmit" type="button" disabled>발사! 🚀</button>
                             </div>
 
                             <div class="mobilePadWrap" id="mobilePadWrap" aria-hidden="true">
@@ -151,54 +123,28 @@
                                     <button type="button" class="mobilePadBtn" data-pad="1">1</button>
                                     <button type="button" class="mobilePadBtn" data-pad="2">2</button>
                                     <button type="button" class="mobilePadBtn" data-pad="3">3</button>
-                                    <button type="button" class="mobilePadBtn mobilePadBtnUtil" data-pad="back">⌫</button>
+                                    <button type="button" class="mobilePadBtn mobilePadBtnUtil" data-pad="back">지우기</button>
 
                                     <button type="button" class="mobilePadBtn" data-pad="4">4</button>
                                     <button type="button" class="mobilePadBtn" data-pad="5">5</button>
                                     <button type="button" class="mobilePadBtn" data-pad="6">6</button>
-                                    <button type="button" class="mobilePadBtn mobilePadBtnUtil" data-pad="clear">C</button>
+                                    <button type="button" class="mobilePadBtn mobilePadBtnUtil" data-pad="clear">전체삭제</button>
 
                                     <button type="button" class="mobilePadBtn" data-pad="7">7</button>
                                     <button type="button" class="mobilePadBtn" data-pad="8">8</button>
                                     <button type="button" class="mobilePadBtn" data-pad="9">9</button>
                                     <button type="button" class="mobilePadBtn" data-pad="0">0</button>
                                 </div>
-
-                                <div class="mobileActionRow">
-                                    <button class="btn mobileActionBtn mobileStartWide" id="btnMobileStart" type="button">Start</button>
-                                    <button class="btn secondary mobileActionBtn" id="btnMobileReset" type="button">Reset</button>
-                                    <button class="btn secondary mobileActionBtn" id="btnMobileBackToSetup" type="button">Settings</button>
-                                </div>
                             </div>
 
-                            <div class="play-hud-strip">
-                                <div class="play-hud-meta">
-                                    <span class="hud-inline">Mode <b id="hudMode">Practice</b></span>
-                                    <span class="hud-inline">Operation <b id="hudOperation">Add</b></span>
-                                </div>
-
-                                <div class="play-hud-stats">
-                                    <span class="hud-pill">Score <b id="score">0</b></span>
-                                    <span class="hud-pill">Correct <b id="correct">0</b></span>
-                                    <span class="hud-pill">Stars <b id="earnedStars">0</b></span>
-                                    <span class="hud-pill combo">Combo <b id="comboCount">0</b></span>
-                                </div>
+                            <div class="msg-wrap">
+                                <div class="msg" id="msg"></div>
                             </div>
 
-                            <div class="feverDock" id="feverDock">
-                                <div class="feverPill" id="feverPill">
-                                    <span class="feverDot"></span>
-                                    <span class="feverText" id="feverText">Fever Ready</span>
-                                </div>
+                            <div class="actionRow bottom-action-row">
+                                <button class="btn btn-primary" id="btnStart" type="button">▶️ 준비, 시작!</button>
+                                <button class="btn secondary" id="btnReset" type="button">🔄 다시 하기</button>
                             </div>
-
-                            <div class="msg" id="msg">Press start 🙂</div>
-                        </div>
-
-                        <div class="spacer-10"></div>
-
-                        <div class="seg">
-                            <button class="btn secondary" id="btnBackToSetup" type="button">← Settings</button>
                         </div>
                     </div>
                 </div>
@@ -206,184 +152,141 @@
 
             <aside class="card side-panel status-card">
                 <div class="card-h status-card-head">
-                    <h2>Avatar Status</h2>
+                    <h2>✨ 내 마법사 상태 ✨</h2>
                 </div>
 
                 <div class="card-b status-body">
                     <div class="status-avatar-stage">
                         <div class="status-avatar-wrap">
-                            <div class="status-avatar-canvas is-idle is-breathing" id="statusAvatarCanvas">
-                                <div class="status-avatar-burst" id="statusAvatarBurst" aria-hidden="true"></div>
+                            <div class="status-avatar-canvas is-idle" id="statusAvatarCanvas">
 
-                                <div class="status-avatar-ground-aura" id="statusAvatarGroundAura" aria-hidden="true">
-                                    <img
-                                        class="status-avatar-ground-aura-img"
-                                        id="statusAvatarGroundAuraImg"
-                                        src="{% static 'img/effects/wind_aura_base.png' %}"
-                                        alt=""
-                                    >
+                                <div class="avatar-bg-effect" id="avatarBgEffect" aria-hidden="true">
+                                    <div class="canvas-moon"></div>
+
+                                    <div class="avatar-wind-ring ring-a"></div>
+                                    <div class="avatar-wind-ring ring-b"></div>
+                                    <div class="avatar-wind-ring ring-c"></div>
+
+                                    <div class="canvas-particle p1"></div>
+                                    <div class="canvas-particle p2"></div>
+                                    <div class="canvas-particle p3"></div>
+                                    <div class="canvas-particle p4"></div>
+                                    <div class="canvas-particle p5"></div>
+                                    <div class="canvas-particle p6"></div>
+                                    <div class="canvas-particle p7"></div>
+                                    <div class="canvas-particle p8"></div>
+                                    <div class="canvas-particle p9"></div>
+                                    <div class="canvas-particle p10"></div>
+                                    <div class="canvas-particle p11"></div>
+                                    <div class="canvas-particle p12"></div>
                                 </div>
 
-                                <div class="status-avatar-stack" id="statusAvatarStack">
-                                    <img class="status-avatar-layer status-avatar-layer-body" src="{% static 'avatar/img/base/male/body.webp' %}" alt="">
-                                    <img class="status-avatar-layer status-avatar-layer-hair-rear" src="{% static 'avatar/img/base/male/rear_hair.webp' %}" alt="">
-                                    <img class="status-avatar-layer status-avatar-layer-head" src="{% static 'avatar/img/base/male/head.webp' %}" alt="">
-                                    <img class="status-avatar-layer status-avatar-layer-eyebrow" src="{% static 'avatar/img/base/male/eyebrow.webp' %}" alt="">
-                                    <img class="status-avatar-layer status-avatar-layer-eyes" src="{% static 'avatar/img/base/male/eyes.webp' %}" alt="">
-                                    <img class="status-avatar-layer status-avatar-layer-mouth" src="{% static 'avatar/img/base/male/mouth.webp' %}" alt="">
-                                    <img class="status-avatar-layer status-avatar-layer-hair-front" src="{% static 'avatar/img/base/male/front_hair.webp' %}" alt="">
-                                </div>
-
-                                <div class="status-avatar-ground"></div>
+                                <div class="status-avatar-stack" id="statusAvatarStack"></div>
                             </div>
                         </div>
-                        <div class="status-avatar-name" id="statusAvatarName">
+
+                        <div class="status-avatar-name synced-nickname" id="statusAvatarName">
                             {% if user.is_authenticated %}
-                                {{ my_nickname|default:"Player" }}
+                                {{ my_nickname|default:"마법사님" }}
                             {% else %}
-                                Guest
+                                반가운 손님! 👋
                             {% endif %}
                         </div>
                     </div>
 
                     <div class="status-core-grid">
                         <div class="status-core-card">
-                            <div class="status-core-k">Total Stars</div>
+                            <div class="status-core-k">모은 별 ⭐</div>
                             <div class="status-core-v" id="statStars">{{ total_stars|default:0 }}</div>
                         </div>
+
                         <div class="status-core-card">
-                            <div class="status-core-k">Remaining Keys</div>
+                            <div class="status-core-k">남은 열쇠 🔑</div>
                             <div class="status-core-v" id="statKeys">{{ remaining_keys|default:3 }}</div>
                         </div>
-                        <div class="status-core-card">
-                            <div class="status-core-k">Aura State</div>
-                            <div class="status-core-v" id="statAura">Idle</div>
-                        </div>
-                        <div class="status-core-card">
-                            <div class="status-core-k">Selected Mode</div>
-                            <div class="status-core-v" id="statGameMode">Practice</div>
-                        </div>
-                    </div>
 
-                    <div class="play-hidden-stats" aria-hidden="true">
-                        <span id="statMode">Add</span>
-                        <span id="statDifficulty">Easy</span>
+                        <div class="status-core-card">
+                            <div class="status-core-k">아바타 파워 ⚡</div>
+                            <div class="status-core-v" id="statAura">조용함...</div>
+                        </div>
+
+                        <div class="status-core-card">
+                            <div class="status-core-k">현재 모드 🎮</div>
+                            <div class="status-core-v" id="statGameMode">연습 모드</div>
+                        </div>
                     </div>
                 </div>
             </aside>
         </div>
     </div>
 
-    <div class="rewardOverlay" id="rewardOverlay" aria-hidden="true">
-        <div class="rewardVideoGlow"></div>
-        <div class="rewardConfetti" id="rewardConfetti"></div>
+    <div class="rewardOverlay" id="rewardOverlay">
+        <div class="rewardConfetti"></div>
         <div class="rewardCard">
-            <div class="rewardStar">★</div>
-            <div class="rewardTitle" id="rewardTitle">Stars Earned</div>
+            <div class="rewardStarBounce">⭐</div>
+            <div class="rewardTitle">우와! 대단해요!</div>
             <div class="rewardAmount" id="rewardAmount">+0</div>
-            <div class="rewardSub" id="rewardSub">Great job!</div>
+            <div class="rewardSub">별을 이만큼이나 모았어요!</div>
         </div>
     </div>
 
     <div class="modal" id="modal">
-        <div class="modalBox" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modalBox" role="dialog" aria-modal="true">
             <div class="modalHead">
-                <h3 id="modalTitle">Run Result</h3>
-                <button class="btn secondary" id="btnClose" type="button">Close</button>
+                <h3 id="modalTitle">🎉 최종 결과 발표! 🎉</h3>
             </div>
 
             <div class="modalBody">
+                <div class="resultText" id="rText">최고의 마법사네요! 👍</div>
+
                 <div class="resultPanel">
                     <div class="resultItem">
-                        <div class="k">Correct</div>
+                        <div class="k">⭕ 정답</div>
                         <div class="v" id="rCorrect">0</div>
                     </div>
+
                     <div class="resultItem">
-                        <div class="k">Wrong</div>
+                        <div class="k">❌ 오답</div>
                         <div class="v" id="rWrong">0</div>
                     </div>
+
                     <div class="resultItem">
-                        <div class="k">Accuracy</div>
-                        <div class="v" id="rAcc">0%</div>
-                    </div>
-                    <div class="resultItem">
-                        <div class="k">Stars Earned</div>
+                        <div class="k">⭐ 얻은 별</div>
                         <div class="v" id="rStars">0</div>
-                    </div>
-                    <div class="resultItem">
-                        <div class="k">Best Combo</div>
-                        <div class="v" id="rCombo">0</div>
-                    </div>
-                    <div class="resultItem">
-                        <div class="k">Mode</div>
-                        <div class="v" id="rMode">Practice</div>
                     </div>
                 </div>
 
-                <div class="resultText" id="rText">Good job!</div>
-
-                <div class="resultRankBlock">
-                    <div class="resultRankHead">
-                        <h4>Friend Ranking</h4>
-                        <div class="sub">내 바로 위 / 아래 친구 랭킹</div>
-                    </div>
-
-                    <div class="resultRankSummary">
-                        <div class="resultRankSummaryItem">
-                            <div class="k">My Rank</div>
-                            <div class="v" id="rMyFriendRank">-</div>
-                        </div>
-                        <div class="resultRankSummaryItem">
-                            <div class="k">My Score</div>
-                            <div class="v" id="rMyFriendScore">-</div>
-                        </div>
-                    </div>
-
-                    <div class="resultRankNeighbors">
-                        <div class="resultRankNeighborCard">
-                            <div class="k">Above Me</div>
-                            <div class="v" id="rAboveFriend">-</div>
-                        </div>
-                        <div class="resultRankNeighborCard">
-                            <div class="k">Below Me</div>
-                            <div class="v" id="rBelowFriend">-</div>
-                        </div>
-                    </div>
-
-                    <div class="resultRankFooter">
-                        <a href="{% url 'ranking:home' %}?mode=practice" class="btn secondary" id="btnOpenRanking">Open Ranking</a>
-                    </div>
+                <div id="friendRankSummary" class="friend-rank-summary">
+                    <div class="friend-rank-label">🏆 내 친구 랭킹</div>
+                    <div id="friendRankText" class="friend-rank-text">계산 중... ⏳</div>
                 </div>
             </div>
 
             <div class="modalActions">
-                <button class="btn secondary" id="btnAgain" type="button">Play Again</button>
+                <button class="btn btn-primary" id="btnAgain" type="button">🔄 한 번 더 하기!</button>
+                <a class="btn secondary" id="btnOpenRanking" href="{% url 'ranking:home' %}">🏆 랭킹</a>
+                <button class="btn secondary" id="btnClose" type="button">닫기</button>
             </div>
         </div>
     </div>
 
     <div class="modal" id="keyExhaustedModal">
-        <div class="modalBox keyModalBox" role="dialog" aria-modal="true" aria-labelledby="keyModalTitle">
+        <div class="modalBox" role="dialog" aria-modal="true">
             <div class="modalHead">
-                <h3 id="keyModalTitle">No Keys Left Today</h3>
-                <button class="btn secondary" id="btnKeyModalClose" type="button">Close</button>
+                <h3>앗! 열쇠가 없어요 😭</h3>
             </div>
 
-            <div class="modalBody">
-                <div class="keyModalHero">
-                    <div class="keyModalIcon">🔑</div>
-                    <div>
-                        <div class="keyModalMain">You used all free keys for today.</div>
-                        <div class="keyModalSub">
-                            Come back later or unlock more daily turns from pricing.
-                        </div>
-                    </div>
+            <div class="modalBody key-modal-body">
+                <div class="key-modal-icon">🔑❌</div>
+                <div class="key-modal-text">
+                    오늘 쓸 수 있는 무료 열쇠를 다 썼어요!<br>
+                    내일 다시 오거나 부모님께 여쭤보세요!
                 </div>
             </div>
 
             <div class="modalActions">
-                <button class="btn secondary" id="btnLater" type="button">Maybe Later</button>
-                <a href="{% url 'core:landing' %}#pricing" class="btn" id="btnGoPricing">Go to Pricing</a>
+                <button class="btn secondary" id="btnKeyModalClose" type="button">나중에 할래요</button>
+                <a href="{% url 'core:landing' %}#pricing" class="btn btn-primary">🎟️ 이용권 구경하기</a>
             </div>
         </div>
     </div>
@@ -404,47 +307,8 @@
     rankingHomeUrlBase: "{% url 'ranking:home' %}",
     isAuthenticated: {{ user.is_authenticated|yesno:"true,false" }},
     avatarLoginUrl: "{% url 'account_login' %}?next={% url 'avatar:my_room' %}",
-    nickname: "{{ my_nickname|default:''|escapejs }}",
-    username: "{{ username|default:''|escapejs }}"
+    nickname: "{{ my_nickname|default:''|escapejs }}"
   };
 </script>
-
-<script>
-(function () {
-  function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-    return '';
-  }
-
-  window.trackMathnerEvent = function (eventType, extra) {
-    const cfg = window.PLAY_PAGE_CONFIG || {};
-    if (!cfg.trackEventUrl) return;
-
-    fetch(cfg.trackEventUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCookie('csrftoken')
-      },
-      body: JSON.stringify(Object.assign({
-        event_type: eventType,
-        game_name: cfg.gameName || 'aura',
-        source: 'aura_play_html',
-        page: window.location.pathname
-      }, extra || {})),
-      keepalive: true
-    }).catch(function () {});
-  };
-
-  document.addEventListener('click', function (event) {
-    const loginLink = event.target.closest('a[href*="/accounts/"]');
-    if (loginLink) {
-      window.trackMathnerEvent('login_click', { reason: 'login_link_click' });
-    }
-  });
-})();
-</script>
-<script src="{% static 'game/js/aura_play.js' %}?v=20260501_eventlog_1"></script>
+<script src="{% static 'game/js/aura_play.js' %}?v=20260506_v33_avatar_room_font_sync"></script>
 {% endblock %}

@@ -3,126 +3,235 @@ from apps.shop.models import ShopItem
 
 
 class Command(BaseCommand):
-    help = "Seed font items into shop"
+    help = "Replace shop font items with Korean kid-friendly Google fonts"
+
+    def set_if_exists(self, obj, field_names, key, value):
+        if key in field_names:
+            setattr(obj, key, value)
 
     def handle(self, *args, **options):
+        category_profile_font = getattr(
+            ShopItem,
+            "CATEGORY_PROFILE_FONT",
+            "profile_font",
+        )
+        gender_common = getattr(ShopItem, "GENDER_COMMON", "common")
+
+        model_field_names = {
+            field.name
+            for field in ShopItem._meta.get_fields()
+            if hasattr(field, "attname")
+        }
+
         fonts = [
             {
-                "name": "Bubblegum Sans",
-                "font_family_key": ShopItem.FONT_FAMILY_BUBBLEGUM_SANS,
-                "description": "Bright playful font for nickname and title.",
+                "name": "주아",
+                "font_family_key": "jua",
+                "old_keys": ["bubblegum_sans", "jua"],
+                "old_names": ["Bubblegum Sans", "말랑 주아", "Jua", "주아"],
+                "description": "둥글고 또렷해서 초등 저학년 닉네임에 잘 어울리는 한글 폰트.",
                 "price_stars": 120,
+                "is_premium": True,
             },
             {
-                "name": "Delius Swash Caps",
-                "font_family_key": ShopItem.FONT_FAMILY_DELIUS_SWASH_CAPS,
-                "description": "Curly stylish font for nickname and title.",
+                "name": "감자꽃",
+                "font_family_key": "gamja_flower",
+                "old_keys": ["delius_swash_caps", "gamja_flower"],
+                "old_names": ["Delius Swash Caps", "감자꽃 손글씨", "Gamja Flower", "감자꽃"],
+                "description": "손으로 쓴 느낌이 부드럽고 귀여운 한글 폰트.",
                 "price_stars": 120,
+                "is_premium": True,
             },
             {
-                "name": "Boogaloo",
-                "font_family_key": ShopItem.FONT_FAMILY_BOOGALOO,
-                "description": "Comic display font with fun energy.",
+                "name": "동글",
+                "font_family_key": "dongle",
+                "old_keys": ["boogaloo", "dongle"],
+                "old_names": ["Boogaloo", "동글 팡팡", "Dongle", "동글"],
+                "description": "크고 동글동글해서 아이들이 보기 쉬운 한글 폰트.",
                 "price_stars": 120,
+                "is_premium": False,
             },
             {
-                "name": "Love Ya Like A Sister",
-                "font_family_key": ShopItem.FONT_FAMILY_LOVE_YA_LIKE_A_SISTER,
-                "description": "Cute hand-drawn title font.",
+                "name": "하이 멜로디",
+                "font_family_key": "hi_melody",
+                "old_keys": ["love_ya_like_a_sister", "hi_melody"],
+                "old_names": ["Love Ya Like A Sister", "하이 멜로디", "Hi Melody"],
+                "description": "가볍고 귀여운 손글씨 느낌의 프리미엄 한글 폰트.",
                 "price_stars": 130,
+                "is_premium": True,
             },
             {
-                "name": "Luckiest Guy",
-                "font_family_key": ShopItem.FONT_FAMILY_LUCKIEST_GUY,
-                "description": "Bold arcade-style nickname font.",
-                "price_stars": 150,
-            },
-            {
-                "name": "Coming Soon",
-                "font_family_key": ShopItem.FONT_FAMILY_COMING_SOON,
-                "description": "Soft handwriting style font.",
+                "name": "개구쟁이",
+                "font_family_key": "gaegu",
+                "old_keys": ["coming_soon", "gaegu"],
+                "old_names": ["Coming Soon", "꼬마 손글씨", "Gaegu", "개구쟁이"],
+                "description": "장난기 있는 손글씨 느낌의 한글 폰트.",
                 "price_stars": 110,
+                "is_premium": False,
             },
             {
-                "name": "Life Savers",
-                "font_family_key": ShopItem.FONT_FAMILY_LIFE_SAVERS,
-                "description": "Retro candy sign font.",
+                "name": "큐트 폰트",
+                "font_family_key": "cute_font",
+                "old_keys": ["life_savers", "cute_font"],
+                "old_names": ["Life Savers", "귀염 글씨", "Cute Font", "큐트 폰트"],
+                "description": "아기자기하고 귀여운 분위기의 프리미엄 한글 폰트.",
                 "price_stars": 150,
+                "is_premium": True,
             },
             {
-                "name": "Chewy",
-                "font_family_key": ShopItem.FONT_FAMILY_CHEWY,
-                "description": "Rounded chunky display font.",
+                "name": "싱글 데이",
+                "font_family_key": "single_day",
+                "old_keys": ["chewy", "single_day"],
+                "old_names": ["Chewy", "싱글 데이", "Single Day"],
+                "description": "밝고 명랑한 느낌의 한글 손글씨 폰트.",
                 "price_stars": 130,
+                "is_premium": True,
             },
             {
-                "name": "Cabin Sketch",
-                "font_family_key": ShopItem.FONT_FAMILY_CABIN_SKETCH,
-                "description": "Sketch-style headline font.",
+                "name": "푸어 스토리",
+                "font_family_key": "poor_story",
+                "old_keys": ["cabin_sketch", "poor_story"],
+                "old_names": ["Cabin Sketch", "이야기 손글씨", "Poor Story", "푸어 스토리"],
+                "description": "동화책 같은 느낌의 프리미엄 한글 손글씨 폰트.",
                 "price_stars": 140,
+                "is_premium": False,
             },
             {
-                "name": "Mouse Memoirs",
-                "font_family_key": ShopItem.FONT_FAMILY_MOUSE_MEMOIRS,
-                "description": "Cartoon memory font.",
+                "name": "구기",
+                "font_family_key": "gugi",
+                "old_keys": ["mouse_memoirs", "gugi"],
+                "old_names": ["Mouse Memoirs", "구기체", "Gugi", "구기"],
+                "description": "개성 있고 장난스러운 프리미엄 한글 폰트.",
                 "price_stars": 130,
+                "is_premium": False,
             },
             {
-                "name": "Londrina Shadow",
-                "font_family_key": ShopItem.FONT_FAMILY_LONDRINA_SHADOW,
-                "description": "Shadow headline font.",
-                "price_stars": 160,
-            },
-            {
-                "name": "Modak",
-                "font_family_key": ShopItem.FONT_FAMILY_MODAK,
-                "description": "Heavy bubble display font.",
-                "price_stars": 160,
-            },
-            {
-                "name": "Amatic SC",
-                "font_family_key": ShopItem.FONT_FAMILY_AMATIC_SC,
-                "description": "Tall handwritten title font.",
+                "name": "나눔 펜글씨",
+                "font_family_key": "nanum_pen_script",
+                "old_keys": ["amatic_sc", "nanum_pen", "nanum_pen_script"],
+                "old_names": ["Amatic SC", "나눔 펜글씨", "Nanum Pen Script"],
+                "description": "친근한 손글씨 느낌의 한글 폰트.",
                 "price_stars": 120,
+                "is_premium": True,
             },
             {
-                "name": "Capriola",
-                "font_family_key": ShopItem.FONT_FAMILY_CAPRIOLA,
-                "description": "Friendly rounded sans font.",
+                "name": "고운 돋움",
+                "font_family_key": "gowun_dodum",
+                "old_keys": ["capriola", "gowun_dodum"],
+                "old_names": ["Capriola", "고운 돋움", "Gowun Dodum"],
+                "description": "가장 또렷하고 읽기 편한 프리미엄 한글 기본 폰트.",
                 "price_stars": 120,
+                "is_premium": False,
             },
             {
-                "name": "McLaren",
-                "font_family_key": ShopItem.FONT_FAMILY_MCLAREN,
-                "description": "Clean comic display font.",
+                "name": "해바라기",
+                "font_family_key": "sunflower",
+                "old_keys": ["mclaren", "sunflower"],
+                "old_names": ["McLaren", "해바라기체", "Sunflower", "해바라기"],
+                "description": "밝고 깨끗한 느낌의 프리미엄 한글 폰트.",
                 "price_stars": 130,
+                "is_premium": False,
             },
         ]
 
+        removed_font_keys = [
+            "do_hyeon",
+            "luckiest_guy",
+            "dokdo",
+            "black_han_sans",
+            "londrina_shadow",
+        ]
+
+        removed_font_names = [
+            "도현",
+            "Do Hyeon",
+            "Luckiest Guy",
+            "또박 도현",
+            "Dokdo",
+            "검은 고딕",
+            "Black Han Sans",
+            "Londrina Shadow",
+            "까만 제목체",
+        ]
+
+        active_keys = [font["font_family_key"] for font in fonts]
         created_count = 0
         updated_count = 0
+        deactivated_count = 0
+        removed_count = 0
 
         for font in fonts:
-            item, created = ShopItem.objects.update_or_create(
-                name=font["name"],
-                category=ShopItem.CATEGORY_PROFILE_FONT,
-                defaults={
-                    "gender": ShopItem.GENDER_COMMON,
-                    "description": font["description"],
-                    "price_stars": font["price_stars"],
-                    "image_path": "",
-                    "is_active": True,
-                    "font_family_key": font["font_family_key"],
-                    "font_preview_text": "Mathner Style",
-                },
-            )
+            existing = None
+
+            if "font_family_key" in model_field_names:
+                existing = ShopItem.objects.filter(
+                    category=category_profile_font,
+                    font_family_key__in=font["old_keys"],
+                ).first()
+
+            if not existing:
+                existing = ShopItem.objects.filter(
+                    category=category_profile_font,
+                    name__in=font["old_names"],
+                ).first()
+
+            if existing:
+                item = existing
+                created = False
+            else:
+                item = ShopItem(category=category_profile_font)
+                created = True
+
+            item.name = font["name"]
+            item.category = category_profile_font
+
+            self.set_if_exists(item, model_field_names, "gender", gender_common)
+            self.set_if_exists(item, model_field_names, "description", font["description"])
+            self.set_if_exists(item, model_field_names, "price_stars", font["price_stars"])
+            self.set_if_exists(item, model_field_names, "image_path", "")
+            self.set_if_exists(item, model_field_names, "is_active", True)
+            self.set_if_exists(item, model_field_names, "font_family_key", font["font_family_key"])
+            self.set_if_exists(item, model_field_names, "font_preview_text", "매스너!")
+            self.set_if_exists(item, model_field_names, "is_premium", font["is_premium"])
+
+            item.save()
+
             if created:
                 created_count += 1
+                self.stdout.write(self.style.SUCCESS(f"Created: {item.name}"))
             else:
                 updated_count += 1
+                self.stdout.write(self.style.WARNING(f"Updated: {item.name}"))
+
+        old_font_qs = ShopItem.objects.filter(category=category_profile_font)
+
+        if "font_family_key" in model_field_names:
+            old_font_qs = old_font_qs.exclude(font_family_key__in=active_keys)
+        else:
+            old_font_qs = old_font_qs.exclude(name__in=[font["name"] for font in fonts])
+
+        if "is_active" in model_field_names:
+            deactivated_count = old_font_qs.update(is_active=False)
+
+            removed_qs = ShopItem.objects.filter(category=category_profile_font).filter(
+                name__in=removed_font_names
+            )
+
+            if "font_family_key" in model_field_names:
+                removed_key_qs = ShopItem.objects.filter(
+                    category=category_profile_font,
+                    font_family_key__in=removed_font_keys,
+                )
+                removed_qs = removed_qs | removed_key_qs
+
+            removed_count = removed_qs.update(is_active=False)
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Done. created={created_count}, updated={updated_count}"
+                f"Korean Google font seed complete. "
+                f"created={created_count}, "
+                f"updated={updated_count}, "
+                f"deactivated={deactivated_count}, "
+                f"removed={removed_count}"
             )
         )

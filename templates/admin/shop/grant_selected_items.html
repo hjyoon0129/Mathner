@@ -1,24 +1,255 @@
 ﻿{% extends "admin/base_site.html" %}
 
+{% block extrastyle %}
+{{ block.super }}
+{{ mathner_admin_style|safe }}
+
+<style>
+  .mathner-grant-page {
+    max-width: 980px;
+    padding: 24px 0 48px;
+  }
+
+  .mathner-grant-page,
+  .mathner-grant-page * {
+    box-sizing: border-box;
+  }
+
+  .mathner-grant-page h1,
+  .mathner-grant-page h2,
+  .mathner-grant-page h3,
+  .mathner-grant-page p,
+  .mathner-grant-page label,
+  .mathner-grant-page strong,
+  .mathner-grant-page span {
+    color: #f9fafb !important;
+  }
+
+  .mathner-grant-title {
+    margin: 0 0 20px;
+    color: #f9fafb !important;
+    font-size: 24px;
+    font-weight: 800;
+  }
+
+  .mathner-grant-subtitle {
+    margin: 0 0 18px;
+    color: #e5e7eb !important;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .mathner-selected-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0 18px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #1f2937 !important;
+    border: 1px solid #374151 !important;
+    color: #fef08a !important;
+    font-weight: 900;
+  }
+
+  .mathner-grant-form {
+    max-width: 860px;
+  }
+
+  .mathner-grant-form p {
+    margin: 14px 0;
+  }
+
+  .mathner-grant-form label {
+    display: inline-block;
+    min-width: 100px;
+    color: #f9fafb !important;
+    font-weight: 800;
+  }
+
+  .mathner-grant-form select,
+  .mathner-grant-form input,
+  .mathner-grant-form textarea {
+    background: #111827 !important;
+    color: #f9fafb !important;
+    border: 1px solid #4b5563 !important;
+    border-radius: 8px !important;
+    padding: 8px 10px !important;
+    min-height: 34px;
+  }
+
+  .mathner-grant-form select option {
+    background: #111827 !important;
+    color: #f9fafb !important;
+  }
+
+  .mathner-grant-form .help,
+  .mathner-grant-form .helptext {
+    color: #cbd5e1 !important;
+  }
+
+  .mathner-grant-form .errorlist {
+    margin: 8px 0;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #450a0a !important;
+    border: 1px solid #991b1b !important;
+    color: #fecaca !important;
+  }
+
+  .mathner-grant-form .errorlist li {
+    color: #fecaca !important;
+  }
+
+  .mathner-panel-title {
+    margin: 24px 0 10px;
+    color: #f9fafb !important;
+    font-size: 17px;
+    font-weight: 900;
+  }
+
+  .mathner-items-panel {
+    width: 100%;
+    max-width: 860px;
+    max-height: 560px;
+    overflow-y: auto;
+    margin: 12px 0 20px;
+    padding: 14px 18px;
+    background: #111827 !important;
+    border: 1px solid #374151 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+  }
+
+  .mathner-items-panel ul {
+    margin: 0 !important;
+    padding-left: 20px !important;
+  }
+
+  .mathner-items-panel li {
+    margin: 7px 0 !important;
+    color: #f9fafb !important;
+    line-height: 1.55 !important;
+    list-style: square;
+  }
+
+  .mathner-item-id {
+    color: #93c5fd !important;
+    font-weight: 900;
+  }
+
+  .mathner-item-name {
+    color: #ffffff !important;
+    font-weight: 900;
+  }
+
+  .mathner-item-meta {
+    color: #cbd5e1 !important;
+    font-weight: 600;
+  }
+
+  .mathner-item-effect {
+    color: #fbbf24 !important;
+    font-weight: 800;
+  }
+
+  .mathner-item-font {
+    color: #86efac !important;
+    font-weight: 800;
+  }
+
+  .mathner-empty {
+    color: #fca5a5 !important;
+    font-weight: 800;
+  }
+
+  .mathner-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  .mathner-actions button,
+  .mathner-actions input[type="submit"] {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border: 1px solid #1d4ed8 !important;
+    border-radius: 9px !important;
+    padding: 9px 15px !important;
+    font-weight: 900 !important;
+    cursor: pointer;
+  }
+
+  .mathner-actions button:hover,
+  .mathner-actions input[type="submit"]:hover {
+    background: #1d4ed8 !important;
+  }
+
+  .mathner-actions a {
+    color: #7dd3fc !important;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .mathner-actions a:hover {
+    color: #bae6fd !important;
+    text-decoration: underline;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-  <h1>{{ title }}</h1>
+<div class="mathner-grant-page">
+  <h1 class="mathner-grant-title">{{ title }}</h1>
+  <h2 class="mathner-grant-subtitle">Grant checked ShopItems to a user</h2>
 
-  <p><strong>Selected items:</strong> {{ selected_count }}</p>
+  <p class="mathner-selected-count">
+    Selected items: {{ selected_count }}
+  </p>
 
-  <form method="post" style="max-width:720px;">
+  <form method="post" class="mathner-grant-form" novalidate>
     {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="errorlist">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
     {{ form.as_p }}
 
-    <h2>Items to grant</h2>
-    <div style="margin:12px 0 20px; padding:12px; border:1px solid #ddd; background:#fff;">
-      <ul style="margin:0; padding-left:20px;">
+    <h3 class="mathner-panel-title">Items to grant</h3>
+
+    <div class="mathner-items-panel">
+      <ul>
         {% for item in items %}
-          <li>#{{ item.id }} - {{ item.name }} / {{ item.category }} / {{ item.gender }}</li>
+          <li>
+            <span class="mathner-item-id">#{{ item.id }}</span>
+            -
+            <span class="mathner-item-name">{{ item.name }}</span>
+            <span class="mathner-item-meta">
+              / {{ item.category }}
+              {% if item.equip_slot %}/ {{ item.equip_slot }}{% endif %}
+              / {{ item.gender }}
+            </span>
+            {% if item.effect_key %}
+              <span class="mathner-item-effect">/ effect: {{ item.effect_key }}</span>
+            {% endif %}
+            {% if item.font_family_key %}
+              <span class="mathner-item-font">/ font: {{ item.font_family_key }}</span>
+            {% endif %}
+          </li>
+        {% empty %}
+          <li class="mathner-empty">선택된 아이템이 없습니다.</li>
         {% endfor %}
       </ul>
     </div>
 
-    <button type="submit" class="default">Grant checked items</button>
-    <a href="../" style="margin-left:10px;">Cancel</a>
+    <div class="mathner-actions">
+      <button type="submit" class="default">Grant checked items</button>
+      <a href="../">Cancel</a>
+    </div>
   </form>
+</div>
 {% endblock %}

@@ -1,0 +1,478 @@
+/* =========================================================
+   kids-room-diary-guestbook.css
+   Guestbook / Diary
+   - Layout only
+   - font-* / effect-* visual definitions are inherited from shop CSS
+   ========================================================= */
+
+.guestbook-form,
+.diary-form {
+  display: grid;
+  gap: 10px;
+}
+
+.message-list {
+  display: grid;
+  gap: 12px;
+}
+
+.message-card,
+.guestbook-entry-card,
+.diary-entry-card {
+  background: #ffffff;
+  border: 2px solid #e9f5ff;
+  border-radius: 18px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 16px rgba(98, 141, 172, 0.08);
+}
+
+.message-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 0 12px;
+}
+
+.message-top span,
+.message-meta {
+  font-size: 12px;
+  color: #8e8379;
+  font-weight: 400;
+}
+
+.message-body {
+  margin: 0;
+  padding: 8px 12px 0;
+  color: #433b34;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.message-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding: 0 12px;
+}
+
+.mini-action-btn {
+  min-height: 34px;
+  border: none;
+  border-radius: 13px;
+  background: #eaf7ff;
+  color: #3f84b4;
+  padding: 7px 12px;
+  font-family: "Jua", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.mini-action-btn.danger {
+  background: #fff1f1;
+  color: #ff5d5d;
+}
+
+.reply-editor {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+  padding: 0 12px;
+}
+
+.reply-editor.is-hidden {
+  display: none;
+}
+
+.reply-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 84px;
+  border: 2px solid #eeeeee;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #403932;
+  padding: 10px 12px;
+  font-family: "Jua", system-ui, sans-serif;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.reply-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.reply-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 0 12px;
+}
+
+.reply-card {
+  border: 2px solid #f0f3f7;
+  border-radius: 16px;
+  background: #fbfdff;
+  padding: 10px;
+}
+
+.reply-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.reply-top span {
+  font-size: 11px;
+  color: #8e8379;
+  font-weight: 400;
+}
+
+.guest-name-btn,
+.guest-name-btn-text,
+.message-body,
+.reply-body,
+.diary-entry-title {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  backface-visibility: hidden;
+  text-indent: 0 !important;
+}
+
+.guest-name-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: inherit !important;
+  font-weight: 400;
+  line-height: 1 !important;
+  cursor: pointer;
+  text-align: left;
+  justify-self: start;
+  overflow: visible;
+  transition:
+    opacity 0.14s ease,
+    transform 0.14s ease;
+}
+
+.guest-name-btn:hover {
+  opacity: 0.94;
+  transform: translateY(-1px);
+}
+
+.guest-name-btn::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #8add92;
+  box-shadow: 0 0 8px rgba(103, 204, 112, 0.35);
+  flex: 0 0 auto;
+  opacity: 0.82;
+}
+
+.guest-name-label-shell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: auto;
+  min-width: 62px;
+  max-width: 100%;
+  min-height: 34px;
+
+  padding: 7px 16px 8px;
+  border-radius: 999px;
+
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 42%),
+    linear-gradient(180deg, #172844 0%, #0b1729 100%);
+
+  border: 1px solid rgba(255, 255, 255, 0.14);
+
+  box-shadow:
+    0 8px 16px rgba(54, 104, 142, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.28);
+
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.guest-name-label-shell::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.guest-name-btn:hover .guest-name-label-shell {
+  transform: translateY(-1px);
+  box-shadow:
+    0 10px 20px rgba(54, 104, 142, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.32);
+}
+
+.guest-name-btn-text {
+  position: relative;
+  z-index: 2;
+
+  display: inline-block;
+  width: auto;
+  max-width: 100%;
+
+  margin: 0;
+  padding: 0;
+
+  line-height: 1.05 !important;
+  text-align: center;
+  white-space: nowrap;
+  word-break: normal;
+  overflow: visible;
+  text-overflow: clip;
+
+  font-size: inherit !important;
+  font-weight: 900;
+  transform-origin: center center;
+}
+
+/* effect 클래스가 없는 오래된 닉네임용 기본 표시 */
+.guest-name-btn-text:not([class*="effect-"]) {
+  color: #fff8ea;
+  -webkit-text-fill-color: #fff8ea;
+  text-shadow:
+    0 0 3px rgba(255, 255, 255, 0.68),
+    0 0 10px rgba(255, 205, 105, 0.42),
+    0 0 18px rgba(255, 173, 80, 0.18);
+}
+
+/* Shop effect를 받되, 방명록 레이아웃은 유지 */
+.guest-name-btn-text[class*="effect-"] {
+  display: inline-block !important;
+  max-width: 100% !important;
+  line-height: 1.05 !important;
+  white-space: nowrap !important;
+}
+
+/* 본문은 폰트/이펙트를 받을 수 있지만 카드 레이아웃은 유지 */
+.message-body[class*="effect-"],
+.reply-body[class*="effect-"] {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  line-height: 1.7 !important;
+}
+
+/* Shop font-size가 본문을 너무 키우지 않도록 avatar 문맥에서는 크기만 고정 */
+.message-body[class*="font-"],
+.reply-body[class*="font-"] {
+  font-size: 15px !important;
+}
+
+.diary-action-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.diary-calendar-shell {
+  border: 2px solid #f0efdd;
+  border-radius: 20px;
+  background: #fffdf0;
+  padding: 14px;
+  margin-bottom: 18px;
+}
+
+.diary-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.calendar-nav-btn {
+  width: 42px;
+  height: 42px;
+  min-height: 42px;
+  padding: 0;
+  border-radius: 15px;
+}
+
+.calendar-month-label {
+  font-size: 17px;
+  font-weight: 400;
+  color: #4b3f36;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.calendar-weekdays span {
+  text-align: center;
+  font-size: 12px;
+  color: #8d8177;
+  font-weight: 400;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.calendar-day {
+  min-height: 40px;
+  border-radius: 13px;
+  border: 2px solid #f1ead1;
+  background: #ffffff;
+  color: #4a4039;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Jua", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  transition:
+    transform 0.14s ease,
+    border-color 0.14s ease,
+    background 0.14s ease,
+    box-shadow 0.14s ease;
+}
+
+.calendar-day:hover {
+  transform: translateY(-1px);
+  border-color: #8ed6ff;
+  box-shadow: 0 8px 16px rgba(83, 142, 184, 0.1);
+}
+
+.calendar-day.is-muted {
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.calendar-day.is-today {
+  background: #eaf7ff;
+  border-color: #8ed6ff;
+}
+
+.calendar-day.is-selected {
+  background: var(--kids-yellow) !important;
+  color: #5d4100 !important;
+  border-color: #ffd24a !important;
+}
+
+.calendar-day.has-entry {
+  position: relative;
+}
+
+.calendar-day.has-entry::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #73d882;
+  transform: translateX(-50%);
+}
+
+.diary-entry-top {
+  align-items: flex-start;
+}
+
+.diary-entry-title {
+  display: inline-block;
+  color: #4b3f36;
+  font-size: 17px;
+  line-height: 1.15;
+  font-weight: 400;
+  word-break: break-word;
+}
+
+.diary-entry-title[class*="effect-"] {
+  display: inline-block !important;
+  max-width: 100% !important;
+  line-height: 1.15 !important;
+}
+
+.diary-entry-title[class*="font-"] {
+  font-size: 17px !important;
+}
+
+@media (max-width: 768px) {
+  .message-card,
+  .guestbook-entry-card,
+  .diary-entry-card {
+    padding: 14px;
+  }
+
+  .message-top,
+  .message-body,
+  .message-actions,
+  .reply-editor,
+  .reply-list {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .guest-name-label-shell {
+    min-height: 31px;
+    min-width: 56px;
+    padding: 6px 13px 7px;
+  }
+
+  .guest-name-btn-text {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .message-top,
+  .reply-top {
+    gap: 8px;
+  }
+
+  .diary-action-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  .calendar-day {
+    min-height: 34px !important;
+    font-size: 11px !important;
+    border-radius: 10px !important;
+  }
+}

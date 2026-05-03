@@ -1,0 +1,375 @@
+/* =========================================================
+   kids-room-shop-match.css
+   Avatar Room editor UI matched with Shop UI
+   - Layout / preview box only
+   - effect-* visuals are inherited from shop CSS
+   ========================================================= */
+
+/* =========================================================
+   1. Tom 닉네임 라벨
+   ========================================================= */
+
+.owner-name,
+.avatar-status-name,
+#roomOwnerName {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  width: auto !important;
+  min-width: 72px !important;
+  max-width: 100% !important;
+  min-height: 46px !important;
+
+  padding: 7px 22px 8px !important;
+  border-radius: 999px !important;
+
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0) 42%),
+    linear-gradient(180deg, #14233d 0%, #091426 100%) !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+
+  line-height: 1.05 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+
+  box-shadow:
+    0 8px 18px rgba(8, 21, 42, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.28) !important;
+
+  transform-origin: center center !important;
+}
+
+/* effect 클래스가 없을 때만 기본 금빛 텍스트 */
+.owner-name:not([class*="effect-"]),
+.avatar-status-name:not([class*="effect-"]),
+#roomOwnerName:not([class*="effect-"]) {
+  color: #fff8ea !important;
+  -webkit-text-fill-color: #fff8ea !important;
+  text-shadow:
+    0 0 6px rgba(255, 211, 123, 0.75),
+    0 0 15px rgba(255, 181, 83, 0.38),
+    0 1px 0 rgba(0, 0, 0, 0.55) !important;
+}
+
+/* Shop effect를 받을 때도 라벨 안에서 정렬 유지 */
+.owner-name[class*="effect-"],
+.avatar-status-name[class*="effect-"],
+#roomOwnerName[class*="effect-"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1.05 !important;
+  white-space: nowrap !important;
+}
+
+/* =========================================================
+   2. 글씨체/반짝이 카드 - 상점 검정 미리보기와 맞춤
+   ========================================================= */
+
+.font-inventory-card,
+.effect-inventory-card {
+  border: 2px solid rgba(230, 238, 245, 0.95) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fcff 100%) !important;
+  border-radius: 20px !important;
+  padding: 10px !important;
+  min-height: 166px !important;
+  box-shadow: 0 10px 20px rgba(58, 91, 120, 0.07) !important;
+}
+
+.font-inventory-card.is-selected,
+.effect-inventory-card.is-selected,
+.font-inventory-card.is-equipped,
+.effect-inventory-card.is-equipped {
+  border-color: #ffc94a !important;
+  background: linear-gradient(180deg, #fffaf0 0%, #fff6c9 100%) !important;
+  box-shadow:
+    0 0 0 3px rgba(255, 202, 74, 0.16),
+    0 12px 24px rgba(255, 190, 50, 0.12) !important;
+}
+
+.font-preview-box,
+.font-inventory-card .font-preview-box,
+.effect-inventory-card .font-preview-box {
+  position: relative !important;
+  isolation: isolate !important;
+
+  min-height: 72px !important;
+  height: 72px !important;
+  width: 100% !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  border-radius: 16px !important;
+  border: 2px solid #202d3b !important;
+
+  overflow: hidden !important;
+
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0) 34%),
+    radial-gradient(circle at 18% 18%, rgba(120, 190, 255, 0.04) 0%, rgba(120, 190, 255, 0) 26%),
+    linear-gradient(180deg, #101820 0%, #070d14 56%, #03070c 100%) !important;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+    inset 0 -14px 24px rgba(0, 0, 0, 0.52),
+    0 8px 18px rgba(20, 35, 50, 0.14) !important;
+}
+
+.font-preview-box::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.16) 0 1px, transparent 2px),
+    radial-gradient(circle at 78% 24%, rgba(255, 220, 120, 0.14) 0 1px, transparent 2px),
+    radial-gradient(circle at 42% 74%, rgba(120, 200, 255, 0.12) 0 1px, transparent 2px),
+    radial-gradient(circle at 90% 70%, rgba(255, 255, 255, 0.09) 0 1px, transparent 2px);
+
+  opacity: 0.34 !important;
+  animation: roomShopPreviewDustFloat 4s ease-in-out infinite;
+}
+
+.font-preview-text,
+.font-inventory-card .font-preview-text,
+.effect-inventory-card .font-preview-text {
+  position: relative !important;
+  z-index: 3 !important;
+
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 42px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  margin: 0 !important;
+  padding: 0 8px !important;
+
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+
+  line-height: 1.05 !important;
+  font-weight: 900 !important;
+}
+
+/* effect 클래스가 없을 때만 기본 흰색 미리보기 */
+.font-preview-text:not([class*="effect-"]),
+.font-inventory-card .font-preview-text:not([class*="effect-"]),
+.effect-inventory-card .font-preview-text:not([class*="effect-"]) {
+  color: #f7fbff !important;
+  -webkit-text-fill-color: #f7fbff !important;
+  text-shadow:
+    0 0 3px rgba(255, 255, 255, 0.68),
+    0 0 12px rgba(190, 230, 255, 0.22) !important;
+}
+
+/* effect 클래스가 붙은 미리보기는 shop effect를 그대로 받음 */
+.font-preview-box .font-preview-text[class*="effect-"] {
+  position: relative !important;
+  z-index: 3 !important;
+  max-width: 100% !important;
+  line-height: 1.05 !important;
+  white-space: nowrap !important;
+}
+
+/* =========================================================
+   3. 옷 갈아입기 카드 - 상점 카드 느낌
+   ========================================================= */
+
+.inventory-card {
+  border: 2px solid rgba(232, 239, 245, 0.95) !important;
+  border-radius: 22px !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fcff 100%) !important;
+  padding: 12px !important;
+  box-shadow: 0 12px 22px rgba(58, 91, 120, 0.08) !important;
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background 0.16s ease !important;
+}
+
+.inventory-card:hover {
+  transform: translateY(-2px);
+  border-color: #bfe6ff !important;
+  box-shadow: 0 16px 28px rgba(82, 137, 177, 0.14) !important;
+}
+
+.inventory-card.is-equipped {
+  border-color: #ffc94a !important;
+  background: linear-gradient(180deg, #fffaf0 0%, #fff6c9 100%) !important;
+  box-shadow:
+    0 0 0 3px rgba(255, 202, 74, 0.16),
+    0 14px 26px rgba(255, 190, 50, 0.13) !important;
+}
+
+.inventory-thumb {
+  min-height: 92px !important;
+  height: 92px !important;
+  border-radius: 16px !important;
+  border: 2px dashed #e4eef6 !important;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(126, 200, 255, 0.08), transparent 52%),
+    #ffffff !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  overflow: hidden !important;
+  padding: 8px !important;
+}
+
+.inventory-thumb img {
+  max-width: 92% !important;
+  max-height: 92% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  image-rendering: pixelated !important;
+}
+
+.inventory-name {
+  min-height: 34px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  color: #2f3a45 !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  line-height: 1.25 !important;
+  letter-spacing: -0.035em !important;
+  text-align: center !important;
+  word-break: keep-all !important;
+}
+
+.inventory-meta {
+  display: none !important;
+}
+
+.inventory-equip-btn {
+  width: 100% !important;
+  min-height: 38px !important;
+  border-radius: 14px !important;
+
+  background: linear-gradient(135deg, #aee1ff 0%, #82c7f5 100%) !important;
+  color: #17405f !important;
+
+  border: none !important;
+  font-weight: 900 !important;
+  box-shadow: 0 4px 0 rgba(57, 101, 132, 0.12) !important;
+}
+
+.inventory-equip-btn.is-active {
+  background: linear-gradient(180deg, #eef2f5 0%, #dfe6eb 100%) !important;
+  color: #4d5b68 !important;
+  box-shadow: 0 4px 0 rgba(80, 95, 110, 0.16) !important;
+}
+
+/* =========================================================
+   4. 스페셜 옷장 카드 - 상점 스페셜과 맞춤
+   ========================================================= */
+
+.inventory-card-unique {
+  border-color: rgba(255, 210, 90, 0.45) !important;
+}
+
+.inventory-thumb-unique {
+  position: relative !important;
+  isolation: isolate !important;
+
+  border-color: rgba(255, 215, 120, 0.66) !important;
+
+  background:
+    radial-gradient(circle at 50% 46%, rgba(255, 230, 160, 0.22), rgba(255, 200, 90, 0.1) 30%, transparent 54%),
+    linear-gradient(180deg, #071326 0%, #020713 100%) !important;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 0 28px rgba(255, 215, 120, 0.1),
+    0 10px 22px rgba(20, 28, 45, 0.13) !important;
+}
+
+.inventory-unique-badge {
+  position: absolute !important;
+  top: 7px !important;
+  right: 7px !important;
+  z-index: 6 !important;
+
+  min-height: 22px !important;
+  padding: 4px 8px !important;
+
+  border-radius: 999px !important;
+  background: linear-gradient(135deg, #ffd76a, #ffb547) !important;
+  color: #47320a !important;
+
+  font-size: 10px !important;
+  font-weight: 900 !important;
+}
+
+.inventory-unique-item-wrap {
+  position: relative !important;
+  z-index: 5 !important;
+  width: 100% !important;
+  height: 100% !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.inventory-thumb-unique img {
+  position: relative !important;
+  z-index: 5 !important;
+
+  max-width: 86% !important;
+  max-height: 86% !important;
+
+  filter:
+    drop-shadow(0 0 4px rgba(255, 245, 190, 0.96))
+    drop-shadow(0 0 12px rgba(255, 213, 100, 0.68))
+    drop-shadow(0 0 26px rgba(255, 210, 90, 0.32)) !important;
+
+  animation: roomShopUniqueItemFloat 2.8s ease-in-out infinite;
+}
+
+/* =========================================================
+   5. animation
+   ========================================================= */
+
+@keyframes roomShopPreviewDustFloat {
+  0%,
+  100% {
+    opacity: 0.28;
+    transform: translateY(0);
+  }
+
+  50% {
+    opacity: 0.42;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes roomShopUniqueItemFloat {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+
+  50% {
+    translate: 0 -3px;
+  }
+}

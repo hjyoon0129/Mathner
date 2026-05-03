@@ -1,0 +1,274 @@
+.cute-card-head {
+  padding: 15px 18px;
+  background: linear-gradient(90deg, #fff8d5 0%, #ffffff 100%);
+  border-bottom: 2px dashed #ecf0f4;
+  border-radius: var(--kids-radius-lg) var(--kids-radius-lg) 0 0;
+}
+
+.cute-card-head h2 {
+  margin: 0;
+  font-size: 19px;
+  color: var(--kids-orange);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.cute-card-body {
+  padding: 18px;
+}
+
+.summary-card {
+  position: sticky;
+  top: 96px;
+  overflow: hidden;
+}
+
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 15px;
+  font-weight: 900;
+  color: #4e5b68;
+}
+
+.summary-line strong {
+  color: #2f3a45;
+}
+
+.summary-list {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 2px dashed #edf1f4;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.summary-item {
+  padding: 10px 11px;
+  background: #f3f9ff;
+  border: 1px solid #e4f1fb;
+  border-radius: 13px;
+  margin-bottom: 7px;
+  font-size: 13px;
+  color: #3f4b57;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.summary-empty {
+  text-align: center;
+  color: #9ba7b3;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 22px 0;
+}
+
+.shop-empty-state {
+  grid-column: 1 / -1;
+  padding: 42px 20px;
+  text-align: center;
+  color: var(--kids-text-soft);
+  font-weight: 800;
+}
+
+.premium-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 15000;
+  display: none;
+}
+
+.premium-modal.is-open {
+  display: block;
+}
+
+.premium-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(23, 33, 43, 0.48);
+  backdrop-filter: blur(4px);
+}
+
+.premium-modal-dialog {
+  position: relative;
+  width: min(430px, calc(100vw - 28px));
+  margin: 120px auto 0;
+  padding: 26px 22px 22px;
+  text-align: center;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+@media (max-width: 1180px) {
+  .kids-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-card {
+    position: static;
+  }
+}
+
+@media (max-width: 900px) {
+  .kids-theme {
+    padding-top: 0 !important;
+  }
+
+  .shop-header {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    padding: 22px 18px;
+  }
+
+  .shop-header-right {
+    justify-content: center;
+  }
+
+  .kids-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .kids-tab-btn {
+    min-height: 46px;
+    font-size: 15px;
+  }
+
+  .kids-inventory-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .cute-item-card {
+    min-height: 282px;
+    padding: 13px;
+  }
+
+  .font-card,
+  .effect-card {
+    min-height: 350px;
+  }
+
+  .item-thumb {
+    height: 116px;
+    flex-basis: 116px;
+  }
+
+  .font-card .item-thumb,
+  .effect-card .item-thumb {
+    height: 126px !important;
+    flex-basis: 126px !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .kids-wrap {
+    width: calc(100vw - 14px);
+  }
+
+  .kids-inventory-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .cute-item-card {
+    min-height: 270px;
+    padding: 11px;
+    border-radius: 19px;
+  }
+
+  .font-card,
+  .effect-card {
+    min-height: 338px;
+  }
+
+  .item-thumb {
+    height: 104px;
+    flex-basis: 104px;
+    border-radius: 16px;
+    padding: 8px;
+  }
+
+  .font-card .item-thumb,
+  .effect-card .item-thumb {
+    height: 112px !important;
+    flex-basis: 112px !important;
+    padding: 0 !important;
+  }
+
+  .item-name {
+    font-size: 13px;
+    min-height: 35px;
+  }
+
+  .item-price {
+    font-size: 14px;
+  }
+
+  .btn-cute {
+    min-height: 40px;
+    font-size: 14px;
+  }
+
+  .custom-select-trigger {
+    min-height: 37px !important;
+    padding: 7px 10px !important;
+    font-size: 11px !important;
+  }
+
+  .custom-select-menu {
+    max-height: 210px !important;
+  }
+
+  .custom-select-option {
+    min-height: 32px !important;
+    font-size: 11px !important;
+  }
+
+  .font-default,
+  .font-pretendard,
+  .font-jua,
+  .font-bubblegum_sans,
+  .font-do_hyeon,
+  .font-luckiest_guy,
+  .font-gugi,
+  .font-mouse_memoirs,
+  .font-black_han_sans,
+  .font-londrina_shadow,
+  .font-gowun_dodum,
+  .font-capriola,
+  .font-sunflower,
+  .font-mclaren {
+    font-size: 20px;
+  }
+
+  .font-gamja_flower,
+  .font-delius_swash_caps,
+  .font-hi_melody,
+  .font-love_ya_like_a_sister,
+  .font-gaegu,
+  .font-coming_soon,
+  .font-single_day,
+  .font-chewy,
+  .font-poor_story,
+  .font-cabin_sketch {
+    font-size: 24px;
+  }
+
+  .font-dongle,
+  .font-boogaloo,
+  .font-cute_font,
+  .font-life_savers {
+    font-size: 30px;
+  }
+
+  .font-nanum_pen_script,
+  .font-nanum_pen,
+  .font-amatic_sc {
+    font-size: 27px;
+  }
+}

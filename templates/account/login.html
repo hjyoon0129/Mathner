@@ -11,19 +11,20 @@
   <div class="auth-shell">
     <div class="auth-card">
       <div class="auth-head">
-        <p class="auth-eyebrow">Welcome back</p>
-        <h1>Sign in</h1>
+        <p class="auth-eyebrow">환영해요! 👋</p>
+        <h1>로그인하기</h1>
         <p class="auth-sub">
-          Login to continue to Mathner.
+          매스너 세상에 로그인하고 재미있는 마법 놀이를 계속해 봐요!
         </p>
       </div>
 
       <a href="{% provider_login_url 'google' process='login' next=request.GET.next|default:'/' %}" class="auth-google-btn">
-        Continue with Google
+        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo">
+        구글 계정으로 로그인할래요
       </a>
 
       <div class="auth-divider">
-        <span>or</span>
+        <span>또는 이메일로 로그인</span>
       </div>
 
       <form method="post" action="{% url 'account_login' %}" class="auth-form">
@@ -34,12 +35,12 @@
 
         {% if form.non_field_errors %}
           <div class="auth-alert">
-            {{ form.non_field_errors }}
+            앗! {{ form.non_field_errors }}
           </div>
         {% endif %}
 
         <div class="auth-field">
-          <label for="{{ form.login.id_for_label }}">Email</label>
+          <label for="{{ form.login.id_for_label }}">이메일 💌</label>
           {{ form.login }}
           {% if form.login.errors %}
             <div class="auth-error">{{ form.login.errors }}</div>
@@ -48,8 +49,8 @@
 
         <div class="auth-field">
           <div class="auth-label-row">
-            <label for="{{ form.password.id_for_label }}">Password</label>
-            <a href="{% url 'account_reset_password' %}" class="auth-link">Forgot your password?</a>
+            <label for="{{ form.password.id_for_label }}">비밀번호 🔑</label>
+            <a href="{% url 'account_reset_password' %}" class="auth-link">비밀번호를 깜빡했나요?</a>
           </div>
           {{ form.password }}
           {% if form.password.errors %}
@@ -61,17 +62,17 @@
         <div class="auth-check">
           <label>
             {{ form.remember }}
-            <span>Remember me</span>
+            <span>나를 기억해 주세요!</span>
           </label>
         </div>
         {% endif %}
 
-        <button type="submit" class="auth-submit-btn">Sign in</button>
+        <button type="submit" class="auth-submit-btn">로그인 출발! 🚀</button>
       </form>
 
       <div class="auth-foot">
-        Don’t have an account?
-        <a href="{% url 'account_signup' %}?next={{ request.GET.next|default:'/' }}">Create account</a>
+        아직 매스너 회원이 아닌가요?
+        <a href="{% url 'account_signup' %}?next={{ request.GET.next|default:'/' }}">회원가입하기</a>
       </div>
     </div>
   </div>

@@ -14,7 +14,8 @@
         >
           {{ comment.author_nickname_snapshot }}
         </span>
-        <span class="comment-date">{{ comment.created_at|date:"Y-m-d H:i" }}</span>
+        <!-- 날짜 형식 변경: Y-m-d H:i -> y-m-d -->
+        <span class="comment-date">{{ comment.created_at|date:"y-m-d" }}</span>
       </div>
     </div>
 
@@ -36,7 +37,7 @@
                       stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </span>
-            <span>Like</span>
+            <span>좋아요</span>
             <span class="like-count">{{ comment.like_count }}</span>
           </button>
         </form>
@@ -52,7 +53,7 @@
               <path d="M7 12H14C17.314 12 20 14.686 20 18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </span>
-          <span>Reply</span>
+          <span>답글</span>
         </button>
 
         {% if user.is_superuser or comment.author_id == user.id %}
@@ -67,7 +68,7 @@
                       stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </span>
-            <span>Edit</span>
+            <span>수정</span>
           </button>
 
           <form method="post" action="{% url 'community:comment_delete' comment.pk %}">
@@ -84,7 +85,7 @@
                         stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </span>
-              <span>Delete</span>
+              <span>삭제</span>
             </button>
           </form>
         {% endif %}
@@ -96,7 +97,7 @@
                     stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </span>
-          <span>Like</span>
+          <span>좋아요</span>
           <span class="like-count">{{ comment.like_count }}</span>
         </a>
       {% endif %}
@@ -112,7 +113,7 @@
               <path d="M8 10L12 14L16 10" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </span>
-          <span>Replies</span>
+          <span>답글</span>
           <span class="comment-count-badge">{{ comment.styled_replies|length }}</span>
         </button>
       {% endif %}
@@ -126,11 +127,11 @@
         <textarea
           name="content"
           class="comment-textarea"
-          placeholder="Write a reply..."
+          placeholder="답글을 남겨보세요..."
           required
         ></textarea>
         <div class="comment-form-actions">
-          <button type="submit" class="community-write-btn comment-submit-btn">Add Reply</button>
+          <button type="submit" class="community-write-btn comment-submit-btn">답글 작성</button>
         </div>
       </form>
     </div>
@@ -145,7 +146,7 @@
           required
         >{{ comment.content }}</textarea>
         <div class="comment-form-actions">
-          <button type="submit" class="community-write-btn comment-submit-btn">Save Edit</button>
+          <button type="submit" class="community-write-btn comment-submit-btn">수정 저장</button>
         </div>
       </form>
     </div>

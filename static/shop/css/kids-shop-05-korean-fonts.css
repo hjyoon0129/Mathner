@@ -1,0 +1,268 @@
+/* =========================================================
+   Mathner Korean Font Classes
+   Google Fonts 실제 한글 폰트 기준
+   새 key + 기존 old key alias 모두 지원
+   ========================================================= */
+
+/* 기본 폰트 */
+.font-default,
+.font-pretendard {
+  font-family: var(--kids-font);
+  font-size: 24px;
+  font-weight: 900;
+}
+
+/* Jua / 기존 Bubblegum Sans alias */
+.font-jua,
+.font-bubblegum_sans {
+  font-family: "Jua", var(--kids-font), sans-serif;
+  font-size: 25px;
+  font-weight: 400;
+}
+
+/* Gamja Flower / 기존 Delius Swash Caps alias */
+.font-gamja_flower,
+.font-delius_swash_caps {
+  font-family: "Gamja Flower", var(--kids-font), cursive;
+  font-size: 30px;
+  font-weight: 400;
+}
+
+/* Dongle / 기존 Boogaloo alias */
+.font-dongle,
+.font-boogaloo {
+  font-family: "Dongle", var(--kids-font), sans-serif;
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+/* Hi Melody / 기존 Love Ya Like A Sister alias */
+.font-hi_melody,
+.font-love_ya_like_a_sister {
+  font-family: "Hi Melody", var(--kids-font), cursive;
+  font-size: 31px;
+  font-weight: 400;
+}
+
+/* Do Hyeon / 기존 Luckiest Guy alias */
+.font-do_hyeon,
+.font-luckiest_guy {
+  font-family: "Do Hyeon", var(--kids-font), sans-serif;
+  font-size: 25px;
+  font-weight: 400;
+}
+
+/* Gaegu / 기존 Coming Soon alias */
+.font-gaegu,
+.font-coming_soon {
+  font-family: "Gaegu", var(--kids-font), cursive;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+/* Cute Font / 기존 Life Savers alias */
+.font-cute_font,
+.font-life_savers {
+  font-family: "Cute Font", var(--kids-font), cursive;
+  font-size: 38px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+/* Single Day / 기존 Chewy alias */
+.font-single_day,
+.font-chewy {
+  font-family: "Single Day", var(--kids-font), cursive;
+  font-size: 29px;
+  font-weight: 400;
+}
+
+/* Poor Story / 기존 Cabin Sketch alias */
+.font-poor_story,
+.font-cabin_sketch {
+  font-family: "Poor Story", var(--kids-font), cursive;
+  font-size: 27px;
+  font-weight: 400;
+}
+
+/* Gugi / 기존 Mouse Memoirs alias */
+.font-gugi,
+.font-mouse_memoirs {
+  font-family: "Gugi", var(--kids-font), cursive;
+  font-size: 24px;
+  font-weight: 400;
+}
+
+/* Black Han Sans / 기존 Londrina Shadow alias */
+.font-black_han_sans,
+.font-londrina_shadow {
+  font-family: "Black Han Sans", var(--kids-font), sans-serif;
+  font-size: 23px;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+}
+
+/* Nanum Pen Script / 기존 Amatic SC alias */
+.font-nanum_pen_script,
+.font-nanum_pen,
+.font-amatic_sc {
+  font-family: "Nanum Pen Script", var(--kids-font), cursive;
+  font-size: 33px;
+  font-weight: 400;
+}
+
+/* Gowun Dodum / 기존 Capriola alias */
+.font-gowun_dodum,
+.font-capriola {
+  font-family: "Gowun Dodum", var(--kids-font), sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+}
+
+/* Sunflower / 기존 McLaren alias */
+.font-sunflower,
+.font-mclaren {
+  font-family: "Sunflower", var(--kids-font), sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   Preview text inside shop cards
+   ========================================================= */
+
+.shop-preview-text.font-pretendard,
+.font-preview.font-pretendard,
+.effect-preview.font-pretendard {
+  font-family: var(--kids-font);
+}
+
+.shop-preview-text.font-jua,
+.shop-preview-text.font-bubblegum_sans,
+.font-preview.font-jua,
+.font-preview.font-bubblegum_sans,
+.effect-preview.font-jua,
+.effect-preview.font-bubblegum_sans {
+  font-family: "Jua", var(--kids-font), sans-serif;
+}
+
+.shop-preview-text.font-gamja_flower,
+.shop-preview-text.font-delius_swash_caps,
+.font-preview.font-gamja_flower,
+.font-preview.font-delius_swash_caps,
+.effect-preview.font-gamja_flower,
+.effect-preview.font-delius_swash_caps {
+  font-family: "Gamja Flower", var(--kids-font), cursive;
+}
+
+.shop-preview-text.font-dongle,
+.shop-preview-text.font-boogaloo,
+.font-preview.font-dongle,
+.font-preview.font-boogaloo,
+.effect-preview.font-dongle,
+.effect-preview.font-boogaloo {
+  font-family: "Dongle", var(--kids-font), sans-serif;
+}
+
+.shop-preview-text.font-hi_melody,
+.shop-preview-text.font-love_ya_like_a_sister,
+.font-preview.font-hi_melody,
+.font-preview.font-love_ya_like_a_sister,
+.effect-preview.font-hi_melody,
+.effect-preview.font-love_ya_like_a_sister {
+  font-family: "Hi Melody", var(--kids-font), cursive;
+}
+
+.shop-preview-text.font-do_hyeon,
+.shop-preview-text.font-luckiest_guy,
+.font-preview.font-do_hyeon,
+.font-preview.font-luckiest_guy,
+.effect-preview.font-do_hyeon,
+.effect-preview.font-luckiest_guy {
+  font-family: "Do Hyeon", var(--kids-font), sans-serif;
+}
+
+.shop-preview-text.font-gaegu,
+.shop-preview-text.font-coming_soon,
+.font-preview.font-gaegu,
+.font-preview.font-coming_soon,
+.effect-preview.font-gaegu,
+.effect-preview.font-coming_soon {
+  font-family: "Gaegu", var(--kids-font), cursive;
+}
+
+.shop-preview-text.font-cute_font,
+.shop-preview-text.font-life_savers,
+.font-preview.font-cute_font,
+.font-preview.font-life_savers,
+.effect-preview.font-cute_font,
+.effect-preview.font-life_savers {
+  font-family: "Cute Font", var(--kids-font), cursive;
+}
+
+.shop-preview-text.font-single_day,
+.shop-preview-text.font-chewy,
+.font-preview.font-single_day,
+.font-preview.font-chewy,
+.effect-preview.font-single_day,
+.effect-preview.font-chewy {
+  font-family: "Single Day", var(--kids-font), cursive;
+}
+
+.shop-preview-text.font-poor_story,
+.shop-preview-text.font-cabin_sketch,
+.font-preview.font-poor_story,
+.font-preview.font-cabin_sketch,
+.effect-preview.font-poor_story,
+.effect-preview.font-cabin_sketch {
+  font-family: "Poor Story", var(--kids-font), cursive;
+}
+
+.shop-preview-text.font-gugi,
+.shop-preview-text.font-mouse_memoirs,
+.font-preview.font-gugi,
+.font-preview.font-mouse_memoirs,
+.effect-preview.font-gugi,
+.effect-preview.font-mouse_memoirs {
+  font-family: "Gugi", var(--kids-font), cursive;
+}
+
+.shop-preview-text.font-black_han_sans,
+.shop-preview-text.font-londrina_shadow,
+.font-preview.font-black_han_sans,
+.font-preview.font-londrina_shadow,
+.effect-preview.font-black_han_sans,
+.effect-preview.font-londrina_shadow {
+  font-family: "Black Han Sans", var(--kids-font), sans-serif;
+}
+
+.shop-preview-text.font-nanum_pen_script,
+.shop-preview-text.font-nanum_pen,
+.shop-preview-text.font-amatic_sc,
+.font-preview.font-nanum_pen_script,
+.font-preview.font-nanum_pen,
+.font-preview.font-amatic_sc,
+.effect-preview.font-nanum_pen_script,
+.effect-preview.font-nanum_pen,
+.effect-preview.font-amatic_sc {
+  font-family: "Nanum Pen Script", var(--kids-font), cursive;
+}
+
+.shop-preview-text.font-gowun_dodum,
+.shop-preview-text.font-capriola,
+.font-preview.font-gowun_dodum,
+.font-preview.font-capriola,
+.effect-preview.font-gowun_dodum,
+.effect-preview.font-capriola {
+  font-family: "Gowun Dodum", var(--kids-font), sans-serif;
+}
+
+.shop-preview-text.font-sunflower,
+.shop-preview-text.font-mclaren,
+.font-preview.font-sunflower,
+.font-preview.font-mclaren,
+.effect-preview.font-sunflower,
+.effect-preview.font-mclaren {
+  font-family: "Sunflower", var(--kids-font), sans-serif;
+}

@@ -12,7 +12,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from apps.avatar.models import RoomItemPlacement, UserAvatarProfile, UserRoomProfile
 from apps.core.models import UserGameProfile
-from apps.shop.models import UserFontPreference, UserOwnedItem, UserOwnedEffect
+from apps.shop.models import UserFontPreference, UserOwnedEffect, UserOwnedItem
 from apps.social.models import Friendship
 
 
@@ -50,6 +50,58 @@ EFFECT_LABEL_MAP = {
     "float_wave": "Float Wave",
     "fire_glow": "Fire Glow",
     "ice_glow": "Ice Glow",
+}
+
+EFFECT_KEY_ALIAS_MAP = {
+    "none": "none",
+
+    "neonblue": "neon_blue",
+    "neon_blue": "neon_blue",
+    "neon blue": "neon_blue",
+    "네온블루": "neon_blue",
+    "네온 블루": "neon_blue",
+
+    "rainbowflow": "rainbow_flow",
+    "rainbow_flow": "rainbow_flow",
+    "rainbow flow": "rainbow_flow",
+    "레인보우": "rainbow_flow",
+    "무지개": "rainbow_flow",
+    "무지개효과": "rainbow_flow",
+
+    "goldglow": "gold_glow",
+    "gold_glow": "gold_glow",
+    "gold glow": "gold_glow",
+    "골드글로우": "gold_glow",
+    "골드 글로우": "gold_glow",
+    "금빛": "gold_glow",
+    "금빛효과": "gold_glow",
+
+    "sparkle": "sparkle",
+    "스파클": "sparkle",
+    "반짝이": "sparkle",
+    "반짝이효과": "sparkle",
+    "반짝임": "sparkle",
+
+    "glitch": "glitch",
+    "글리치": "glitch",
+
+    "floatwave": "float_wave",
+    "float_wave": "float_wave",
+    "float wave": "float_wave",
+    "물결": "float_wave",
+    "물결효과": "float_wave",
+
+    "fireglow": "fire_glow",
+    "fire_glow": "fire_glow",
+    "fire glow": "fire_glow",
+    "불꽃": "fire_glow",
+    "불꽃효과": "fire_glow",
+
+    "iceglow": "ice_glow",
+    "ice_glow": "ice_glow",
+    "ice glow": "ice_glow",
+    "얼음": "ice_glow",
+    "얼음효과": "ice_glow",
 }
 
 AVATAR_SLOT_TO_FIELD = OrderedDict([
@@ -126,11 +178,23 @@ CATEGORY_TO_SLOT = {
 }
 
 SUPPORTED_FONT_KEYS = {
-    "gaegu",
+    "pretendard",
+
+    "cute_font",
     "dongle",
+    "gaegu",
+    "gamja_flower",
+    "gowun_dodum",
     "gowun_batang",
+    "gugi",
+    "hi_melody",
+    "jua",
     "nanum_pen",
+    "poor_story",
+    "single_day",
+    "sunflower",
     "dokdo",
+
     "bubblegum_sans",
     "delius_swash_caps",
     "boogaloo",
@@ -146,6 +210,138 @@ SUPPORTED_FONT_KEYS = {
     "amatic_sc",
     "capriola",
     "mclaren",
+}
+
+FONT_KEY_ALIAS_MAP = {
+    "pretendard": "pretendard",
+    "프리텐다드": "pretendard",
+    "프리텐다드체": "pretendard",
+
+    "cute": "cute_font",
+    "cutefont": "cute_font",
+    "cute_font": "cute_font",
+    "cute font": "cute_font",
+    "큐트폰트": "cute_font",
+    "귀여운폰트": "cute_font",
+    "귀여운 폰트": "cute_font",
+
+    "dongle": "dongle",
+    "동글": "dongle",
+    "동글체": "dongle",
+
+    "gaegu": "gaegu",
+    "개구": "gaegu",
+    "개구체": "gaegu",
+
+    "gamja": "gamja_flower",
+    "gamjaflower": "gamja_flower",
+    "gamja_flower": "gamja_flower",
+    "gamja flower": "gamja_flower",
+    "감자꽃": "gamja_flower",
+    "감자꽃체": "gamja_flower",
+
+    "gowundodum": "gowun_dodum",
+    "gowun_dodum": "gowun_dodum",
+    "gowun dodum": "gowun_dodum",
+    "고운돋움": "gowun_dodum",
+    "고운돋움체": "gowun_dodum",
+
+    "gowunbatang": "gowun_batang",
+    "gowun_batang": "gowun_batang",
+    "gowun batang": "gowun_batang",
+    "고운바탕": "gowun_batang",
+    "고운바탕체": "gowun_batang",
+
+    "gugi": "gugi",
+    "구기": "gugi",
+    "구기체": "gugi",
+
+    "himelody": "hi_melody",
+    "hi_melody": "hi_melody",
+    "hi melody": "hi_melody",
+    "하이멜로디": "hi_melody",
+    "하이멜로디체": "hi_melody",
+
+    "jua": "jua",
+    "주아": "jua",
+    "주아체": "jua",
+
+    "nanumpen": "nanum_pen",
+    "nanum_pen": "nanum_pen",
+    "nanum pen": "nanum_pen",
+    "나눔펜": "nanum_pen",
+    "나눔펜체": "nanum_pen",
+
+    "poorstory": "poor_story",
+    "poor_story": "poor_story",
+    "poor story": "poor_story",
+    "푸어스토리": "poor_story",
+    "푸어 스토리": "poor_story",
+    "푸어스토리체": "poor_story",
+
+    "singleday": "single_day",
+    "single_day": "single_day",
+    "single day": "single_day",
+    "싱글데이": "single_day",
+    "싱글 데이": "single_day",
+    "싱글데이체": "single_day",
+
+    "sunflower": "sunflower",
+    "해바라기": "sunflower",
+    "해바라기체": "sunflower",
+
+    "dokdo": "dokdo",
+    "독도": "dokdo",
+    "독도체": "dokdo",
+
+    "bubblegumsans": "bubblegum_sans",
+    "bubblegum_sans": "bubblegum_sans",
+    "bubblegum sans": "bubblegum_sans",
+
+    "deliusswashcaps": "delius_swash_caps",
+    "delius_swash_caps": "delius_swash_caps",
+    "delius swash caps": "delius_swash_caps",
+
+    "boogaloo": "boogaloo",
+
+    "loveyalikeasister": "love_ya_like_a_sister",
+    "love_ya_like_a_sister": "love_ya_like_a_sister",
+    "love ya like a sister": "love_ya_like_a_sister",
+
+    "luckiestguy": "luckiest_guy",
+    "luckiest_guy": "luckiest_guy",
+    "luckiest guy": "luckiest_guy",
+
+    "comingsoon": "coming_soon",
+    "coming_soon": "coming_soon",
+    "coming soon": "coming_soon",
+
+    "lifesavers": "life_savers",
+    "life_savers": "life_savers",
+    "life savers": "life_savers",
+
+    "chewy": "chewy",
+
+    "cabinsketch": "cabin_sketch",
+    "cabin_sketch": "cabin_sketch",
+    "cabin sketch": "cabin_sketch",
+
+    "mousememoirs": "mouse_memoirs",
+    "mouse_memoirs": "mouse_memoirs",
+    "mouse memoirs": "mouse_memoirs",
+
+    "londrinashadow": "londrina_shadow",
+    "londrina_shadow": "londrina_shadow",
+    "londrina shadow": "londrina_shadow",
+
+    "modak": "modak",
+
+    "amaticsc": "amatic_sc",
+    "amatic_sc": "amatic_sc",
+    "amatic sc": "amatic_sc",
+
+    "capriola": "capriola",
+    "mclaren": "mclaren",
 }
 
 
@@ -167,10 +363,35 @@ def _clamp_float(value, min_value, max_value):
     return max(min_value, min(max_value, _safe_float(value, min_value)))
 
 
-def _normalize_effect_key(value):
-    raw = str(value or "none").strip().lower()
+def _normalize_plain_key(value):
+    raw = str(value or "").strip().lower()
     raw = raw.replace("-", "_").replace(" ", "_")
-    return raw if raw in SUPPORTED_EFFECT_KEYS else "none"
+    raw = re.sub(r"[^a-z0-9_가-힣]+", "", raw)
+    raw = re.sub(r"_+", "_", raw).strip("_")
+    return raw
+
+
+def _normalize_effect_key(value):
+    raw_original = str(value or "none").strip()
+    if not raw_original:
+        return "none"
+
+    raw_lower = raw_original.lower().strip()
+
+    if raw_lower in EFFECT_KEY_ALIAS_MAP:
+        return EFFECT_KEY_ALIAS_MAP[raw_lower]
+
+    normalized = _normalize_plain_key(raw_original)
+
+    if normalized in EFFECT_KEY_ALIAS_MAP:
+        return EFFECT_KEY_ALIAS_MAP[normalized]
+
+    compact = normalized.replace("_", "")
+
+    if compact in EFFECT_KEY_ALIAS_MAP:
+        return EFFECT_KEY_ALIAS_MAP[compact]
+
+    return normalized if normalized in SUPPORTED_EFFECT_KEYS else "none"
 
 
 def _image_url_from_item(item):
@@ -188,37 +409,123 @@ def _image_url_from_item(item):
 
 
 def _slugify_font_key(value):
-    raw = str(value or "").strip().lower()
-    raw = raw.replace("-", "_").replace(" ", "_")
-    raw = re.sub(r"[^a-z0-9_]+", "", raw)
-    raw = re.sub(r"_+", "_", raw).strip("_")
-    return raw
+    raw_original = str(value or "").strip()
+    if not raw_original:
+        return ""
+
+    raw_lower = raw_original.lower().strip()
+
+    if raw_original in FONT_KEY_ALIAS_MAP:
+        return FONT_KEY_ALIAS_MAP[raw_original]
+
+    if raw_lower in FONT_KEY_ALIAS_MAP:
+        return FONT_KEY_ALIAS_MAP[raw_lower]
+
+    normalized = _normalize_plain_key(raw_original)
+
+    if normalized in FONT_KEY_ALIAS_MAP:
+        return FONT_KEY_ALIAS_MAP[normalized]
+
+    compact = normalized.replace("_", "")
+
+    if compact in FONT_KEY_ALIAS_MAP:
+        return FONT_KEY_ALIAS_MAP[compact]
+
+    return normalized
 
 
 def _font_key_from_item(item):
-    direct_key = _slugify_font_key(getattr(item, "font_family_key", ""))
-    if direct_key in SUPPORTED_FONT_KEYS:
-        return direct_key
+    if not item:
+        return ""
 
     candidates = [
+        getattr(item, "font_family_key", ""),
         getattr(item, "font_key", ""),
         getattr(item, "code", ""),
         getattr(item, "slug", ""),
         getattr(item, "name", ""),
+        getattr(item, "display_name", ""),
+        getattr(item, "title", ""),
     ]
+
     for candidate in candidates:
         key = _slugify_font_key(candidate)
         if key in SUPPORTED_FONT_KEYS:
             return key
+
     return ""
+
+
+def _effect_key_from_item(item):
+    if not item:
+        return ""
+
+    candidates = [
+        getattr(item, "effect_key", ""),
+        getattr(item, "key", ""),
+        getattr(item, "code", ""),
+        getattr(item, "slug", ""),
+        getattr(item, "name", ""),
+        getattr(item, "display_name", ""),
+        getattr(item, "title", ""),
+    ]
+
+    for candidate in candidates:
+        raw = str(candidate or "").strip()
+        if not raw:
+            continue
+
+        key = _normalize_effect_key(raw)
+        if key in SUPPORTED_EFFECT_KEYS and key != "none":
+            return key
+
+    return ""
+
+
+def _is_effect_item(item):
+    if not item:
+        return False
+
+    category = str(getattr(item, "category", "") or "").strip().lower()
+    item_type = str(getattr(item, "type", "") or "").strip().lower()
+    item_group = str(getattr(item, "item_group", "") or "").strip().lower()
+
+    if category in {"profile_effect", "effect"}:
+        return True
+
+    if item_type in {"profile_effect", "effect"}:
+        return True
+
+    if item_group in {"profile_effect", "effect"}:
+        return True
+
+    if "effect" in category or "effect" in item_type or "effect" in item_group:
+        return True
+
+    return bool(_effect_key_from_item(item))
 
 
 def _is_font_item(item):
     if not item:
         return False
 
+    if _is_effect_item(item):
+        return False
+
     category = str(getattr(item, "category", "") or "").strip().lower()
-    if category == "profile_font" or "font" in category:
+    item_type = str(getattr(item, "type", "") or "").strip().lower()
+    item_group = str(getattr(item, "item_group", "") or "").strip().lower()
+
+    if category in {"profile_font", "font"}:
+        return True
+
+    if item_type in {"profile_font", "font"}:
+        return True
+
+    if item_group in {"profile_font", "font"}:
+        return True
+
+    if "font" in category or "font" in item_type or "font" in item_group:
         return True
 
     return bool(_font_key_from_item(item))
@@ -230,6 +537,10 @@ def _normalize_item_group(category):
         return "unique"
     if category == "set":
         return "set"
+    if category in {"profile_font", "font"}:
+        return "font"
+    if category in {"profile_effect", "effect"}:
+        return "effect"
     return ""
 
 
@@ -361,6 +672,7 @@ def _normalize_avatar_type(category):
         "avatar_shoes": "shoes",
         "avatar_hat": "hat",
         "profile_font": "font",
+        "profile_effect": "effect",
 
         "head": "head",
         "face": "head",
@@ -385,6 +697,7 @@ def _normalize_avatar_type(category):
         "hat": "hat",
         "cap": "hat",
         "font": "font",
+        "effect": "effect",
         "unique": "unique",
         "set": "set",
     }
@@ -397,6 +710,9 @@ def _normalize_slot_name(value):
 
 
 def _infer_slot_from_item(item):
+    if _is_font_item(item) or _is_effect_item(item):
+        return ""
+
     equip_slot = (
         getattr(item, "resolved_equip_slot", None)
         or getattr(item, "equip_slot", None)
@@ -526,11 +842,19 @@ def _group_owned_items(user):
     grouped = OrderedDict()
     for owned in rows:
         item = owned.item
-        slot = _infer_slot_from_item(item)
         category = str(getattr(item, "category", "") or "").strip().lower()
         item_group = _normalize_item_group(category)
+        effect_key = _effect_key_from_item(item)
+        is_effect = _is_effect_item(item)
         is_font = _is_font_item(item)
-        font_key = _font_key_from_item(item)
+        font_key = _font_key_from_item(item) if is_font else ""
+        slot = _infer_slot_from_item(item)
+
+        if is_effect:
+            item_group = "effect"
+
+        if is_font:
+            item_group = "font"
 
         if item.id not in grouped:
             grouped[item.id] = {
@@ -544,16 +868,17 @@ def _group_owned_items(user):
                 "slot": slot,
                 "equip_slot": slot,
                 "resolved_equip_slot": slot,
-                "type": _normalize_avatar_type(category),
+                "type": "effect" if is_effect else _normalize_avatar_type(category),
                 "gender": _normalize_gender(item),
                 "description": getattr(item, "description", "") or "",
                 "image_url": _image_url_from_item(item),
                 "price": int(getattr(item, "price_stars", 0) or 0),
                 "quantity": max(1, int(getattr(owned, "quantity", 1) or 1)),
                 "is_font": is_font,
+                "is_effect": is_effect,
                 "font_key": font_key,
                 "font_family_key": getattr(item, "font_family_key", "") or font_key,
-                "effect_key": str(getattr(item, "effect_key", "") or "").strip().lower().replace("-", "_"),
+                "effect_key": effect_key,
             }
         else:
             grouped[item.id]["quantity"] += max(1, int(getattr(owned, "quantity", 1) or 1))
@@ -562,14 +887,15 @@ def _group_owned_items(user):
 
 
 def _group_owned_effects(user):
-    rows = (
+    grouped = OrderedDict()
+
+    effect_rows = (
         UserOwnedEffect.objects
         .filter(user=user)
         .order_by("effect_key", "id")
     )
 
-    grouped = OrderedDict()
-    for owned in rows:
+    for owned in effect_rows:
         effect_key = _normalize_effect_key(getattr(owned, "effect_key", "none"))
         if effect_key == "none":
             continue
@@ -578,6 +904,31 @@ def _group_owned_effects(user):
             grouped[effect_key] = {
                 "effect_key": effect_key,
                 "name": EFFECT_LABEL_MAP.get(effect_key, effect_key.replace("_", " ").title()),
+                "quantity": max(1, int(getattr(owned, "quantity", 1) or 1)),
+                "preview_class": f"effect-{effect_key.replace('_', '-')}",
+                "is_effect": True,
+            }
+        else:
+            grouped[effect_key]["quantity"] += max(1, int(getattr(owned, "quantity", 1) or 1))
+
+    item_rows = (
+        UserOwnedItem.objects
+        .select_related("item")
+        .filter(user=user, item__isnull=False)
+        .order_by("item_id", "id")
+    )
+
+    for owned in item_rows:
+        item = owned.item
+        effect_key = _effect_key_from_item(item)
+
+        if not effect_key or effect_key == "none":
+            continue
+
+        if effect_key not in grouped:
+            grouped[effect_key] = {
+                "effect_key": effect_key,
+                "name": getattr(item, "name", "") or EFFECT_LABEL_MAP.get(effect_key, effect_key.replace("_", " ").title()),
                 "quantity": max(1, int(getattr(owned, "quantity", 1) or 1)),
                 "preview_class": f"effect-{effect_key.replace('_', '-')}",
                 "is_effect": True,
@@ -703,18 +1054,29 @@ def _validate_avatar_item_for_slot(user, slot, item_id):
     return owned.item, None
 
 
-def _validate_owned_font_item(user, item_id):
-    item_id = _safe_int(item_id, 0)
+def _validate_owned_font_item(user, font_item_id):
+    item_id = _safe_int(font_item_id, 0)
+
     if item_id <= 0:
         return None, "", "Invalid font item."
 
     owned = (
         UserOwnedItem.objects
         .select_related("item")
-        .filter(user=user, item_id=item_id)
+        .filter(user=user, item_id=item_id, item__isnull=False)
         .order_by("id")
         .first()
     )
+
+    if not owned:
+        owned = (
+            UserOwnedItem.objects
+            .select_related("item")
+            .filter(user=user, id=item_id, item__isnull=False)
+            .order_by("id")
+            .first()
+        )
+
     if not owned or not owned.item:
         return None, "", "You do not own this font."
 
@@ -722,6 +1084,7 @@ def _validate_owned_font_item(user, item_id):
         return None, "", "Selected item is not a font."
 
     font_key = _font_key_from_item(owned.item)
+
     if not font_key:
         return None, "", "Unsupported font item."
 
@@ -734,17 +1097,30 @@ def _validate_owned_effect(user, effect_key):
     if normalized == "none":
         return "none", None
 
-    owned = (
+    owned_effect = (
         UserOwnedEffect.objects
         .filter(user=user, effect_key__in=[normalized, normalized.replace("_", "-")])
         .order_by("id")
         .first()
     )
-    if not owned:
-        return None, "You do not own this effect."
 
-    stored_key = _normalize_effect_key(getattr(owned, "effect_key", normalized))
-    return stored_key, None
+    if owned_effect:
+        stored_key = _normalize_effect_key(getattr(owned_effect, "effect_key", normalized))
+        return stored_key, None
+
+    owned_item = (
+        UserOwnedItem.objects
+        .select_related("item")
+        .filter(user=user, item__isnull=False)
+        .order_by("id")
+    )
+
+    for row in owned_item:
+        item_effect_key = _effect_key_from_item(row.item)
+        if item_effect_key == normalized:
+            return item_effect_key, None
+
+    return None, "You do not own this effect."
 
 
 @login_required
@@ -827,41 +1203,77 @@ def save_font_preference(request):
     reset_default = bool(payload.get("reset_default"))
     font_item_id = payload.get("font_item_id")
     effect_key_raw = payload.get("effect_key")
-    nickname_scale = _clamp_float(payload.get("nickname_scale"), MIN_NICKNAME_SCALE, MAX_NICKNAME_SCALE)
-    nickname_letter_spacing = _clamp_float(payload.get("nickname_letter_spacing"), MIN_NICKNAME_SPACING, MAX_NICKNAME_SPACING)
+
+    nickname_scale = _clamp_float(
+        payload.get("nickname_scale"),
+        MIN_NICKNAME_SCALE,
+        MAX_NICKNAME_SCALE,
+    )
+
+    nickname_letter_spacing = _clamp_float(
+        payload.get("nickname_letter_spacing"),
+        MIN_NICKNAME_SPACING,
+        MAX_NICKNAME_SPACING,
+    )
 
     selected_item = None
     font_key = ""
+    effect_key = "none"
 
-    if not reset_default:
-        selected_item, font_key, error = _validate_owned_font_item(request.user, font_item_id)
-        if error:
-            return JsonResponse({"ok": False, "error": error}, status=400)
+    if reset_default:
+        effect_key = "none"
+    else:
+        if font_item_id:
+            selected_item, font_key, error = _validate_owned_font_item(request.user, font_item_id)
+
+            if error:
+                return JsonResponse({
+                    "ok": False,
+                    "error": error,
+                    "debug_font_item_id": font_item_id,
+                }, status=400)
 
         validated_effect_key, effect_error = _validate_owned_effect(request.user, effect_key_raw)
+
         if effect_error:
             return JsonResponse({"ok": False, "error": effect_error}, status=400)
-        effect_key = validated_effect_key
-    else:
-        effect_key = "none"
+
+        effect_key = validated_effect_key or "none"
 
     with transaction.atomic():
         pref, _ = UserFontPreference.objects.get_or_create(user=request.user)
 
-        pref.nickname_font_item = None if reset_default else selected_item
-        pref.title_font_item = None if reset_default else selected_item
-        pref.content_font_item = None if reset_default else selected_item
+        if reset_default:
+            pref.nickname_font_item = None
+            pref.title_font_item = None
+            pref.content_font_item = None
 
-        pref.nickname_effect_key = "none" if reset_default else effect_key
-        pref.title_effect_key = "none"
-        pref.content_effect_key = "none"
+            pref.nickname_effect_key = "none"
+            pref.title_effect_key = "none"
+            pref.content_effect_key = "none"
 
-        pref.nickname_scale = DEFAULT_NICKNAME_SCALE if reset_default else nickname_scale
-        pref.nickname_letter_spacing = DEFAULT_NICKNAME_LETTER_SPACING if reset_default else nickname_letter_spacing
+            pref.nickname_scale = DEFAULT_NICKNAME_SCALE
+            pref.nickname_letter_spacing = DEFAULT_NICKNAME_LETTER_SPACING
 
-        pref.nickname_color = "#ffffff"
-        pref.title_color = "#ffffff"
-        pref.content_color = "#eef4ff"
+            pref.nickname_color = "#ffffff"
+            pref.title_color = "#ffffff"
+            pref.content_color = "#eef4ff"
+        else:
+            pref.nickname_font_item = selected_item
+            pref.title_font_item = selected_item
+            pref.content_font_item = selected_item
+
+            pref.nickname_effect_key = effect_key
+            pref.title_effect_key = "none"
+            pref.content_effect_key = "none"
+
+            pref.nickname_scale = nickname_scale
+            pref.nickname_letter_spacing = nickname_letter_spacing
+
+            pref.nickname_color = "#73c5ff"
+            pref.title_color = "#403932"
+            pref.content_color = "#403932"
+
         pref.save()
 
     return JsonResponse({

@@ -1,12 +1,16 @@
 ﻿{% extends "base_app.html" %}
 {% load static %}
 
-{% block title %}{{ page_title }} - Community{% endblock %}
+{% block title %}{{ page_title }} - 커뮤니티{% endblock %}
 
 {% block extra_css %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Boogaloo&family=Bubblegum+Sans&family=Cabin+Sketch:wght@400;700&family=Capriola&family=Chewy&family=Coming+Soon&family=Delius+Swash+Caps&family=Dokdo&family=Dongle:wght@400;700&family=Gaegu:wght@400;700&family=Gowun+Batang:wght@400;700&family=Life+Savers:wght@400;700;800&family=Londrina+Shadow&family=Love+Ya+Like+A+Sister&family=Luckiest+Guy&family=McLaren&family=Modak&family=Mouse+Memoirs&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<!-- 프리텐다드 폰트 적용 -->
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body, .community-page, .community-page * {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif !important;
+  }
+</style>
 <link rel="stylesheet" href="{% static 'community/css/community.css' %}">
 {% endblock %}
 
@@ -17,34 +21,34 @@
       <div class="write-head">
         <div>
           <h1 class="write-title">{{ page_title }}</h1>
-          <p class="write-sub">Write your post in the same premium community tone.</p>
+          <p class="write-sub">프리미엄 커뮤니티에 어울리는 글을 작성해 보세요.</p>
         </div>
-        <a href="{% url 'community:home' %}" class="detail-back-btn">← Back to List</a>
+        <a href="{% url 'community:home' %}" class="detail-back-btn">← 목록으로 돌아가기</a>
       </div>
 
       <form method="post" enctype="multipart/form-data" class="write-form">
         {% csrf_token %}
 
         <div class="form-group">
-          <label class="form-label" for="{{ form.title.id_for_label }}">Title</label>
+          <label class="form-label" for="{{ form.title.id_for_label }}">제목</label>
           {{ form.title }}
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="{{ form.content.id_for_label }}">Content</label>
+          <label class="form-label" for="{{ form.content.id_for_label }}">내용</label>
           {{ form.content }}
         </div>
 
         {% if post and post.images.all %}
         <div class="form-group">
-          <label class="form-label">Current Images</label>
+          <label class="form-label">현재 이미지</label>
           <div class="edit-image-grid">
             {% for image in post.images.all %}
             <div class="edit-image-card">
-              <img src="{{ image.image.url }}" alt="post image">
+              <img src="{{ image.image.url }}" alt="게시물 이미지">
               <label class="edit-image-check">
                 <input type="checkbox" name="delete_image_ids" value="{{ image.id }}">
-                <span>Delete this image</span>
+                <span>이 이미지 삭제</span>
               </label>
             </div>
             {% endfor %}
@@ -52,13 +56,13 @@
 
           <label class="delete-all-images-line">
             <input type="checkbox" name="delete_all_images" value="true">
-            <span>Delete all current images</span>
+            <span>현재 이미지 모두 삭제</span>
           </label>
         </div>
         {% endif %}
 
         <div class="form-group">
-          <label class="form-label" for="communityImagesInput">Images</label>
+          <label class="form-label" for="communityImagesInput">이미지</label>
           <input
             id="communityImagesInput"
             type="file"
@@ -67,11 +71,11 @@
             multiple
             accept="image/*"
           >
-          <p class="write-sub write-sub-small">You can upload multiple images.</p>
+          <p class="write-sub write-sub-small">여러 장의 이미지를 업로드할 수 있습니다.</p>
         </div>
 
         <div class="write-actions">
-          <a href="{% url 'community:home' %}" class="detail-list-btn">Cancel</a>
+          <a href="{% url 'community:home' %}" class="detail-list-btn">취소</a>
           <button type="submit" class="community-write-btn">{{ submit_label }}</button>
         </div>
       </form>

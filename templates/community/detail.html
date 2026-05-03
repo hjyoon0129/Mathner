@@ -2,12 +2,16 @@
 {% load static %}
 {% load community_extras %}
 
-{% block title %}{{ post.title }} - Community{% endblock %}
+{% block title %}{{ post.title }} - 커뮤니티{% endblock %}
 
 {% block extra_css %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Boogaloo&family=Bubblegum+Sans&family=Cabin+Sketch:wght@400;700&family=Capriola&family=Chewy&family=Coming+Soon&family=Delius+Swash+Caps&family=Dokdo&family=Dongle:wght@400;700&family=Gaegu:wght@400;700&family=Gowun+Batang:wght@400;700&family=Life+Savers:wght@400;700;800&family=Londrina+Shadow&family=Love+Ya+Like+A+Sister&family=Luckiest+Guy&family=McLaren&family=Modak&family=Mouse+Memoirs&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<!-- 프리텐다드 폰트 적용 -->
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body, .community-page, .community-page * {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif !important;
+  }
+</style>
 <link rel="stylesheet" href="{% static 'community/css/community.css' %}">
 {% endblock %}
 
@@ -16,14 +20,14 @@
   <div class="community-wrap">
     <div class="detail-card">
       <div class="detail-topbar">
-        <a href="{% url 'community:home' %}" class="detail-back-btn">← Back to List</a>
+        <a href="{% url 'community:home' %}" class="detail-back-btn">← 목록으로 돌아가기</a>
 
         {% if can_edit_post %}
         <div class="detail-owner-actions">
-          <a href="{% url 'community:edit' post.pk %}" class="detail-list-btn">Edit</a>
-          <form method="post" action="{% url 'community:delete' post.pk %}" onsubmit="return confirm('Delete this post?');">
+          <a href="{% url 'community:edit' post.pk %}" class="detail-list-btn">수정</a>
+          <form method="post" action="{% url 'community:delete' post.pk %}" onsubmit="return confirm('이 게시물을 삭제하시겠습니까?');">
             {% csrf_token %}
-            <button type="submit" class="danger-btn">Delete</button>
+            <button type="submit" class="danger-btn">삭제</button>
           </form>
         </div>
         {% endif %}
@@ -32,10 +36,10 @@
       <div class="detail-header">
         <div class="detail-badges">
           {% if post.is_notice %}
-            <span class="notice-badge">Notice</span>
+            <span class="notice-badge">공지</span>
           {% endif %}
           {% if post.images.count > 0 %}
-            <span class="row-chip">IMG {{ post.images.count }}</span>
+            <span class="row-chip">이미지 {{ post.images.count }}</span>
           {% endif %}
           <span class="row-chip row-chip-like">
             <span class="thumb-icon thumb-icon-sm" aria-hidden="true">
@@ -53,7 +57,7 @@
 
         <div class="detail-meta">
           <div class="detail-meta-item">
-            <span class="meta-label">Nickname</span>
+            <span class="meta-label">닉네임</span>
             <span
               class="nickname-text nickname-strong {{ post.author_font_key_snapshot|font_class }} {{ post.author_effect_key_snapshot|effect_class }}"
               data-nickname-font-key="{{ post.author_font_key_snapshot }}"
@@ -66,16 +70,17 @@
             </span>
           </div>
           <div class="detail-meta-item">
-            <span class="meta-label">Views</span>
+            <span class="meta-label">조회수</span>
             <span>{{ post.views }}</span>
           </div>
           <div class="detail-meta-item">
-            <span class="meta-label">Likes</span>
+            <span class="meta-label">좋아요</span>
             <span>{{ post.like_count }}</span>
           </div>
           <div class="detail-meta-item">
-            <span class="meta-label">Date</span>
-            <span>{{ post.created_at|date:"Y-m-d H:i" }}</span>
+            <span class="meta-label">작성일</span>
+            <!-- 날짜 형식 변경: Y-m-d H:i -> y-m-d -->
+            <span>{{ post.created_at|date:"y-m-d" }}</span>
           </div>
         </div>
       </div>
@@ -105,7 +110,7 @@
                         stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </span>
-              <span>Like</span>
+              <span>좋아요</span>
               <span class="like-count">{{ post.like_count }}</span>
             </button>
           </form>
@@ -117,19 +122,19 @@
                       stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </span>
-            <span>Like</span>
+            <span>좋아요</span>
             <span class="like-count">{{ post.like_count }}</span>
           </a>
         {% endif %}
 
-        <a href="{% url 'community:home' %}" class="detail-list-btn">List</a>
+        <a href="{% url 'community:home' %}" class="detail-list-btn">목록</a>
       </div>
     </div>
 
     <div class="comments-card" id="comments">
       <div class="comments-head">
-        <h2 class="comments-title">Comments</h2>
-        <button type="button" class="comment-collapse-all-btn" id="toggleAllCommentsBtn">Collapse All</button>
+        <h2 class="comments-title">댓글</h2>
+        <button type="button" class="comment-collapse-all-btn" id="toggleAllCommentsBtn">모두 접기</button>
       </div>
 
       {% if user.is_authenticated %}
@@ -137,13 +142,13 @@
         {% csrf_token %}
         {{ comment_form.content }}
         <div class="comment-form-actions">
-          <button type="submit" class="community-write-btn comment-submit-btn">Add Comment</button>
+          <button type="submit" class="community-write-btn comment-submit-btn">댓글 작성</button>
         </div>
       </form>
       {% else %}
       <div class="comment-login-box">
         <a href="{% url 'account_login' %}?next={% url 'community:detail' post.pk %}" class="detail-list-btn">
-          Sign in to write a comment
+          댓글을 작성하려면 로그인하세요
         </a>
       </div>
       {% endif %}
@@ -152,7 +157,7 @@
         {% for comment in top_level_comments %}
           {% include "community/_comment_item.html" with comment=comment post=post liked_comment_ids=liked_comment_ids %}
         {% empty %}
-          <div class="community-empty">No comments yet.</div>
+          <div class="community-empty">아직 댓글이 없습니다.</div>
         {% endfor %}
       </div>
     </div>

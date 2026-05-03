@@ -1,22 +1,20 @@
 ﻿{% extends "base_app.html" %}
 {% load static %}
 
-{% block title %}Avatar Shop - mathner{% endblock %}
+{% block title %}매스너 상점{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'shop/css/shop-common.css' %}">
-<link rel="stylesheet" href="{% static 'shop/css/shop-avatar.css' %}">
-<link rel="stylesheet" href="{% static 'shop/css/shop-font-effect.css' %}">
-<link rel="stylesheet" href="{% static 'shop/css/shop-set-unique.css' %}">
-
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Boogaloo&family=Bubblegum+Sans&family=Cabin+Sketch:wght@400;700&family=Capriola&family=Chewy&family=Coming+Soon&family=Delius+Swash+Caps&family=Dokdo&family=Dongle:wght@400;700&family=Gaegu:wght@400;700&family=Gowun+Batang:wght@400;700&family=Life+Savers:wght@400;700;800&family=Londrina+Shadow&family=Love+Ya+Like+A+Sister&family=Luckiest+Guy&family=McLaren&family=Modak&family=Mouse+Memoirs&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'shop/css/kids-shop.css' %}">
+
 {% endblock %}
 
 {% block content %}
 <section
-  class="shop-page"
+  class="shop-page kids-theme"
   id="shopPage"
   data-owned-map='{{ owned_map_json|escape }}'
   data-owned-effect-map='{{ owned_effect_map_json|escape }}'
@@ -24,377 +22,270 @@
   data-buy-url="/shop/buy/"
   data-buy-effects-url="/shop/buy-effects/"
   data-premium-url="/#pricing"
-  data-is-premium-user="{% if request.user.profile.is_premium %}true{% else %}false{% endif %}"
+  data-is-premium-user="{% if request.user.is_authenticated and request.user.profile.is_premium %}true{% else %}false{% endif %}"
 >
-  <div class="shop-wrap">
-    <div class="shop-header">
-      <div>
-        <div class="shop-header-top-row">
-          <h1 class="shop-title">Avatar Shop</h1>
-          <a href="/avatar/my-room/" class="shop-back-btn">Back to My Avatar</a>
-        </div>
-        <p class="shop-sub">Buy avatar parts, fonts, effects, set items, and unique items with your Stars.</p>
+  <div class="kids-wrap">
+    <div class="shop-header cute-card">
+      <div class="shop-header-left">
+        <h1 class="shop-title">🛒 매스너 상점</h1>
+        <p class="shop-sub">별을 모아서 예쁜 옷과 글씨체, 반짝이 효과를 사보세요!</p>
       </div>
 
-      <div class="shop-balance-card">
-        <div class="shop-balance-k">Current Stars</div>
-        <div class="shop-balance-v" id="shopCurrentStars">{{ shop_star_count }}</div>
+      <div class="shop-header-right">
+        <div class="star-balance-box">
+          <span class="star-label">내 별 ⭐</span>
+          <strong class="star-amount" id="shopCurrentStars">{{ shop_star_count }}</strong>
+        </div>
+        <a href="/avatar/my-room/" class="btn-cute btn-gray shop-room-btn">내 방으로 가기 🏠</a>
       </div>
     </div>
 
-    <div class="shop-layout">
+    <div class="kids-layout">
       <div class="shop-main">
-        <div class="shop-filter-panel">
-          <div class="shop-filter-group">
-            <div class="shop-filter-label">Tab</div>
-            <div class="shop-filter-bar" id="shopMainTabBar">
-              <button type="button" class="shop-filter-btn is-active" data-main-tab="avatar">Avatar</button>
-              <button type="button" class="shop-filter-btn" data-main-tab="font">Font</button>
-              <button type="button" class="shop-filter-btn" data-main-tab="effect">Font Effect</button>
-              <button type="button" class="shop-filter-btn" data-main-tab="set">Set</button>
-              <button type="button" class="shop-filter-btn" data-main-tab="unique">Unique</button>
-            </div>
+        <div class="cute-card filter-card">
+          <div class="kids-tabs" id="shopMainTabBar">
+            <button type="button" class="kids-tab-btn is-active" data-main-tab="avatar">기본 옷</button>
+            <button type="button" class="kids-tab-btn" data-main-tab="set">세트 옷</button>
+            <button type="button" class="kids-tab-btn" data-main-tab="unique">스페셜</button>
+            <button type="button" class="kids-tab-btn" data-main-tab="font">글씨체</button>
+            <button type="button" class="kids-tab-btn" data-main-tab="effect">반짝이 효과</button>
           </div>
 
-          <div class="shop-filter-group" id="shopGenderFilterGroup">
-            <div class="shop-filter-label">Gender</div>
-            <div class="shop-filter-bar" id="shopGenderFilterBar">
-              <button type="button" class="shop-filter-btn is-active" data-filter-group="gender" data-filter="all">All</button>
-              <button type="button" class="shop-filter-btn" data-filter-group="gender" data-filter="male">Male</button>
-              <button type="button" class="shop-filter-btn" data-filter-group="gender" data-filter="female">Female</button>
-              <button type="button" class="shop-filter-btn" data-filter-group="gender" data-filter="common">Common</button>
-            </div>
+          <div class="sub-filter-row" id="shopGenderFilterGroup">
+            <button type="button" class="sub-filter-btn is-active" data-filter-group="gender" data-filter="all">전체</button>
+            <button type="button" class="sub-filter-btn" data-filter-group="gender" data-filter="male">남자</button>
+            <button type="button" class="sub-filter-btn" data-filter-group="gender" data-filter="female">여자</button>
+            <button type="button" class="sub-filter-btn" data-filter-group="gender" data-filter="common">공용</button>
           </div>
 
-          <div class="shop-filter-group" id="shopTypeFilterGroup">
-            <div class="shop-filter-label">Type</div>
-            <div class="shop-filter-bar" id="shopTypeFilterBar">
-              <button type="button" class="shop-filter-btn is-active" data-filter-group="type" data-filter="all">All</button>
-              <button type="button" class="shop-filter-btn" data-filter-group="type" data-filter="face">Face</button>
-              <button type="button" class="shop-filter-btn" data-filter-group="type" data-filter="hair">Hair</button>
-              <button type="button" class="shop-filter-btn" data-filter-group="type" data-filter="body">Body</button>
-              <button type="button" class="shop-filter-btn" data-filter-group="type" data-filter="top">Top</button>
-              <button type="button" class="shop-filter-btn" data-filter-group="type" data-filter="cloth">Cloth</button>
-              <button type="button" class="shop-filter-btn" data-filter-group="type" data-filter="pants">Pants</button>
-              <button type="button" class="shop-filter-btn" data-filter-group="type" data-filter="shoes">Shoes</button>
-              <button type="button" class="shop-filter-btn" data-filter-group="type" data-filter="hat">Hat</button>
-            </div>
+          <div class="sub-filter-row" id="shopTypeFilterGroup">
+            <button type="button" class="sub-filter-btn is-active" data-filter-group="type" data-filter="all">전체</button>
+            <button type="button" class="sub-filter-btn" data-filter-group="type" data-filter="face">얼굴</button>
+            <button type="button" class="sub-filter-btn" data-filter-group="type" data-filter="hair">머리</button>
+            <button type="button" class="sub-filter-btn" data-filter-group="type" data-filter="top">상의</button>
+            <button type="button" class="sub-filter-btn" data-filter-group="type" data-filter="cloth">전신옷</button>
+            <button type="button" class="sub-filter-btn" data-filter-group="type" data-filter="pants">하의</button>
+            <button type="button" class="sub-filter-btn" data-filter-group="type" data-filter="shoes">신발</button>
+            <button type="button" class="sub-filter-btn" data-filter-group="type" data-filter="hat">모자</button>
           </div>
         </div>
 
         <div class="shop-section" id="shopItemsSection">
-          <div class="shop-section-head">
-            <h2 id="shopItemsSectionTitle">Avatar Items</h2>
-          </div>
+          <div class="kids-inventory-grid" id="shopAvatarGrid">
+            {% for category, items in grouped_items.items %}
+              {% for item in items %}
+                {% if item.category|lower != 'unique' and item.category|lower != 'set' %}
+                <div
+                  class="cute-item-card {% if item.category == 'profile_font' %}font-card{% endif %}"
+                  data-item-id="{{ item.id }}"
+                  data-item-name="{{ item.name }}"
+                  data-item-price="{{ item.price_stars }}"
+                  data-item-category="{{ item.category|lower }}"
+                  data-item-slot="{{ item.slot|default:''|lower }}"
+                  data-item-gender="{{ item.gender|default:''|lower }}"
+                  data-item-font-family="{{ item.font_family_key|default:'default' }}"
+                  data-is-premium="{% if item.is_premium %}true{% else %}false{% endif %}"
+                >
+                  <span class="premium-badge" {% if not item.is_premium %}hidden{% endif %}>PREMIUM</span>
 
-          <div class="shop-gender-section" id="shopMaleSection">
-            <div class="shop-gender-head">
-              <span class="shop-gender-badge shop-gender-badge-male">Male</span>
-              <h3>Male Items</h3>
-            </div>
-
-            <div class="shop-grid" id="shopMaleGrid">
-              {% for category, items in grouped_items.items %}
-                {% for item in items %}
-                  {% if item.category|lower != 'unique' and item.category|lower != 'set' %}
-                  <div
-                    class="shop-card {% if item.category == 'profile_font' %}shop-font-card{% endif %}"
-                    data-item-id="{{ item.id }}"
-                    data-item-name="{{ item.name }}"
-                    data-item-price="{{ item.price_stars }}"
-                    data-item-category="{{ item.category|lower }}"
-                    data-item-slot="{{ item.slot|default:''|lower }}"
-                    data-item-gender="{{ item.gender|default:''|lower }}"
-                    data-item-font-family="{{ item.font_family_key|default:'default' }}"
-                    data-item-image="{% if item.image_path %}{% static item.image_path %}{% endif %}"
-                  >
-                    <span class="shop-premium-badge" hidden>Premium</span>
-
-                    <div class="shop-thumb">
-                      {% if item.category == 'profile_font' %}
-                        <div class="shop-font-preview-wrap">
-                          <div class="shop-font-preview-title">Font Preview</div>
-                          <div class="shop-preview-stage shop-preview-stage-compact">
-                            <div class="shop-preview-text shop-font-preview-live font-{{ item.font_family_key|default:'default' }} effect-none">
-                              Mathner Hero
-                            </div>
-                          </div>
+                  <div class="item-thumb {% if item.category == 'profile_font' %}font-thumb{% endif %}">
+                    {% if item.category == 'profile_font' %}
+                      <div class="shop-preview-stage">
+                        <div class="shop-preview-text shop-font-preview-live font-{{ item.font_family_key|default:'default' }} effect-none">
+                          매스너!
                         </div>
-                      {% elif item.image_path %}
-                        <img src="{% static item.image_path %}" alt="{{ item.name }}">
-                      {% else %}
-                        <div class="shop-thumb-fallback">IMG</div>
-                      {% endif %}
-                    </div>
+                      </div>
+                    {% elif item.image_path %}
+                      <img src="{% static item.image_path %}" alt="{{ item.name }}">
+                    {% else %}
+                      <div class="no-img">이미지 없음</div>
+                    {% endif %}
+                  </div>
 
-                    <div class="shop-item-name">{{ item.name }}</div>
+                  <div class="item-info">
+                    <div class="item-name">{{ item.name }}</div>
 
                     {% if item.category == 'profile_font' %}
-                      <div class="shop-font-note-line">Pure font only</div>
-                      <div class="shop-font-note-line">Effect is preview only</div>
-
-                      <label class="shop-effect-preview-label shop-font-inline-preview-label">
-                        <span>Preview Effect</span>
-                        <select class="shop-effect-preview-select shop-font-effect-select">
-                          <option value="none">None</option>
-                          <option value="neon-blue">Neon Blue</option>
-                          <option value="rainbow-flow">Rainbow Flow</option>
-                          <option value="gold-glow">Gold Glow</option>
-                          <option value="sparkle">Sparkle</option>
-                          <option value="glitch">Glitch</option>
-                          <option value="float-wave">Float Wave</option>
-                          <option value="fire-glow">Fire Glow</option>
-                          <option value="ice-glow">Ice Glow</option>
-                        </select>
-                      </label>
+                    <label class="preview-select-label">
+                      <span>미리보기 효과</span>
+                      <select class="preview-select shop-font-effect-select">
+                        <option value="none">None</option>
+                        <option value="neon-blue">Neon Blue</option>
+                        <option value="rainbow-flow">Rainbow Flow</option>
+                        <option value="gold-glow">Gold Glow</option>
+                        <option value="sparkle">Sparkle</option>
+                        <option value="glitch">Glitch</option>
+                        <option value="float-wave">Float Wave</option>
+                        <option value="fire-glow">Fire Glow</option>
+                        <option value="ice-glow">Ice Glow</option>
+                      </select>
+                    </label>
                     {% endif %}
 
-                    <div class="shop-meta-row">
-                      <span class="shop-price">★ {{ item.price_stars }}</span>
-                    </div>
-
-                    <button type="button" class="shop-select-btn">Select</button>
+                    <div class="item-price">⭐ {{ item.price_stars }}</div>
                   </div>
-                  {% endif %}
-                {% endfor %}
-              {% endfor %}
-            </div>
 
-            <div class="shop-empty-state" id="shopMaleEmptyState" style="display:none;">
-              No male items match this filter.
-            </div>
-          </div>
-
-          <div class="shop-gender-section" id="shopFemaleSection">
-            <div class="shop-gender-head">
-              <span class="shop-gender-badge shop-gender-badge-female">Female</span>
-              <h3>Female Items</h3>
-            </div>
-            <div class="shop-grid" id="shopFemaleGrid"></div>
-            <div class="shop-empty-state" id="shopFemaleEmptyState" style="display:none;">
-              No female items match this filter.
-            </div>
-          </div>
-
-          <div class="shop-gender-section" id="shopCommonSection">
-            <div class="shop-gender-head">
-              <span class="shop-gender-badge shop-gender-badge-common">Common</span>
-              <h3 id="shopCommonSectionHeading">Common Items</h3>
-            </div>
-            <div class="shop-grid" id="shopCommonGrid"></div>
-            <div class="shop-empty-state" id="shopCommonEmptyState" style="display:none;">
-              No common items match this filter.
-            </div>
-          </div>
-        </div>
-
-        <div class="shop-section" id="shopEffectsSection" style="display:none;">
-          <div class="shop-section-head">
-            <h2>Font Effect Shop</h2>
-            <p class="shop-section-sub">Buy effects with Stars. Choose a font to preview each effect before selecting it.</p>
-          </div>
-
-          <div class="shop-effect-preview-grid">
-            {% for effect in effect_catalog %}
-            <div
-              class="shop-effect-card"
-              data-effect-id="{{ effect.key }}"
-              data-effect-name="{{ effect.name }}"
-              data-effect-price="{{ effect.price_stars }}"
-            >
-              <span class="shop-premium-badge" hidden>Premium</span>
-
-              <div class="shop-item-name">{{ effect.name }}</div>
-
-              <label class="shop-effect-preview-label">
-                <span>Preview Font</span>
-                <select class="shop-effect-preview-select" data-effect-preview="{{ effect.key }}">
-                  {% for font_item in font_items %}
-                    <option value="{{ font_item.font_family_key|default:'default' }}">{{ font_item.name }}</option>
-                  {% endfor %}
-                </select>
-              </label>
-
-              <div class="shop-effect-preview-box">
-                <div class="shop-preview-stage">
-                  <div class="shop-preview-text effect-preview-target {{ effect.preview_class }}" data-effect-target="{{ effect.key }}">
-                    Mathner Hero
-                  </div>
+                  <button type="button" class="btn-cute btn-blue full-width shop-select-btn">담기</button>
                 </div>
-              </div>
-
-              <div class="shop-meta-row">
-                <span class="shop-price">★ {{ effect.price_stars }}</span>
-              </div>
-
-              <button type="button" class="shop-effect-select-btn shop-select-btn">Select</button>
-            </div>
+                {% endif %}
+              {% endfor %}
             {% endfor %}
           </div>
         </div>
 
         <div class="shop-section" id="shopSetSection" style="display:none;">
-          <div class="shop-section-head">
-            <h2>Set Items</h2>
-            <p class="shop-section-sub">Complete set items grouped by subcategory.</p>
-          </div>
+          <div class="kids-inventory-grid">
+            {% if set_items %}
+              {% for item in set_items %}
+              <div
+                class="cute-item-card set-card"
+                data-item-id="{{ item.id }}"
+                data-item-name="{{ item.name }}"
+                data-item-price="{{ item.price_stars }}"
+                data-item-category="set"
+                data-item-slot="{{ item.slot|default:'cloth'|lower }}"
+                data-item-gender="{{ item.gender|default:'common'|lower }}"
+                data-is-premium="{% if item.is_premium %}true{% else %}false{% endif %}"
+              >
+                <span class="premium-badge" {% if not item.is_premium %}hidden{% endif %}>PREMIUM</span>
 
-          <div class="shop-set-wrap" data-shop-scope="set">
-            <div class="shop-subcat-row">
-              <button type="button" class="shop-subcat-btn active" data-subcat="all">All</button>
-              <button type="button" class="shop-subcat-btn" data-subcat="cloth">Cloth</button>
-              <button type="button" class="shop-subcat-btn" data-subcat="pants">Pants</button>
-              <button type="button" class="shop-subcat-btn" data-subcat="shoes">Shoes</button>
-              <button type="button" class="shop-subcat-btn" data-subcat="hat">Hat</button>
-            </div>
-
-            <div class="shop-set-grid">
-              {% if set_items %}
-                {% for item in set_items %}
-                <div
-                  class="shop-card shop-set-card"
-                  data-item-id="{{ item.id }}"
-                  data-item-name="{{ item.name }}"
-                  data-item-price="{{ item.price_stars }}"
-                  data-item-category="set"
-                  data-item-slot="{{ item.slot|default:'cloth'|lower }}"
-                  data-subcategory="{{ item.slot|default:'cloth'|lower }}"
-                  data-item-gender="{{ item.gender|default:'common'|lower }}"
-                  data-item-image="{% if item.image_path %}{% static item.image_path %}{% endif %}"
-                >
-                  <span class="shop-premium-badge">Set</span>
-
-                  <div class="shop-thumb">
-                    {% if item.image_path %}
-                      <img src="{% static item.image_path %}" alt="{{ item.name }}">
-                    {% else %}
-                      <div class="shop-thumb-fallback">SET</div>
-                    {% endif %}
-                  </div>
-
-                  <div class="shop-item-name">{{ item.name }}</div>
-                  <div class="shop-font-note-line">Set item</div>
-                  <div class="shop-font-note-line">{{ item.slot|default:"cloth"|title }} category</div>
-
-                  <div class="shop-meta-row">
-                    <span class="shop-price">★ {{ item.price_stars }}</span>
-                  </div>
-
-                  <button type="button" class="shop-select-btn">Select</button>
+                <div class="item-thumb">
+                  {% if item.image_path %}
+                    <img src="{% static item.image_path %}" alt="{{ item.name }}">
+                  {% else %}
+                    <div class="no-img">SET</div>
+                  {% endif %}
                 </div>
-                {% endfor %}
-              {% else %}
-                <div class="shop-empty-state">
-                  No set items yet.
+
+                <div class="item-info">
+                  <div class="item-name">{{ item.name }}</div>
+                  <div class="item-price">⭐ {{ item.price_stars }}</div>
                 </div>
-              {% endif %}
-            </div>
+
+                <button type="button" class="btn-cute btn-blue full-width shop-select-btn">담기</button>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="shop-empty-state">아직 세트 옷이 없어요.</div>
+            {% endif %}
           </div>
         </div>
 
         <div class="shop-section" id="shopUniqueSection" style="display:none;">
-          <div class="shop-section-head">
-            <h2>Unique Items</h2>
-            <p class="shop-section-sub">Rare unique items with special shining aura.</p>
+          <div class="kids-inventory-grid">
+            {% if unique_items %}
+              {% for item in unique_items %}
+              <div
+                class="cute-item-card unique-card"
+                data-item-id="{{ item.id }}"
+                data-item-name="{{ item.name }}"
+                data-item-price="{{ item.price_stars }}"
+                data-item-category="unique"
+                data-item-slot="{{ item.slot|default:'cloth'|lower }}"
+                data-item-gender="{{ item.gender|default:'common'|lower }}"
+                data-is-premium="{% if item.is_premium %}true{% else %}false{% endif %}"
+              >
+                <span class="premium-badge unique-badge" {% if not item.is_premium %}hidden{% endif %}>PREMIUM</span>
+
+                <div class="item-thumb unique-thumb">
+                  <span class="unique-glow"></span>
+                  {% if item.image_path %}
+                    <img src="{% static item.image_path %}" alt="{{ item.name }}">
+                  {% else %}
+                    <img src="{% static 'shop/img/unique/gold_wreath.png' %}" alt="{{ item.name }}">
+                  {% endif %}
+                </div>
+
+                <div class="item-info">
+                  <div class="item-name">{{ item.name }}</div>
+                  <div class="item-price">⭐ {{ item.price_stars }}</div>
+                </div>
+
+                <button type="button" class="btn-cute btn-blue full-width shop-select-btn">담기</button>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="shop-empty-state">아직 스페셜 아이템이 없어요.</div>
+            {% endif %}
           </div>
+        </div>
 
-          <div class="shop-unique-wrap" data-shop-scope="unique">
-            <div class="shop-subcat-row">
-              <button type="button" class="shop-subcat-btn active" data-subcat="all">All</button>
-              <button type="button" class="shop-subcat-btn" data-subcat="cloth">Cloth</button>
-              <button type="button" class="shop-subcat-btn" data-subcat="pants">Pants</button>
-              <button type="button" class="shop-subcat-btn" data-subcat="shoes">Shoes</button>
-              <button type="button" class="shop-subcat-btn" data-subcat="hat">Hat</button>
-            </div>
+        <div class="shop-section" id="shopEffectsSection" style="display:none;">
+          <div class="kids-inventory-grid effect-grid">
+            {% for effect in effect_catalog %}
+            <div
+              class="cute-item-card effect-card"
+              data-effect-id="{{ effect.key }}"
+              data-effect-name="{{ effect.name }}"
+              data-effect-price="{{ effect.price_stars }}"
+              data-is-premium="{% if effect.is_premium %}true{% else %}false{% endif %}"
+            >
+              <span class="premium-badge" {% if not effect.is_premium %}hidden{% endif %}>PREMIUM</span>
 
-            <div class="shop-unique-grid">
-              {% if unique_items %}
-                {% for item in unique_items %}
-                <div
-                  class="shop-card shop-unique-card"
-                  data-item-id="{{ item.id }}"
-                  data-item-name="{{ item.name }}"
-                  data-item-price="{{ item.price_stars }}"
-                  data-item-category="unique"
-                  data-item-slot="{% if 'robe' in item.name|lower or 'robe' in item.image_path|default:''|lower %}cloth{% else %}{% if 'crown' in item.name|lower or 'hat' in item.name|lower or 'wreath' in item.image_path|default:''|lower %}hat{% elif 'shoe' in item.name|lower or 'boot' in item.name|lower %}shoes{% elif 'pant' in item.name|lower %}pants{% else %}hat{% endif %}{% endif %}"
-                  data-subcategory="{% if 'robe' in item.name|lower or 'robe' in item.image_path|default:''|lower %}cloth{% else %}{% if 'crown' in item.name|lower or 'hat' in item.name|lower or 'wreath' in item.image_path|default:''|lower %}hat{% elif 'shoe' in item.name|lower or 'boot' in item.name|lower %}shoes{% elif 'pant' in item.name|lower %}pants{% else %}hat{% endif %}{% endif %}"
-                  data-item-gender="{{ item.gender|default:'common'|lower }}"
-                  data-item-image="{% if item.image_path %}{% static item.image_path %}{% else %}{% static 'shop/img/unique/gold_wreath.png' %}{% endif %}"
-                >
-                  <span class="shop-premium-badge shop-unique-badge">Unique</span>
-
-                  <div class="shop-thumb shop-unique-thumb">
-                    <div class="shop-unique-glow"></div>
-                    <div class="shop-unique-ring"></div>
-                    <div class="shop-unique-spark spark-1"></div>
-                    <div class="shop-unique-spark spark-2"></div>
-                    <div class="shop-unique-spark spark-3"></div>
-                    <div class="shop-unique-spark spark-4"></div>
-
-                    {% if item.image_path %}
-                      <img src="{% static item.image_path %}" alt="{{ item.name }}">
-                    {% else %}
-                      <img src="{% static 'shop/img/unique/gold_wreath.png' %}" alt="{{ item.name }}">
-                    {% endif %}
+              <div class="item-thumb effect-thumb">
+                <div class="shop-preview-stage">
+                  <div
+                    class="shop-preview-text effect-preview-target {{ effect.preview_class }}"
+                    data-effect-target="{{ effect.key }}"
+                  >
+                    매스너!
                   </div>
-
-                  <div class="shop-item-name">{{ item.name }}</div>
-                  <div class="shop-font-note-line">Unique item</div>
-                  <div class="shop-font-note-line">
-                    {% if 'robe' in item.name|lower or 'robe' in item.image_path|default:''|lower %}
-                      Cloth category
-                    {% elif 'crown' in item.name|lower or 'hat' in item.name|lower or 'wreath' in item.image_path|default:''|lower %}
-                      Hat category
-                    {% elif 'shoe' in item.name|lower or 'boot' in item.name|lower %}
-                      Shoes category
-                    {% elif 'pant' in item.name|lower %}
-                      Pants category
-                    {% else %}
-                      Hat category
-                    {% endif %}
-                  </div>
-
-                  <div class="shop-meta-row">
-                    <span class="shop-price">★ {{ item.price_stars }}</span>
-                  </div>
-
-                  <button type="button" class="shop-unique-select-btn shop-select-btn">Select</button>
                 </div>
-                {% endfor %}
-              {% else %}
-                <div class="shop-empty-state">
-                  No unique items yet.
-                </div>
-              {% endif %}
+              </div>
+
+              <div class="item-info">
+                <div class="item-name">{{ effect.name }}</div>
+
+                <label class="preview-select-label">
+                  <span>미리보기 글씨체</span>
+                  <select class="preview-select shop-effect-preview-select" data-effect-preview="{{ effect.key }}">
+                    <option value="default">Default</option>
+                    {% for font_item in font_items %}
+                      <option value="{{ font_item.font_family_key|default:'default' }}">{{ font_item.name }}</option>
+                    {% endfor %}
+                  </select>
+                </label>
+
+                <div class="item-price">⭐ {{ effect.price_stars }}</div>
+              </div>
+
+              <button type="button" class="btn-cute btn-blue full-width shop-effect-select-btn">담기</button>
             </div>
+            {% endfor %}
           </div>
         </div>
       </div>
 
       <aside class="shop-side">
-        <div class="shop-summary-card" id="shopSummaryCard">
-          <h2 id="summaryTitle">Purchase Summary</h2>
-
-          <div class="summary-line">
-            <span>Selected Items</span>
-            <strong id="summaryCount">0</strong>
+        <div class="cute-card summary-card" id="shopSummaryCard">
+          <div class="cute-card-head">
+            <h2 id="summaryTitle">🛒 장바구니</h2>
           </div>
 
-          <div class="summary-line">
-            <span>Total Cost</span>
-            <strong id="summaryCost">0</strong>
-          </div>
+          <div class="cute-card-body">
+            <div class="summary-line">
+              <span>고른 아이템</span>
+              <strong id="summaryCount">0개</strong>
+            </div>
 
-          <div class="summary-line">
-            <span>Remaining Stars</span>
-            <strong id="summaryRemain">{{ shop_star_count }}</strong>
-          </div>
+            <div class="summary-line">
+              <span>필요한 별</span>
+              <strong id="summaryCost">0</strong>
+            </div>
 
-          <div class="summary-list" id="summaryList">
-            <div class="summary-empty">No items selected.</div>
-          </div>
+            <div class="summary-line">
+              <span>남는 별</span>
+              <strong id="summaryRemain">{{ shop_star_count }}</strong>
+            </div>
 
-          <button type="button" class="shop-buy-btn" id="shopBuyBtn">Buy Selected</button>
+            <div class="summary-list" id="summaryList">
+              <div class="summary-empty">담은 아이템이 없어요.</div>
+            </div>
+
+            <button type="button" class="btn-cute btn-green full-width" id="shopBuyBtn" disabled>
+              구매하기 ✨
+            </button>
+          </div>
         </div>
       </aside>
     </div>
@@ -403,15 +294,18 @@
 
 <div class="premium-modal" id="premiumModal" aria-hidden="true">
   <div class="premium-modal-backdrop" data-premium-close></div>
-  <div class="premium-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="premiumModalTitle">
+
+  <div class="premium-modal-dialog cute-card" role="dialog" aria-modal="true" aria-labelledby="premiumModalTitle">
     <div class="premium-modal-icon">🔒</div>
-    <h3 class="premium-modal-title" id="premiumModalTitle">Premium Locked</h3>
+    <h2 class="premium-modal-title" id="premiumModalTitle">프리미엄 전용 아이템이에요</h2>
     <p class="premium-modal-text">
-      This item is locked. Go to Premium pricing to unlock premium shop items, or choose later.
+      이 아이템은 유료 회원만 구매할 수 있어요.<br>
+      이용권 페이지로 이동하거나 나중에 다시 볼 수 있어요.
     </p>
+
     <div class="premium-modal-actions">
-      <button type="button" class="shop-modal-btn shop-modal-btn-secondary" id="premiumLaterBtn">Later</button>
-      <button type="button" class="shop-modal-btn shop-modal-btn-primary" id="premiumGoBtn">Go Premium</button>
+      <button type="button" class="btn-cute btn-gray" id="premiumLaterBtn">나중에 살게요</button>
+      <button type="button" class="btn-cute btn-blue" id="premiumGoBtn">이용권 보러가기</button>
     </div>
   </div>
 </div>
@@ -421,8 +315,11 @@
 <script>
   window.CSRF_TOKEN = "{{ csrf_token }}";
 </script>
-<script src="{% static 'shop/js/shop-main.js' %}"></script>
-<script src="{% static 'shop/js/shop-avatar.js' %}"></script>
-<script src="{% static 'shop/js/shop-font.js' %}"></script>
-<script src="{% static 'shop/js/shop-set-unique.js' %}"></script>
+<script src="{% static 'shop/js/kids-shop-00-core.js' %}?v=20260502-freeze-fix" defer></script>
+<script src="{% static 'shop/js/kids-shop-01-fonts.js' %}?v=20260502-freeze-fix" defer></script>
+<script src="{% static 'shop/js/kids-shop-02-preview-select.js' %}?v=20260502-freeze-fix" defer></script>
+<script src="{% static 'shop/js/kids-shop-03-items.js' %}?v=20260502-freeze-fix" defer></script>
+<script src="{% static 'shop/js/kids-shop-04-tabs-filters.js' %}?v=20260502-freeze-fix" defer></script>
+<script src="{% static 'shop/js/kids-shop-05-summary-buy.js' %}?v=20260502-freeze-fix" defer></script>
+<script src="{% static 'shop/js/kids-shop-06-events-init.js' %}?v=20260502-freeze-fix" defer></script>
 {% endblock %}

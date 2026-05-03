@@ -1,0 +1,425 @@
+/* =========================================================
+   kids-room-main.css
+   Mathner Avatar Room - Kids Theme Entry
+   - Avatar layout CSS
+   - Shop font/effect CSS inherited as common style source
+   ========================================================= */
+
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
+
+/* Shop 기준 한글 폰트 세트 */
+@import url("https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Cute+Font&family=Do+Hyeon&family=Dongle:wght@400;700&family=Gaegu:wght@400;700&family=Gamja+Flower&family=Gowun+Dodum&family=Gugi&family=Hi+Melody&family=Jua&family=Nanum+Pen+Script&family=Poor+Story&family=Single+Day&family=Sunflower:wght@300;500;700&display=swap");
+
+/* Avatar room layout modules */
+@import url("./kids-room-layout.css");
+@import url("./kids-room-avatar-edit.css");
+@import url("./kids-room-font-edit.css");
+@import url("./kids-room-diary-guestbook.css");
+@import url("./kids-room-effects.css");
+@import url("./kids-room-shop-match.css");
+
+/*
+   Shop font/effect source
+   avatar가 shop의 폰트/이펙트 표현을 그대로 이어받는다.
+   static/avatar/css/kids-room-main.css 기준 상대경로:
+   ../../shop/css/...
+*/
+@import url("../../shop/css/kids-shop-05-korean-fonts.css");
+@import url("../../shop/css/kids-shop-06-effects.css");
+
+/* =========================================================
+   Pretendard UI Override
+   - UI 기본 폰트는 Pretendard
+   - 단, 사용자가 적용한 font-* 클래스는 건드리지 않음
+   ========================================================= */
+
+:root {
+  --kids-font: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body.kids-theme-body {
+  font-family: var(--kids-font) !important;
+}
+
+/* 전체 방 UI 기본 */
+.avatar-page.kids-theme,
+.avatar-page.kids-theme .cute-card,
+.avatar-page.kids-theme .avatar-card,
+.avatar-page.kids-theme .cute-card-head,
+.avatar-page.kids-theme .avatar-card-head,
+.avatar-page.kids-theme .cute-card-body,
+.avatar-page.kids-theme .avatar-card-body,
+.avatar-page.kids-theme .edit-card,
+.avatar-page.kids-theme .panel-block,
+.avatar-page.kids-theme .empty-text,
+.avatar-page.kids-theme .message-meta,
+.avatar-page.kids-theme .room-row-sub,
+.avatar-page.kids-theme .save-hint {
+  font-family: var(--kids-font) !important;
+}
+
+/* 제목류 */
+.avatar-page.kids-theme h1,
+.avatar-page.kids-theme h2,
+.avatar-page.kids-theme h3,
+.avatar-page.kids-theme h4,
+.avatar-page.kids-theme .cute-card-head h2,
+.avatar-page.kids-theme .avatar-card-head h2,
+.avatar-page.kids-theme .edit-card-title,
+.avatar-page.kids-theme .panel-title,
+.avatar-page.kids-theme .inventory-title,
+.avatar-page.kids-theme .calendar-month-label,
+.avatar-page.kids-theme .confirm-modal-title {
+  font-family: var(--kids-font) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.035em !important;
+}
+
+/* 버튼류는 UI 폰트 유지 */
+.avatar-page.kids-theme button,
+.avatar-page.kids-theme .btn-cute,
+.avatar-page.kids-theme .avatar-btn,
+.avatar-page.kids-theme .btn-menu,
+.avatar-page.kids-theme .side-tab-btn,
+.avatar-page.kids-theme .slot-clear-btn,
+.avatar-page.kids-theme .inventory-equip-btn,
+.avatar-page.kids-theme .mini-action-btn,
+.avatar-page.kids-theme .calendar-day,
+.avatar-page.kids-theme .font-card-select-btn,
+.avatar-page.kids-theme .effect-card-select-btn,
+.avatar-page.kids-theme .font-tool-btn,
+.avatar-page.kids-theme .font-default-btn,
+.avatar-page.kids-theme .font-apply-btn-inline {
+  font-family: var(--kids-font) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.035em !important;
+}
+
+/* 입력창: font-*가 붙어 있지 않을 때만 UI 폰트 */
+.avatar-page.kids-theme input:not([class*="font-"]),
+.avatar-page.kids-theme select:not([class*="font-"]),
+.avatar-page.kids-theme textarea:not([class*="font-"]),
+.avatar-page.kids-theme .avatar-input:not([class*="font-"]),
+.avatar-page.kids-theme .avatar-select:not([class*="font-"]),
+.avatar-page.kids-theme .avatar-textarea:not([class*="font-"]),
+.avatar-page.kids-theme .cute-input:not([class*="font-"]),
+.avatar-page.kids-theme .cute-select:not([class*="font-"]),
+.avatar-page.kids-theme .cute-textarea:not([class*="font-"]),
+.avatar-page.kids-theme .reply-textarea:not([class*="font-"]) {
+  font-family: var(--kids-font) !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.025em !important;
+}
+
+/* 카드 안 일반 텍스트 */
+.avatar-page.kids-theme .equipped-label,
+.avatar-page.kids-theme .inventory-name,
+.avatar-page.kids-theme .inventory-meta,
+.avatar-page.kids-theme .inventory-unique-badge,
+.avatar-page.kids-theme .font-inventory-name,
+.avatar-page.kids-theme .font-tool-label,
+.avatar-page.kids-theme .font-tool-value,
+.avatar-page.kids-theme .message-top span,
+.avatar-page.kids-theme .reply-top span,
+.avatar-page.kids-theme .confirm-modal-text {
+  font-family: var(--kids-font) !important;
+}
+
+/* 방명록/댓글/다이어리 본문은 font-*가 없을 때만 UI 폰트 */
+.avatar-page.kids-theme .message-body:not([class*="font-"]),
+.avatar-page.kids-theme .reply-body:not([class*="font-"]),
+.avatar-page.kids-theme .diary-entry-title:not([class*="font-"]) {
+  font-family: var(--kids-font) !important;
+}
+
+/* 기본 글씨체 상태일 때는 프리텐다드 */
+.font-default,
+.font-pretendard {
+  font-family: var(--kids-font) !important;
+}
+
+/* 기본 미리보기 */
+.font-preview-text.font-default,
+.font-preview-text.font-pretendard,
+.guest-name-btn-text.font-default,
+.guest-name-btn-text.font-pretendard {
+  font-family: var(--kids-font) !important;
+  font-weight: 800 !important;
+}
+
+/* 모바일에서도 버튼/탭 시인성 유지 */
+@media (max-width: 768px) {
+  .avatar-page.kids-theme .btn-menu,
+  .avatar-page.kids-theme .side-tab-btn,
+  .avatar-page.kids-theme .btn-cute,
+  .avatar-page.kids-theme .avatar-btn {
+    font-weight: 800 !important;
+  }
+}
+/* =========================================================
+   PATCH 20260503
+   Avatar room font class priority fix
+   - main.css의 Pretendard 강제 적용보다 font-* class를 우선시
+   - shop font CSS 기준으로 방명록/댓글/다이어리/입력창 폰트 매칭
+   ========================================================= */
+
+/* Jua / Bubblegum Sans */
+.avatar-page.kids-theme .font-jua,
+.avatar-page.kids-theme .font-bubblegum_sans {
+  font-family: "Jua", var(--kids-font), sans-serif !important;
+}
+
+/* Gamja Flower / Delius Swash Caps */
+.avatar-page.kids-theme .font-gamja_flower,
+.avatar-page.kids-theme .font-delius_swash_caps {
+  font-family: "Gamja Flower", var(--kids-font), cursive !important;
+}
+
+/* Dongle / Boogaloo */
+.avatar-page.kids-theme .font-dongle,
+.avatar-page.kids-theme .font-boogaloo {
+  font-family: "Dongle", var(--kids-font), sans-serif !important;
+}
+
+/* Hi Melody / Love Ya Like A Sister */
+.avatar-page.kids-theme .font-hi_melody,
+.avatar-page.kids-theme .font-love_ya_like_a_sister {
+  font-family: "Hi Melody", var(--kids-font), cursive !important;
+}
+
+/* Do Hyeon / Luckiest Guy */
+.avatar-page.kids-theme .font-do_hyeon,
+.avatar-page.kids-theme .font-luckiest_guy {
+  font-family: "Do Hyeon", var(--kids-font), sans-serif !important;
+}
+
+/* Gaegu / Coming Soon */
+.avatar-page.kids-theme .font-gaegu,
+.avatar-page.kids-theme .font-coming_soon {
+  font-family: "Gaegu", var(--kids-font), cursive !important;
+}
+
+/* Cute Font / Life Savers */
+.avatar-page.kids-theme .font-cute_font,
+.avatar-page.kids-theme .font-life_savers {
+  font-family: "Cute Font", var(--kids-font), cursive !important;
+}
+
+/* Single Day / Chewy */
+.avatar-page.kids-theme .font-single_day,
+.avatar-page.kids-theme .font-chewy {
+  font-family: "Single Day", var(--kids-font), cursive !important;
+}
+
+/* Poor Story / Cabin Sketch */
+.avatar-page.kids-theme .font-poor_story,
+.avatar-page.kids-theme .font-cabin_sketch {
+  font-family: "Poor Story", var(--kids-font), cursive !important;
+}
+
+/* Gugi / Mouse Memoirs */
+.avatar-page.kids-theme .font-gugi,
+.avatar-page.kids-theme .font-mouse_memoirs {
+  font-family: "Gugi", var(--kids-font), cursive !important;
+}
+
+/* Black Han Sans / Londrina Shadow */
+.avatar-page.kids-theme .font-black_han_sans,
+.avatar-page.kids-theme .font-londrina_shadow {
+  font-family: "Black Han Sans", var(--kids-font), sans-serif !important;
+}
+
+/* Nanum Pen Script / Amatic SC */
+.avatar-page.kids-theme .font-nanum_pen_script,
+.avatar-page.kids-theme .font-nanum_pen,
+.avatar-page.kids-theme .font-amatic_sc {
+  font-family: "Nanum Pen Script", var(--kids-font), cursive !important;
+}
+
+/* Gowun Dodum / Capriola */
+.avatar-page.kids-theme .font-gowun_dodum,
+.avatar-page.kids-theme .font-capriola {
+  font-family: "Gowun Dodum", var(--kids-font), sans-serif !important;
+}
+
+/* Sunflower / McLaren */
+.avatar-page.kids-theme .font-sunflower,
+.avatar-page.kids-theme .font-mclaren {
+  font-family: "Sunflower", var(--kids-font), sans-serif !important;
+}
+
+/* 기본 */
+.avatar-page.kids-theme .font-default,
+.avatar-page.kids-theme .font-pretendard {
+  font-family: var(--kids-font) !important;
+}
+
+/* 방명록/댓글/다이어리 본문에서 shop 폰트 크기 느낌도 살림 */
+.avatar-page.kids-theme .message-body.font-jua,
+.avatar-page.kids-theme .reply-body.font-jua,
+.avatar-page.kids-theme .mathner-readable-body.font-jua,
+.avatar-page.kids-theme .message-body.font-bubblegum_sans,
+.avatar-page.kids-theme .reply-body.font-bubblegum_sans,
+.avatar-page.kids-theme .mathner-readable-body.font-bubblegum_sans {
+  font-size: 24px !important;
+  font-weight: 400 !important;
+}
+
+.avatar-page.kids-theme .message-body.font-gamja_flower,
+.avatar-page.kids-theme .reply-body.font-gamja_flower,
+.avatar-page.kids-theme .mathner-readable-body.font-gamja_flower,
+.avatar-page.kids-theme .message-body.font-delius_swash_caps,
+.avatar-page.kids-theme .reply-body.font-delius_swash_caps,
+.avatar-page.kids-theme .mathner-readable-body.font-delius_swash_caps {
+  font-size: 30px !important;
+  font-weight: 400 !important;
+}
+
+.avatar-page.kids-theme .message-body.font-dongle,
+.avatar-page.kids-theme .reply-body.font-dongle,
+.avatar-page.kids-theme .mathner-readable-body.font-dongle,
+.avatar-page.kids-theme .message-body.font-boogaloo,
+.avatar-page.kids-theme .reply-body.font-boogaloo,
+.avatar-page.kids-theme .mathner-readable-body.font-boogaloo {
+  font-size: 38px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.04em !important;
+}
+
+.avatar-page.kids-theme .message-body.font-hi_melody,
+.avatar-page.kids-theme .reply-body.font-hi_melody,
+.avatar-page.kids-theme .mathner-readable-body.font-hi_melody,
+.avatar-page.kids-theme .message-body.font-love_ya_like_a_sister,
+.avatar-page.kids-theme .reply-body.font-love_ya_like_a_sister,
+.avatar-page.kids-theme .mathner-readable-body.font-love_ya_like_a_sister {
+  font-size: 31px !important;
+  font-weight: 400 !important;
+}
+
+.avatar-page.kids-theme .message-body.font-do_hyeon,
+.avatar-page.kids-theme .reply-body.font-do_hyeon,
+.avatar-page.kids-theme .mathner-readable-body.font-do_hyeon,
+.avatar-page.kids-theme .message-body.font-luckiest_guy,
+.avatar-page.kids-theme .reply-body.font-luckiest_guy,
+.avatar-page.kids-theme .mathner-readable-body.font-luckiest_guy {
+  font-size: 25px !important;
+  font-weight: 400 !important;
+}
+
+.avatar-page.kids-theme .message-body.font-gaegu,
+.avatar-page.kids-theme .reply-body.font-gaegu,
+.avatar-page.kids-theme .mathner-readable-body.font-gaegu,
+.avatar-page.kids-theme .message-body.font-coming_soon,
+.avatar-page.kids-theme .reply-body.font-coming_soon,
+.avatar-page.kids-theme .mathner-readable-body.font-coming_soon {
+  font-size: 28px !important;
+  font-weight: 700 !important;
+}
+
+.avatar-page.kids-theme .message-body.font-cute_font,
+.avatar-page.kids-theme .reply-body.font-cute_font,
+.avatar-page.kids-theme .mathner-readable-body.font-cute_font,
+.avatar-page.kids-theme .message-body.font-life_savers,
+.avatar-page.kids-theme .reply-body.font-life_savers,
+.avatar-page.kids-theme .mathner-readable-body.font-life_savers {
+  font-size: 38px !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.avatar-page.kids-theme .message-body.font-single_day,
+.avatar-page.kids-theme .reply-body.font-single_day,
+.avatar-page.kids-theme .mathner-readable-body.font-single_day,
+.avatar-page.kids-theme .message-body.font-chewy,
+.avatar-page.kids-theme .reply-body.font-chewy,
+.avatar-page.kids-theme .mathner-readable-body.font-chewy {
+  font-size: 29px !important;
+  font-weight: 400 !important;
+}
+
+.avatar-page.kids-theme .message-body.font-poor_story,
+.avatar-page.kids-theme .reply-body.font-poor_story,
+.avatar-page.kids-theme .mathner-readable-body.font-poor_story,
+.avatar-page.kids-theme .message-body.font-cabin_sketch,
+.avatar-page.kids-theme .reply-body.font-cabin_sketch,
+.avatar-page.kids-theme .mathner-readable-body.font-cabin_sketch {
+  font-size: 27px !important;
+  font-weight: 400 !important;
+}
+
+.avatar-page.kids-theme .message-body.font-gugi,
+.avatar-page.kids-theme .reply-body.font-gugi,
+.avatar-page.kids-theme .mathner-readable-body.font-gugi,
+.avatar-page.kids-theme .message-body.font-mouse_memoirs,
+.avatar-page.kids-theme .reply-body.font-mouse_memoirs,
+.avatar-page.kids-theme .mathner-readable-body.font-mouse_memoirs {
+  font-size: 24px !important;
+  font-weight: 400 !important;
+}
+
+.avatar-page.kids-theme .message-body.font-black_han_sans,
+.avatar-page.kids-theme .reply-body.font-black_han_sans,
+.avatar-page.kids-theme .mathner-readable-body.font-black_han_sans,
+.avatar-page.kids-theme .message-body.font-londrina_shadow,
+.avatar-page.kids-theme .reply-body.font-londrina_shadow,
+.avatar-page.kids-theme .mathner-readable-body.font-londrina_shadow {
+  font-size: 23px !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.04em !important;
+}
+
+.avatar-page.kids-theme .message-body.font-nanum_pen_script,
+.avatar-page.kids-theme .reply-body.font-nanum_pen_script,
+.avatar-page.kids-theme .mathner-readable-body.font-nanum_pen_script,
+.avatar-page.kids-theme .message-body.font-nanum_pen,
+.avatar-page.kids-theme .reply-body.font-nanum_pen,
+.avatar-page.kids-theme .mathner-readable-body.font-nanum_pen,
+.avatar-page.kids-theme .message-body.font-amatic_sc,
+.avatar-page.kids-theme .reply-body.font-amatic_sc,
+.avatar-page.kids-theme .mathner-readable-body.font-amatic_sc {
+  font-size: 33px !important;
+  font-weight: 400 !important;
+}
+
+.avatar-page.kids-theme .message-body.font-gowun_dodum,
+.avatar-page.kids-theme .reply-body.font-gowun_dodum,
+.avatar-page.kids-theme .mathner-readable-body.font-gowun_dodum,
+.avatar-page.kids-theme .message-body.font-capriola,
+.avatar-page.kids-theme .reply-body.font-capriola,
+.avatar-page.kids-theme .mathner-readable-body.font-capriola {
+  font-size: 24px !important;
+  font-weight: 400 !important;
+}
+
+.avatar-page.kids-theme .message-body.font-sunflower,
+.avatar-page.kids-theme .reply-body.font-sunflower,
+.avatar-page.kids-theme .mathner-readable-body.font-sunflower,
+.avatar-page.kids-theme .message-body.font-mclaren,
+.avatar-page.kids-theme .reply-body.font-mclaren,
+.avatar-page.kids-theme .mathner-readable-body.font-mclaren {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+}
+
+/* 공통 본문 가독성 */
+.avatar-page.kids-theme .message-body[class*="font-"],
+.avatar-page.kids-theme .reply-body[class*="font-"],
+.avatar-page.kids-theme .mathner-readable-body[class*="font-"] {
+  color: #2f2924 !important;
+  -webkit-text-fill-color: #2f2924 !important;
+  line-height: 1.65 !important;
+  text-shadow: none !important;
+  filter: none !important;
+  animation: none !important;
+  background: none !important;
+  background-image: none !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+}
+
+/* 입력창도 선택 폰트가 UI 기본 폰트에 눌리지 않게 */
+.avatar-page.kids-theme textarea[class*="font-"],
+.avatar-page.kids-theme input[class*="font-"] {
+  color: #2f2924 !important;
+  -webkit-text-fill-color: #2f2924 !important;
+}

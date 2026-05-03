@@ -1,0 +1,633 @@
+﻿{% extends "admin/base_site.html" %}
+
+{% block extrastyle %}
+{{ block.super }}
+{{ mathner_admin_style|safe }}
+
+<style>
+  .mathner-grant-page {
+    max-width: 1180px;
+    padding: 24px 0 48px;
+  }
+
+  .mathner-grant-page,
+  .mathner-grant-page * {
+    box-sizing: border-box;
+  }
+
+  .mathner-grant-page h1,
+  .mathner-grant-page h2,
+  .mathner-grant-page h3,
+  .mathner-grant-page p,
+  .mathner-grant-page label,
+  .mathner-grant-page strong,
+  .mathner-grant-page span,
+  .mathner-grant-page td,
+  .mathner-grant-page th {
+    color: #f9fafb !important;
+  }
+
+  .mathner-grant-title {
+    margin: 0 0 20px;
+    color: #f9fafb !important;
+    font-size: 24px;
+    font-weight: 800;
+  }
+
+  .mathner-grant-subtitle {
+    margin: 0 0 18px;
+    color: #e5e7eb !important;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .mathner-info-panel {
+    max-width: 980px;
+    margin: 14px 0 22px;
+    padding: 14px 16px;
+    background: #082f49 !important;
+    border: 1px solid #0369a1 !important;
+    border-radius: 14px;
+    color: #e0f2fe !important;
+    line-height: 1.7;
+  }
+
+  .mathner-info-panel strong {
+    color: #fef08a !important;
+  }
+
+  .mathner-grant-form {
+    max-width: 1080px;
+    padding: 18px;
+    border: 1px solid #374151;
+    border-radius: 16px;
+    background: #111827;
+  }
+
+  .mathner-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(220px, 1fr));
+    gap: 14px 18px;
+    margin-bottom: 18px;
+  }
+
+  .mathner-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .mathner-field label {
+    color: #f9fafb !important;
+    font-weight: 900;
+  }
+
+  .mathner-field select,
+  .mathner-field input {
+    width: 100%;
+    background: #020617 !important;
+    color: #f9fafb !important;
+    border: 1px solid #4b5563 !important;
+    border-radius: 8px !important;
+    padding: 8px 10px !important;
+    min-height: 38px;
+  }
+
+  .mathner-field select option {
+    background: #111827 !important;
+    color: #f9fafb !important;
+  }
+
+  .mathner-check-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 25px;
+  }
+
+  .mathner-check-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #2563eb;
+  }
+
+  .mathner-example-panel {
+    max-width: 980px;
+    margin: 16px 0 20px;
+    padding: 14px 16px;
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+    border-radius: 14px;
+    line-height: 1.7;
+  }
+
+  .mathner-example-panel h3 {
+    margin: 0 0 8px;
+    color: #f9fafb !important;
+  }
+
+  .mathner-example-panel ul {
+    margin: 0;
+    padding-left: 20px;
+  }
+
+  .mathner-example-panel li {
+    margin: 5px 0;
+    color: #cbd5e1 !important;
+  }
+
+  .mathner-example-panel strong {
+    color: #fef08a !important;
+  }
+
+  .mathner-item-tools {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 18px 0 12px;
+    padding: 12px;
+    border-radius: 12px;
+    background: #020617;
+    border: 1px solid #334155;
+  }
+
+  .mathner-mini-btn {
+    background: #1d4ed8 !important;
+    color: #ffffff !important;
+    border: 1px solid #2563eb !important;
+    border-radius: 9px !important;
+    padding: 8px 12px !important;
+    font-weight: 900 !important;
+    cursor: pointer;
+  }
+
+  .mathner-mini-btn.secondary {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+  }
+
+  .mathner-mini-btn:hover {
+    filter: brightness(1.08);
+  }
+
+  .mathner-count-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: #1f2937;
+    border: 1px solid #374151;
+    color: #fef08a !important;
+    font-weight: 900;
+  }
+
+  .mathner-table-wrap {
+    max-height: 520px;
+    overflow: auto;
+    border-radius: 14px;
+    border: 1px solid #374151;
+    background: #020617;
+  }
+
+  .mathner-item-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 980px;
+  }
+
+  .mathner-item-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: #1f2937 !important;
+    color: #f9fafb !important;
+    border-bottom: 1px solid #374151;
+    padding: 10px 9px;
+    font-size: 12px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .mathner-item-table tbody td {
+    border-bottom: 1px solid #1f2937;
+    padding: 9px;
+    font-size: 13px;
+    vertical-align: middle;
+  }
+
+  .mathner-item-row {
+    background: #111827;
+  }
+
+  .mathner-item-row:nth-child(even) {
+    background: #0f172a;
+  }
+
+  .mathner-item-row:hover {
+    background: #172554;
+  }
+
+  .mathner-item-row.is-hidden {
+    display: none;
+  }
+
+  .mathner-item-check {
+    width: 18px;
+    height: 18px;
+    accent-color: #2563eb;
+  }
+
+  .mathner-item-id {
+    color: #93c5fd !important;
+    font-weight: 900;
+  }
+
+  .mathner-item-name {
+    color: #ffffff !important;
+    font-weight: 900;
+  }
+
+  .mathner-item-category {
+    color: #fef08a !important;
+    font-weight: 800;
+  }
+
+  .mathner-item-effect {
+    color: #fbbf24 !important;
+    font-weight: 800;
+  }
+
+  .mathner-item-font {
+    color: #86efac !important;
+    font-weight: 800;
+  }
+
+  .mathner-active-yes {
+    color: #86efac !important;
+    font-weight: 900;
+  }
+
+  .mathner-active-no {
+    color: #fca5a5 !important;
+    font-weight: 900;
+  }
+
+  .mathner-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  .mathner-actions button,
+  .mathner-actions input[type="submit"] {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border: 1px solid #1d4ed8 !important;
+    border-radius: 9px !important;
+    padding: 10px 16px !important;
+    font-weight: 900 !important;
+    cursor: pointer;
+  }
+
+  .mathner-actions button:hover,
+  .mathner-actions input[type="submit"]:hover {
+    background: #1d4ed8 !important;
+  }
+
+  .mathner-actions a {
+    color: #7dd3fc !important;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .mathner-actions a:hover {
+    color: #bae6fd !important;
+    text-decoration: underline;
+  }
+
+  @media (max-width: 900px) {
+    .mathner-filter-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .mathner-grant-page {
+      padding-right: 10px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mathner-grant-page">
+  <h1 class="mathner-grant-title">{{ title }}</h1>
+  <h2 class="mathner-grant-subtitle">Filter items like Excel, check only what you want, then grant</h2>
+
+  <div class="mathner-info-panel">
+    현재 활성화된 ShopItem 수:
+    <strong>{{ preview_count }}</strong><br>
+    카테고리, 슬롯, 성별로 목록을 좁힌 다음 아래 리스트에서 필요한 아이템만 체크해서 지급합니다.
+  </div>
+
+  <div class="mathner-example-panel">
+    <h3>사용 방식</h3>
+    <ul>
+      <li><strong>Category</strong>에서 Profile Font, Profile Effect, Avatar Cloth, Unique 등을 고릅니다.</li>
+      <li>아래 리스트가 해당 조건만 보이게 바뀝니다.</li>
+      <li>그중 필요한 아이템만 체크합니다.</li>
+      <li><strong>Grant checked items</strong>를 누르면 체크한 것만 지급됩니다.</li>
+    </ul>
+  </div>
+
+  <form method="post" class="mathner-grant-form" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="errorlist">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    <div class="mathner-filter-grid">
+      <div class="mathner-field">
+        <label for="{{ form.user.id_for_label }}">Target user</label>
+        {{ form.user }}
+      </div>
+
+      <div class="mathner-field">
+        <label for="{{ form.category.id_for_label }}">Category</label>
+        {{ form.category }}
+      </div>
+
+      <div class="mathner-field">
+        <label for="{{ form.equip_slot.id_for_label }}">Equip slot</label>
+        {{ form.equip_slot }}
+      </div>
+
+      <div class="mathner-field">
+        <label for="{{ form.gender.id_for_label }}">Gender</label>
+        {{ form.gender }}
+      </div>
+
+      <div class="mathner-field">
+        <label for="{{ form.quantity.id_for_label }}">Quantity</label>
+        {{ form.quantity }}
+      </div>
+
+      <div class="mathner-check-row">
+        {{ form.active_only }}
+        <label for="{{ form.active_only.id_for_label }}">Only active items</label>
+      </div>
+    </div>
+
+    <div class="mathner-item-tools">
+      <button type="button" class="mathner-mini-btn" id="selectVisibleItemsBtn">
+        현재 보이는 항목 전체선택
+      </button>
+
+      <button type="button" class="mathner-mini-btn secondary" id="clearVisibleItemsBtn">
+        현재 보이는 항목 선택해제
+      </button>
+
+      <button type="button" class="mathner-mini-btn secondary" id="clearAllItemsBtn">
+        전체 선택해제
+      </button>
+
+      <span class="mathner-count-chip">
+        보이는 항목: <span id="visibleItemCount">0</span>
+      </span>
+
+      <span class="mathner-count-chip">
+        체크됨: <span id="checkedItemCount">0</span>
+      </span>
+    </div>
+
+    <div class="mathner-table-wrap">
+      <table class="mathner-item-table">
+        <thead>
+          <tr>
+            <th>Check</th>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Equip slot</th>
+            <th>Gender</th>
+            <th>Price</th>
+            <th>Font</th>
+            <th>Effect</th>
+            <th>Active</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for item in candidate_items %}
+            <tr
+              class="mathner-item-row"
+              data-category="{{ item.category }}"
+              data-equip-slot="{{ item.equip_slot }}"
+              data-gender="{{ item.gender }}"
+              data-active="{% if item.is_active %}1{% else %}0{% endif %}"
+            >
+              <td>
+                <input
+                  type="checkbox"
+                  class="mathner-item-check"
+                  name="selected_item_ids"
+                  value="{{ item.id }}"
+                >
+              </td>
+
+              <td>
+                <span class="mathner-item-id">#{{ item.id }}</span>
+              </td>
+
+              <td>
+                <span class="mathner-item-name">{{ item.name }}</span>
+              </td>
+
+              <td>
+                <span class="mathner-item-category">{{ item.category }}</span>
+              </td>
+
+              <td>
+                {% if item.equip_slot %}
+                  {{ item.equip_slot }}
+                {% else %}
+                  No slot
+                {% endif %}
+              </td>
+
+              <td>
+                {{ item.gender }}
+              </td>
+
+              <td>
+                {{ item.price_stars }}
+              </td>
+
+              <td>
+                {% if item.font_family_key %}
+                  <span class="mathner-item-font">{{ item.font_family_key }}</span>
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+
+              <td>
+                {% if item.effect_key %}
+                  <span class="mathner-item-effect">{{ item.effect_key }}</span>
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+
+              <td>
+                {% if item.is_active %}
+                  <span class="mathner-active-yes">YES</span>
+                {% else %}
+                  <span class="mathner-active-no">NO</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="10">ShopItem이 없습니다.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mathner-actions">
+      <button type="submit" class="default">Grant checked items</button>
+      <a href="../">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  (function () {
+    const categorySelect = document.getElementById("{{ form.category.id_for_label }}");
+    const slotSelect = document.getElementById("{{ form.equip_slot.id_for_label }}");
+    const genderSelect = document.getElementById("{{ form.gender.id_for_label }}");
+    const activeOnlyInput = document.getElementById("{{ form.active_only.id_for_label }}");
+
+    const rows = Array.from(document.querySelectorAll(".mathner-item-row"));
+    const visibleItemCount = document.getElementById("visibleItemCount");
+    const checkedItemCount = document.getElementById("checkedItemCount");
+
+    const selectVisibleBtn = document.getElementById("selectVisibleItemsBtn");
+    const clearVisibleBtn = document.getElementById("clearVisibleItemsBtn");
+    const clearAllBtn = document.getElementById("clearAllItemsBtn");
+
+    function getSelectedValue(el) {
+      return el ? String(el.value || "").trim() : "";
+    }
+
+    function rowMatches(row) {
+      const category = getSelectedValue(categorySelect);
+      const slot = getSelectedValue(slotSelect);
+      const gender = getSelectedValue(genderSelect);
+      const activeOnly = activeOnlyInput ? activeOnlyInput.checked : false;
+
+      const rowCategory = String(row.dataset.category || "").trim();
+      const rowSlot = String(row.dataset.equipSlot || "").trim();
+      const rowGender = String(row.dataset.gender || "").trim();
+      const rowActive = String(row.dataset.active || "0") === "1";
+
+      if (category && rowCategory !== category) return false;
+      if (slot && rowSlot !== slot) return false;
+      if (gender && rowGender !== gender) return false;
+      if (activeOnly && !rowActive) return false;
+
+      return true;
+    }
+
+    function getVisibleRows() {
+      return rows.filter((row) => !row.classList.contains("is-hidden"));
+    }
+
+    function updateCounts() {
+      const visibleRows = getVisibleRows();
+      const checkedRows = rows.filter((row) => {
+        const checkbox = row.querySelector(".mathner-item-check");
+        return checkbox && checkbox.checked;
+      });
+
+      if (visibleItemCount) {
+        visibleItemCount.textContent = String(visibleRows.length);
+      }
+
+      if (checkedItemCount) {
+        checkedItemCount.textContent = String(checkedRows.length);
+      }
+    }
+
+    function applyFilters() {
+      rows.forEach((row) => {
+        if (rowMatches(row)) {
+          row.classList.remove("is-hidden");
+        } else {
+          row.classList.add("is-hidden");
+        }
+      });
+
+      updateCounts();
+    }
+
+    function setVisibleChecked(checked) {
+      getVisibleRows().forEach((row) => {
+        const checkbox = row.querySelector(".mathner-item-check");
+        if (checkbox) {
+          checkbox.checked = checked;
+        }
+      });
+
+      updateCounts();
+    }
+
+    function clearAllChecked() {
+      rows.forEach((row) => {
+        const checkbox = row.querySelector(".mathner-item-check");
+        if (checkbox) {
+          checkbox.checked = false;
+        }
+      });
+
+      updateCounts();
+    }
+
+    [categorySelect, slotSelect, genderSelect, activeOnlyInput].forEach((el) => {
+      if (!el) return;
+      el.addEventListener("change", applyFilters);
+    });
+
+    rows.forEach((row) => {
+      const checkbox = row.querySelector(".mathner-item-check");
+      if (!checkbox) return;
+      checkbox.addEventListener("change", updateCounts);
+    });
+
+    if (selectVisibleBtn) {
+      selectVisibleBtn.addEventListener("click", function () {
+        setVisibleChecked(true);
+      });
+    }
+
+    if (clearVisibleBtn) {
+      clearVisibleBtn.addEventListener("click", function () {
+        setVisibleChecked(false);
+      });
+    }
+
+    if (clearAllBtn) {
+      clearAllBtn.addEventListener("click", clearAllChecked);
+    }
+
+    applyFilters();
+  })();
+</script>
+{% endblock %}

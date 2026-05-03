@@ -1,0 +1,306 @@
+/* =========================================================
+   kids-room-effects.css
+   Avatar-only visual effects
+   - font-* / effect-* definitions removed
+   - Shop CSS now owns profile fonts and text effects
+   - This file keeps only avatar unique aura
+   ========================================================= */
+
+/* =========================================================
+   Unique avatar aura
+   ========================================================= */
+
+.avatar-unique-aura {
+  position: absolute;
+  left: 50%;
+  top: 2%;
+  width: 96%;
+  height: 92%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  user-select: none;
+  z-index: 26;
+  opacity: 1;
+  overflow: visible;
+}
+
+.avatar-unique-ring,
+.avatar-unique-ring-alt {
+  display: none !important;
+}
+
+.avatar-unique-halo {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: 54%;
+  height: 72%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  filter: blur(18px);
+  opacity: .52;
+  animation: avatarUniqueBodyGlow 3s ease-in-out infinite;
+}
+
+.avatar-unique-spark,
+.avatar-unique-float {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.avatar-unique-spark {
+  width: 10px;
+  height: 10px;
+  animation: avatarUniqueDriftSpark 2.3s ease-in-out infinite;
+}
+
+.avatar-unique-spark-1 {
+  left: 18%;
+  top: 22%;
+  animation-delay: 0s;
+}
+
+.avatar-unique-spark-2 {
+  right: 18%;
+  top: 28%;
+  animation-delay: .4s;
+}
+
+.avatar-unique-spark-3 {
+  left: 22%;
+  bottom: 30%;
+  animation-delay: .9s;
+}
+
+.avatar-unique-spark-4 {
+  right: 20%;
+  bottom: 24%;
+  animation-delay: 1.35s;
+}
+
+.avatar-unique-float {
+  width: 8px;
+  height: 8px;
+  opacity: 0;
+  animation: avatarUniqueFloatRise 3.2s ease-in-out infinite;
+}
+
+.avatar-unique-float-1 {
+  left: 26%;
+  bottom: 8%;
+  animation-delay: 0s;
+}
+
+.avatar-unique-float-2 {
+  left: 50%;
+  bottom: 2%;
+  animation-delay: 1s;
+}
+
+.avatar-unique-float-3 {
+  right: 24%;
+  bottom: 10%;
+  animation-delay: 2s;
+}
+
+.avatar-unique-aura::before,
+.avatar-unique-aura::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  opacity: .95;
+}
+
+.avatar-unique-aura::before {
+  animation: avatarParticleCloudA 4.2s ease-in-out infinite;
+}
+
+.avatar-unique-aura::after {
+  animation: avatarParticleCloudB 5s ease-in-out infinite;
+}
+
+.avatar-unique-aura--gold .avatar-unique-halo,
+.avatar-unique-aura--holy .avatar-unique-halo {
+  background:
+    radial-gradient(ellipse at center,
+      rgba(255, 236, 160, .32) 0%,
+      rgba(255, 210, 95, .18) 46%,
+      rgba(255, 176, 44, 0) 100%);
+}
+
+.avatar-unique-aura--fire .avatar-unique-halo {
+  background:
+    radial-gradient(ellipse at center,
+      rgba(255, 190, 120, .36) 0%,
+      rgba(255, 110, 42, .20) 46%,
+      rgba(255, 80, 20, 0) 100%);
+}
+
+.avatar-unique-aura--ice .avatar-unique-halo {
+  background:
+    radial-gradient(ellipse at center,
+      rgba(214, 246, 255, .36) 0%,
+      rgba(148, 224, 255, .20) 46%,
+      rgba(88, 185, 255, 0) 100%);
+}
+
+.avatar-unique-aura--shadow .avatar-unique-halo {
+  background:
+    radial-gradient(ellipse at center,
+      rgba(154, 112, 255, .26) 0%,
+      rgba(78, 52, 160, .16) 46%,
+      rgba(20, 14, 40, 0) 100%);
+}
+
+.avatar-unique-aura--rainbow .avatar-unique-halo {
+  background:
+    radial-gradient(ellipse at center,
+      rgba(255, 170, 220, .20) 0%,
+      rgba(255, 220, 110, .14) 25%,
+      rgba(110, 255, 180, .14) 48%,
+      rgba(110, 210, 255, .14) 70%,
+      rgba(170, 140, 255, 0) 100%);
+}
+
+.avatar-unique-aura--gold .avatar-unique-spark,
+.avatar-unique-aura--gold .avatar-unique-float,
+.avatar-unique-aura--holy .avatar-unique-spark,
+.avatar-unique-aura--holy .avatar-unique-float {
+  background: radial-gradient(circle, rgba(255,255,255,.98), rgba(255,235,170,.96) 42%, rgba(255,196,88,0) 78%);
+  box-shadow: 0 0 8px rgba(255,240,185,.92), 0 0 16px rgba(255,196,88,.42);
+}
+
+.avatar-unique-aura--fire .avatar-unique-spark,
+.avatar-unique-aura--fire .avatar-unique-float {
+  background: radial-gradient(circle, rgba(255,248,230,.98), rgba(255,176,88,.96) 40%, rgba(255,82,10,0) 78%);
+  box-shadow: 0 0 8px rgba(255,188,110,.92), 0 0 16px rgba(255,86,20,.42);
+}
+
+.avatar-unique-aura--ice .avatar-unique-spark,
+.avatar-unique-aura--ice .avatar-unique-float {
+  background: radial-gradient(circle, rgba(255,255,255,.98), rgba(212,246,255,.96) 40%, rgba(120,202,255,0) 78%);
+  box-shadow: 0 0 8px rgba(220,248,255,.9), 0 0 16px rgba(120,200,255,.36);
+}
+
+.avatar-unique-aura--shadow .avatar-unique-spark,
+.avatar-unique-aura--shadow .avatar-unique-float {
+  background: radial-gradient(circle, rgba(228,220,255,.92), rgba(146,122,255,.8) 40%, rgba(52,28,110,0) 78%);
+  box-shadow: 0 0 8px rgba(148,124,255,.54), 0 0 16px rgba(64,36,128,.34);
+}
+
+.avatar-unique-aura--rainbow .avatar-unique-spark,
+.avatar-unique-aura--rainbow .avatar-unique-float {
+  background: radial-gradient(circle, rgba(255,255,255,.99), rgba(255,255,255,.96) 24%, rgba(255,140,210,.72) 42%, rgba(110,210,255,0) 78%);
+  box-shadow: 0 0 10px rgba(255,255,255,.86), 0 0 18px rgba(154,180,255,.34);
+}
+
+.avatar-unique-aura::before,
+.avatar-unique-aura::after {
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,.96) 0 18%, rgba(255,196,88,0) 62%),
+    radial-gradient(circle, rgba(255,232,170,.92) 0 22%, rgba(255,196,88,0) 64%),
+    radial-gradient(circle, rgba(255,245,220,.95) 0 18%, rgba(255,196,88,0) 62%),
+    radial-gradient(circle, rgba(255,232,170,.92) 0 20%, rgba(255,196,88,0) 62%);
+  background-size: 10px 10px, 8px 8px, 9px 9px, 7px 7px;
+  background-position: 20% 22%, 74% 26%, 30% 52%, 68% 60%;
+}
+
+@keyframes avatarUniqueBodyGlow {
+  0%, 100% {
+    opacity: .34;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  50% {
+    opacity: .6;
+    transform: translate(-50%, -50%) scale(1.06);
+  }
+}
+
+@keyframes avatarUniqueDriftSpark {
+  0%, 100% {
+    opacity: .28;
+    transform: translate(0, 0) scale(.7);
+  }
+
+  25% {
+    opacity: .85;
+    transform: translate(4px, -6px) scale(1.08);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translate(-3px, -12px) scale(1.28);
+  }
+
+  75% {
+    opacity: .72;
+    transform: translate(5px, -8px) scale(1);
+  }
+}
+
+@keyframes avatarUniqueFloatRise {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(.72);
+  }
+
+  18% {
+    opacity: .95;
+  }
+
+  55% {
+    opacity: .88;
+    transform: translateY(-22px) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-58px) scale(.84);
+  }
+}
+
+@keyframes avatarParticleCloudA {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  55% {
+    opacity: .92;
+    transform: translateY(-14px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-34px);
+  }
+}
+
+@keyframes avatarParticleCloudB {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  24% {
+    opacity: 1;
+  }
+
+  60% {
+    opacity: .86;
+    transform: translateY(-18px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-42px);
+  }
+}

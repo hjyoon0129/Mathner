@@ -1,6 +1,8 @@
 from datetime import datetime
-import json
 import hashlib
+import json
+import re
+
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.cache import cache
@@ -13,6 +15,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from apps.core.models import UserGameProfile
 from apps.shop.models import UserFontPreference
+
 from .cache_keys import (
     diary_calendar_key,
     friend_list_key,
@@ -26,6 +29,7 @@ from .models import (
     GuestbookReply,
     Room,
     RoomLike,
+    RoomVisit,
     EFFECT_NONE,
 )
 
@@ -42,11 +46,62 @@ SUPPORTED_EFFECT_KEYS = {
     "ice_glow",
 }
 
+SUPPORTED_FONT_KEYS = {
+    "gaegu",
+    "dongle",
+    "gowun_batang",
+    "nanum_pen",
+    "dokdo",
+    "bubblegum_sans",
+    "delius_swash_caps",
+    "boogaloo",
+    "love_ya_like_a_sister",
+    "luckiest_guy",
+    "coming_soon",
+    "life_savers",
+    "chewy",
+    "cabin_sketch",
+    "mouse_memoirs",
+    "londrina_shadow",
+    "modak",
+    "amatic_sc",
+    "capriola",
+    "mclaren",
+}
+
 
 def _normalize_effect_key(value):
     raw = str(value or "none").strip().lower()
     raw = raw.replace("-", "_").replace(" ", "_")
     return raw if raw in SUPPORTED_EFFECT_KEYS else EFFECT_NONE
+
+
+def _slugify_font_key(value):
+    raw = str(value or "").strip().lower()
+    raw = raw.replace("-", "_").replace(" ", "_")
+    raw = re.sub(r"[^a-z0-9_]+", "", raw)
+    raw = re.sub(r"_+", "_", raw).strip("_")
+    return raw
+
+
+def _font_key_from_item(item):
+    if not item:
+        return ""
+
+    candidates = [
+        getattr(item, "font_family_key", ""),
+        getattr(item, "font_key", ""),
+        getattr(item, "code", ""),
+        getattr(item, "slug", ""),
+        getattr(item, "name", ""),
+    ]
+
+    for candidate in candidates:
+        key = _slugify_font_key(candidate)
+        if key in SUPPORTED_FONT_KEYS:
+            return key
+
+    return ""
 
 
 def _safe_float(value, default=1.0):
@@ -65,6 +120,7 @@ def _nickname_map(user_ids):
         return {}
 
     rows = UserGameProfile.objects.filter(user_id__in=user_ids).values("user_id", "nickname")
+
     return {
         row["user_id"]: (row["nickname"] or "").strip()
         for row in rows
@@ -81,14 +137,12 @@ def _display_name(user, nickname_map=None):
 
     first_name = (getattr(user, "first_name", "") or "").strip()
     username = (getattr(user, "username", "") or "").strip()
+    email = (getattr(user, "email", "") or "").strip()
 
-    return nickname or first_name or username or "Player"
+    if email and "@" in email:
+        email = email.split("@", 1)[0]
 
-
-def _font_key_from_item(item):
-    if not item:
-        return ""
-    return (getattr(item, "font_family_key", "") or "").strip()
+    return nickname or first_name or username or email or "Player"
 
 
 def _font_pref_map(user_ids):
@@ -102,6 +156,7 @@ def _font_pref_map(user_ids):
     )
 
     data = {}
+
     for pref in rows:
         data[pref.user_id] = {
             "nickname_font_key": _font_key_from_item(pref.nickname_font_item),
@@ -109,6 +164,7 @@ def _font_pref_map(user_ids):
             "nickname_scale": float(getattr(pref, "nickname_scale", 1.0) or 1.0),
             "nickname_letter_spacing": float(getattr(pref, "nickname_letter_spacing", 0.0) or 0.0),
         }
+
     return data
 
 
@@ -119,9 +175,9 @@ def _get_font_pref(user):
             "title_font_key": "",
             "content_font_key": "",
             "writing_font_key": "",
-            "nickname_effect_key": "none",
-            "title_effect_key": "none",
-            "content_effect_key": "none",
+            "nickname_effect_key": EFFECT_NONE,
+            "title_effect_key": EFFECT_NONE,
+            "content_effect_key": EFFECT_NONE,
             "nickname_scale": 1.0,
             "nickname_letter_spacing": 0.0,
             "nickname_color": "#ffffff",
@@ -177,6 +233,7 @@ def _get_request_data(request):
 
     return request.POST
 
+
 def _get_client_ip(request):
     x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "")
     if x_forwarded_for:
@@ -208,23 +265,10 @@ def _daily_visit_identity(request):
     }
 
 
-
-
-
-
-
-
-
 def _invalidate_friend_caches(*user_ids):
     for user_id in set(filter(None, user_ids)):
         cache.delete(friend_list_key(user_id))
-
-        # 검색 유무 상관없이 room_directory 캐시 무효화
-        # 키를 prefix로 지우는 기능이 없다면 대표키 몇 개만 지우는 것보다
-        # 전체 패턴 삭제가 낫지만 기본 cache backend 호환성 위해 안전하게 최소 처리
-        cache.delete(_room_directory_cache_key(user_id))
-        for q in ("",):
-            cache.delete(_room_directory_cache_key(user_id, q))
+        cache.delete(_room_directory_cache_key(user_id, ""))
 
 
 def _get_friend_users(user):
@@ -254,6 +298,7 @@ def _get_friend_users(user):
         friend = row.to_user if row.from_user_id == user.id else row.from_user
         if not friend or friend.id in seen_user_ids:
             continue
+
         seen_user_ids.add(friend.id)
         friend_users.append(friend)
 
@@ -265,6 +310,48 @@ def _normalize_directory_query(raw_query):
     return str(raw_query or "").strip()
 
 
+def _friendship_state_between(me, target_user):
+    if (
+        not me
+        or not getattr(me, "is_authenticated", False)
+        or not target_user
+        or me.id == target_user.id
+    ):
+        return {
+            "friendship_id": "",
+            "friendship_status": "none",
+            "friendship_direction": "none",
+        }
+
+    row = (
+        Friendship.objects
+        .filter(
+            Q(from_user=me, to_user=target_user)
+            | Q(from_user=target_user, to_user=me)
+        )
+        .order_by("-updated_at", "-created_at", "-id")
+        .first()
+    )
+
+    if not row:
+        return {
+            "friendship_id": "",
+            "friendship_status": "none",
+            "friendship_direction": "none",
+        }
+
+    if row.status == Friendship.STATUS_ACCEPTED:
+        direction = "none"
+    else:
+        direction = "outgoing" if row.from_user_id == me.id else "incoming"
+
+    return {
+        "friendship_id": row.id,
+        "friendship_status": row.status,
+        "friendship_direction": direction,
+    }
+
+
 def _directory_friendship_map(me, target_user_ids):
     if not target_user_ids:
         return {}
@@ -272,20 +359,26 @@ def _directory_friendship_map(me, target_user_ids):
     rows = (
         Friendship.objects
         .filter(
-            Q(from_user=me, to_user_id__in=target_user_ids) |
-            Q(to_user=me, from_user_id__in=target_user_ids)
+            Q(from_user=me, to_user_id__in=target_user_ids)
+            | Q(to_user=me, from_user_id__in=target_user_ids)
         )
         .only("id", "from_user_id", "to_user_id", "status", "created_at", "updated_at")
         .order_by("-updated_at", "-created_at", "-id")
     )
 
     data = {}
+
     for row in rows:
         other_user_id = row.to_user_id if row.from_user_id == me.id else row.from_user_id
+
         if other_user_id in data:
             continue
 
-        direction = "outgoing" if row.from_user_id == me.id else "incoming"
+        if row.status == Friendship.STATUS_ACCEPTED:
+            direction = "none"
+        else:
+            direction = "outgoing" if row.from_user_id == me.id else "incoming"
+
         data[other_user_id] = {
             "friendship_id": row.id,
             "friendship_status": row.status,
@@ -300,16 +393,34 @@ def _serialize_directory_user(user, nickname_map, font_pref_map, friendship_map)
     relation = friendship_map.get(user.id, {})
 
     return {
+        "id": user.id,
         "username": user.username,
         "display_name": _display_name(user, nickname_map),
         "room_url": f"/avatar/room/{user.username}/",
-        "friendship_id": relation.get("friendship_id"),
+        "friendship_id": relation.get("friendship_id") or "",
         "friendship_status": relation.get("friendship_status", "none"),
         "friendship_direction": relation.get("friendship_direction", "none"),
         "nickname_font_key": pref.get("nickname_font_key", ""),
-        "nickname_effect_key": pref.get("nickname_effect_key", "none"),
+        "font_key": pref.get("nickname_font_key", ""),
+        "font_family_key": pref.get("nickname_font_key", ""),
+        "nickname_effect_key": pref.get("nickname_effect_key", EFFECT_NONE),
+        "effect_key": pref.get("nickname_effect_key", EFFECT_NONE),
         "nickname_scale": pref.get("nickname_scale", 1.0),
         "nickname_letter_spacing": pref.get("nickname_letter_spacing", 0.0),
+    }
+
+
+def _serialize_friendship_response(me, target_user, action):
+    state = _friendship_state_between(me, target_user)
+
+    return {
+        "ok": True,
+        "action": action,
+        "target_username": target_user.username,
+        "friendship": state,
+        "friendship_id": state["friendship_id"],
+        "friendship_status": state["friendship_status"],
+        "friendship_direction": state["friendship_direction"],
     }
 
 
@@ -379,7 +490,7 @@ def _apply_guestbook_permissions(public_entry, request_user, room_owner_id):
         "created_at": public_entry["created_at"],
         "content": public_entry["content"],
         "nickname_font_key": public_entry.get("nickname_font_key", ""),
-        "nickname_effect_key": public_entry.get("nickname_effect_key", "none"),
+        "nickname_effect_key": public_entry.get("nickname_effect_key", EFFECT_NONE),
         "nickname_scale": public_entry.get("nickname_scale", 1.0),
         "nickname_letter_spacing": public_entry.get("nickname_letter_spacing", 0.0),
         "content_font_key": public_entry.get("content_font_key", ""),
@@ -387,7 +498,8 @@ def _apply_guestbook_permissions(public_entry, request_user, room_owner_id):
         "can_reply": bool(request_user.is_authenticated),
         "can_delete": bool(
             request_user.is_authenticated and (
-                request_user.id == public_entry["author_id"] or request_user.id == room_owner_id
+                request_user.id == public_entry["author_id"]
+                or request_user.id == room_owner_id
             )
         ),
         "replies": [],
@@ -401,14 +513,15 @@ def _apply_guestbook_permissions(public_entry, request_user, room_owner_id):
             "created_at": reply["created_at"],
             "content": reply["content"],
             "nickname_font_key": reply.get("nickname_font_key", ""),
-            "nickname_effect_key": reply.get("nickname_effect_key", "none"),
+            "nickname_effect_key": reply.get("nickname_effect_key", EFFECT_NONE),
             "nickname_scale": reply.get("nickname_scale", 1.0),
             "nickname_letter_spacing": reply.get("nickname_letter_spacing", 0.0),
             "content_font_key": reply.get("content_font_key", ""),
             "content_effect_key": EFFECT_NONE,
             "can_delete": bool(
                 request_user.is_authenticated and (
-                    request_user.id == reply["author_id"] or request_user.id == room_owner_id
+                    request_user.id == reply["author_id"]
+                    or request_user.id == room_owner_id
                 )
             ),
         })
@@ -419,9 +532,14 @@ def _apply_guestbook_permissions(public_entry, request_user, room_owner_id):
 @login_required
 def social_hub(request):
     font_pref = _get_font_pref(request.user)
+
     return render(request, "social/social.html", {
         "nickname_font_key": font_pref["nickname_font_key"],
         "writing_font_key": font_pref["writing_font_key"],
+        "nickname_effect_key": font_pref["nickname_effect_key"],
+        "nickname_scale": font_pref["nickname_scale"],
+        "nickname_letter_spacing": font_pref["nickname_letter_spacing"],
+        "font_pref_json": json.dumps(font_pref, ensure_ascii=False),
     })
 
 
@@ -447,8 +565,10 @@ def friend_requests(request):
     font_pref_map = _font_pref_map(user_ids)
 
     data = []
+
     for row in rows:
         pref = font_pref_map.get(row.from_user_id, {})
+
         data.append({
             "id": row.id,
             "username": row.from_user.username,
@@ -456,7 +576,10 @@ def friend_requests(request):
             "room_url": f"/avatar/room/{row.from_user.username}/",
             "created_at": timezone.localtime(row.created_at).strftime("%Y-%m-%d %H:%M"),
             "nickname_font_key": pref.get("nickname_font_key", ""),
-            "nickname_effect_key": pref.get("nickname_effect_key", "none"),
+            "font_key": pref.get("nickname_font_key", ""),
+            "font_family_key": pref.get("nickname_font_key", ""),
+            "nickname_effect_key": pref.get("nickname_effect_key", EFFECT_NONE),
+            "effect_key": pref.get("nickname_effect_key", EFFECT_NONE),
             "nickname_scale": pref.get("nickname_scale", 1.0),
             "nickname_letter_spacing": pref.get("nickname_letter_spacing", 0.0),
         })
@@ -469,6 +592,7 @@ def friend_requests(request):
 def friend_list(request):
     cache_key = friend_list_key(request.user.id)
     cached = cache.get(cache_key)
+
     if cached is not None:
         return JsonResponse({"ok": True, "friends": cached})
 
@@ -478,13 +602,19 @@ def friend_list(request):
     font_pref_map = _font_pref_map(user_ids)
 
     friends = []
+
     for user in friend_users:
         pref = font_pref_map.get(user.id, {})
+
         friends.append({
             "username": user.username,
             "display_name": _display_name(user, nickname_map),
+            "room_url": f"/avatar/room/{user.username}/",
             "nickname_font_key": pref.get("nickname_font_key", ""),
-            "nickname_effect_key": pref.get("nickname_effect_key", "none"),
+            "font_key": pref.get("nickname_font_key", ""),
+            "font_family_key": pref.get("nickname_font_key", ""),
+            "nickname_effect_key": pref.get("nickname_effect_key", EFFECT_NONE),
+            "effect_key": pref.get("nickname_effect_key", EFFECT_NONE),
             "nickname_scale": pref.get("nickname_scale", 1.0),
             "nickname_letter_spacing": pref.get("nickname_letter_spacing", 0.0),
         })
@@ -497,25 +627,22 @@ def friend_list(request):
 @login_required
 def room_directory(request):
     query = _normalize_directory_query(request.GET.get("q", ""))
-    cache_key = _room_directory_cache_key(request.user.id, query)
-    cached = cache.get(cache_key)
-    if cached is not None:
-        return JsonResponse({"ok": True, "rooms": cached})
 
     users_qs = (
         User.objects
         .filter(is_active=True)
         .exclude(id=request.user.id)
-        .only("id", "username", "first_name")
+        .only("id", "username", "first_name", "email")
         .order_by("username", "id")
     )
 
     if query:
         users_qs = users_qs.filter(
-            Q(username__icontains=query) |
-            Q(first_name__icontains=query) |
-            Q(usergameprofile__nickname__icontains=query)
-        )
+            Q(username__icontains=query)
+            | Q(first_name__icontains=query)
+            | Q(email__icontains=query)
+            | Q(usergameprofile__nickname__icontains=query)
+        ).distinct()
 
     users = list(users_qs[:200])
     user_ids = [u.id for u in users]
@@ -529,7 +656,6 @@ def room_directory(request):
         for user in users
     ]
 
-    cache.set(cache_key, rooms, timeout=30)
     return JsonResponse({"ok": True, "rooms": rooms})
 
 
@@ -538,49 +664,122 @@ def room_directory(request):
 def friend_request_toggle(request, username):
     target = get_object_or_404(User, username=username)
 
-    if target == request.user:
+    if target.id == request.user.id:
         return JsonResponse({"ok": False, "error": "You cannot add yourself."}, status=400)
 
-    existing = Friendship.objects.filter(
-        from_user=request.user,
-        to_user=target,
-    ).first()
+    payload = _get_request_data(request)
+    action = str(payload.get("action", "toggle") or "toggle").strip().lower()
 
-    reverse_existing = Friendship.objects.filter(
-        from_user=target,
-        to_user=request.user,
-    ).first()
+    if action in {"request", "send", "friend"}:
+        action = "add"
 
-    if reverse_existing and reverse_existing.status == Friendship.STATUS_PENDING:
-        reverse_existing.status = Friendship.STATUS_ACCEPTED
-        reverse_existing.save(update_fields=["status", "updated_at"])
-        _invalidate_friend_caches(request.user.id, target.id)
-        return JsonResponse({"ok": True, "action": "accepted"})
+    if action in {"delete", "unfriend"}:
+        action = "remove"
 
-    if reverse_existing and reverse_existing.status == Friendship.STATUS_ACCEPTED:
-        return JsonResponse({"ok": True, "action": "already_friends"})
+    if action == "withdraw":
+        action = "cancel"
 
-    if existing:
-        if existing.status == Friendship.STATUS_PENDING:
-            existing.delete()
-            _invalidate_friend_caches(request.user.id, target.id)
-            return JsonResponse({"ok": True, "action": "canceled"})
+    valid_actions = {"toggle", "add", "cancel", "remove", "accept", "reject"}
 
-        if existing.status == Friendship.STATUS_ACCEPTED:
-            return JsonResponse({"ok": True, "action": "already_friends"})
+    if action not in valid_actions:
+        return JsonResponse({"ok": False, "error": "Invalid action."}, status=400)
 
-        existing.status = Friendship.STATUS_PENDING
-        existing.save(update_fields=["status", "updated_at"])
-        _invalidate_friend_caches(request.user.id, target.id)
-        return JsonResponse({"ok": True, "action": "sent"})
+    with transaction.atomic():
+        direct = (
+            Friendship.objects
+            .select_for_update()
+            .filter(from_user=request.user, to_user=target)
+            .order_by("-updated_at", "-id")
+            .first()
+        )
 
-    Friendship.objects.create(
-        from_user=request.user,
-        to_user=target,
-        status=Friendship.STATUS_PENDING,
-    )
+        reverse = (
+            Friendship.objects
+            .select_for_update()
+            .filter(from_user=target, to_user=request.user)
+            .order_by("-updated_at", "-id")
+            .first()
+        )
+
+        if action == "toggle":
+            if direct and direct.status == Friendship.STATUS_ACCEPTED:
+                action = "remove"
+            elif reverse and reverse.status == Friendship.STATUS_ACCEPTED:
+                action = "remove"
+            elif direct and direct.status == Friendship.STATUS_PENDING:
+                action = "cancel"
+            elif reverse and reverse.status == Friendship.STATUS_PENDING:
+                action = "accept"
+            else:
+                action = "add"
+
+        if action == "add":
+            if reverse and reverse.status == Friendship.STATUS_PENDING:
+                reverse.status = Friendship.STATUS_ACCEPTED
+                reverse.save(update_fields=["status", "updated_at"])
+                final_action = "accepted"
+
+            elif direct and direct.status == Friendship.STATUS_ACCEPTED:
+                final_action = "already_friends"
+
+            elif reverse and reverse.status == Friendship.STATUS_ACCEPTED:
+                final_action = "already_friends"
+
+            elif direct and direct.status == Friendship.STATUS_PENDING:
+                final_action = "already_pending"
+
+            else:
+                if direct:
+                    direct.status = Friendship.STATUS_PENDING
+                    direct.save(update_fields=["status", "updated_at"])
+                else:
+                    Friendship.objects.create(
+                        from_user=request.user,
+                        to_user=target,
+                        status=Friendship.STATUS_PENDING,
+                    )
+
+                final_action = "sent"
+
+        elif action == "cancel":
+            if direct and direct.status == Friendship.STATUS_PENDING:
+                direct.delete()
+                final_action = "canceled"
+            else:
+                final_action = "nothing_changed"
+
+        elif action == "remove":
+            removed = False
+
+            if direct and direct.status == Friendship.STATUS_ACCEPTED:
+                direct.delete()
+                removed = True
+
+            if reverse and reverse.status == Friendship.STATUS_ACCEPTED:
+                reverse.delete()
+                removed = True
+
+            final_action = "removed" if removed else "nothing_changed"
+
+        elif action == "accept":
+            if reverse and reverse.status == Friendship.STATUS_PENDING:
+                reverse.status = Friendship.STATUS_ACCEPTED
+                reverse.save(update_fields=["status", "updated_at"])
+                final_action = "accepted"
+            else:
+                final_action = "nothing_changed"
+
+        elif action == "reject":
+            if reverse and reverse.status == Friendship.STATUS_PENDING:
+                reverse.status = Friendship.STATUS_REJECTED
+                reverse.save(update_fields=["status", "updated_at"])
+                final_action = "rejected"
+            else:
+                final_action = "nothing_changed"
+
     _invalidate_friend_caches(request.user.id, target.id)
-    return JsonResponse({"ok": True, "action": "sent"})
+
+    return JsonResponse(_serialize_friendship_response(request.user, target, final_action))
 
 
 @require_POST
@@ -600,13 +799,27 @@ def friend_request_respond(request, friendship_id):
         friendship.status = Friendship.STATUS_ACCEPTED
         friendship.save(update_fields=["status", "updated_at"])
         _invalidate_friend_caches(friendship.from_user_id, friendship.to_user_id)
-        return JsonResponse({"ok": True, "action": "accepted"})
+
+        return JsonResponse({
+            "ok": True,
+            "action": "accepted",
+            "friendship_id": friendship.id,
+            "friendship_status": Friendship.STATUS_ACCEPTED,
+            "friendship_direction": "none",
+        })
 
     if action == "reject":
         friendship.status = Friendship.STATUS_REJECTED
         friendship.save(update_fields=["status", "updated_at"])
         _invalidate_friend_caches(friendship.from_user_id, friendship.to_user_id)
-        return JsonResponse({"ok": True, "action": "rejected"})
+
+        return JsonResponse({
+            "ok": True,
+            "action": "rejected",
+            "friendship_id": friendship.id,
+            "friendship_status": Friendship.STATUS_REJECTED,
+            "friendship_direction": "incoming",
+        })
 
     return JsonResponse({"ok": False, "error": "Invalid action."}, status=400)
 
@@ -631,6 +844,7 @@ def room_stats_api(request, username):
     cache.set(room_stats_key(username), base_stats, timeout=20)
 
     liked_by_me = False
+
     if request.user.is_authenticated:
         liked_by_me = RoomLike.objects.filter(
             room__owner__username=username,
@@ -641,6 +855,7 @@ def room_stats_api(request, username):
         **base_stats,
         "liked_by_me": liked_by_me,
     }
+
     return JsonResponse({"ok": True, "stats": stats})
 
 
@@ -662,7 +877,10 @@ def room_like_toggle_api(request, username):
     room = _sync_room_today_visits(room)
 
     with transaction.atomic():
-        deleted_count, _ = RoomLike.objects.filter(room_id=room.id, user_id=request.user.id).delete()
+        deleted_count, _ = RoomLike.objects.filter(
+            room_id=room.id,
+            user_id=request.user.id,
+        ).delete()
 
         if deleted_count:
             Room.objects.filter(id=room.id).update(like_count=F("like_count") - 1)
@@ -679,6 +897,7 @@ def room_like_toggle_api(request, username):
         **_base_room_stats_payload(room),
         "liked_by_me": liked_by_me,
     }
+
     return JsonResponse({"ok": True, "stats": stats})
 
 
@@ -725,6 +944,7 @@ def room_visit_api(request, username):
             guest_token=guest_token,
             visited_on=today,
         )
+
         Room.objects.filter(id=room.id).update(
             today_visits=F("today_visits") + 1,
             total_visits=F("total_visits") + 1,
@@ -735,18 +955,24 @@ def room_visit_api(request, username):
     cache.delete(room_stats_key(username))
 
     liked_by_me = False
+
     if request.user.is_authenticated:
-        liked_by_me = RoomLike.objects.filter(room_id=room.id, user_id=request.user.id).exists()
+        liked_by_me = RoomLike.objects.filter(
+            room_id=room.id,
+            user_id=request.user.id,
+        ).exists()
 
     stats = {
         **_base_room_stats_payload(room),
         "liked_by_me": liked_by_me,
     }
+
     return JsonResponse({
         "ok": True,
         "counted": not visit_exists,
         "stats": stats,
     })
+
 
 @require_GET
 def guestbook_list_api(request, username):
@@ -808,9 +1034,11 @@ def guestbook_list_api(request, username):
         )
 
         user_ids = set()
+
         for entry in entries:
             if entry.author_id:
                 user_ids.add(entry.author_id)
+
             for reply in getattr(entry, "prefetched_replies", []):
                 if reply.author_id:
                     user_ids.add(reply.author_id)
@@ -822,6 +1050,7 @@ def guestbook_list_api(request, username):
             "room_owner_id": room.owner_id,
             "entries": public_entries,
         }
+
         cache.set(cache_key, cached, timeout=15)
 
     room_owner_id = cached["room_owner_id"]
@@ -856,7 +1085,9 @@ def guestbook_create_api(request, username):
         content_font_key=str(payload.get("content_font_key", "") or "").strip(),
         content_effect_key=EFFECT_NONE,
     )
+
     cache.delete(guestbook_list_key(username))
+
     return JsonResponse({"ok": True})
 
 
@@ -874,6 +1105,7 @@ def guestbook_delete_api(request, entry_id):
     username = entry.room.owner.username
     entry.delete()
     cache.delete(guestbook_list_key(username))
+
     return JsonResponse({"ok": True})
 
 
@@ -884,6 +1116,7 @@ def guestbook_reply_create_api(request, entry_id):
         GuestbookEntry.objects.select_related("room", "room__owner"),
         id=entry_id,
     )
+
     payload = _get_request_data(request)
     content = str(payload.get("content", "")).strip()
 
@@ -901,7 +1134,9 @@ def guestbook_reply_create_api(request, entry_id):
         content_font_key=str(payload.get("content_font_key", "") or "").strip(),
         content_effect_key=EFFECT_NONE,
     )
+
     cache.delete(guestbook_list_key(entry.room.owner.username))
+
     return JsonResponse({"ok": True})
 
 
@@ -919,6 +1154,7 @@ def guestbook_reply_delete_api(request, reply_id):
     username = reply.entry.room.owner.username
     reply.delete()
     cache.delete(guestbook_list_key(username))
+
     return JsonResponse({"ok": True})
 
 
@@ -1008,6 +1244,7 @@ def diary_update_api(request, entry_id):
     entry.title_effect_key = _normalize_effect_key(payload.get("title_effect_key"))
     entry.content_font_key = str(payload.get("content_font_key", "") or "").strip()
     entry.content_effect_key = EFFECT_NONE
+
     entry.save(update_fields=[
         "title",
         "content",
@@ -1048,6 +1285,7 @@ def diary_delete_api(request, entry_id):
     entry.delete()
 
     cache.delete(diary_calendar_key(request.user.username, entry_date.year, entry_date.month))
+
     return JsonResponse({"ok": True})
 
 
@@ -1058,18 +1296,23 @@ def diary_calendar_api(request, username):
 
     cache_key = diary_calendar_key(username, year, month)
     cached = cache.get(cache_key)
+
     if cached is not None:
         return JsonResponse({"ok": True, "days": cached})
 
     room = get_object_or_404(Room.objects.select_related("owner"), owner__username=username)
+
     rows = (
         DiaryEntry.objects
         .filter(room=room, entry_date__year=year, entry_date__month=month)
         .values_list("entry_date", flat=True)
         .distinct()
     )
+
     days = [{"date": d.strftime("%Y-%m-%d")} for d in rows]
+
     cache.set(cache_key, days, timeout=30)
+
     return JsonResponse({"ok": True, "days": days})
 
 
@@ -1104,7 +1347,7 @@ def diary_entry_by_date_api(request, username, date_str):
             "content_font_key": entry.content_font_key or "",
             "content_effect_key": EFFECT_NONE,
             "can_delete": bool(request.user.is_authenticated and request.user == room.owner),
-        }
+        },
     })
 
 

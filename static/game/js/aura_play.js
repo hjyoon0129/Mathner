@@ -1,1983 +1,2334 @@
-const PAGE_CFG = window.PLAY_PAGE_CONFIG || {};
-const playPageRoot = document.getElementById("playPageRoot");
-
-const GAME_MODES = {
-  practice: {
-    key: "practice",
-    label: "Practice",
-    reward: 1,
-    desc: "Choose one arithmetic type. Every correct answer gives 1 star.",
-    difficulty: "Manual",
-  },
-  classic: {
-    key: "classic",
-    label: "Classic",
-    reward: 3,
-    desc: "Mixed operations, adaptive difficulty, and more wrong-type focused questions.",
-    difficulty: "Adaptive",
-  },
-  challenge: {
-    key: "challenge",
-    label: "Challenge",
-    reward: 3,
-    desc: "Harder than Practice. Mixed operations, adaptive, but numbers stay within two digits.",
-    difficulty: "Hard Adaptive",
-  },
-};
-
-const OPERATION_META = {
-  add: { label: "Add", sign: "+" },
-  sub: { label: "Subtract", sign: "-" },
-  mul: { label: "Multiply", sign: "×" },
-  div: { label: "Divide", sign: "÷" },
-};
-
-const AURA_STATE = {
-  idle: "Idle",
-  combo: "Wind Rising",
-  fever: "Crimson Fever",
-  super: "Golden Storm",
-};
-
-const leftTitle = document.getElementById("leftTitle");
-const leftSub = document.getElementById("leftSub");
-
-const screenSelect = document.getElementById("screenSelect");
-const screenSetup = document.getElementById("screenSetup");
-const screenPlay = document.getElementById("screenPlay");
-
-const gameModeTiles = document.getElementById("gameModeTiles");
-const modeBandSummary = document.getElementById("modeBandSummary");
-const modeBandNow = document.getElementById("modeBandNow");
-const practiceOperationWrap = document.getElementById("practiceOperationWrap");
-const practiceOpSeg = document.getElementById("practiceOpSeg");
-
-const setupRewardText = document.getElementById("setupRewardText");
-const setupRuleText = document.getElementById("setupRuleText");
-const setupDifficultyText = document.getElementById("setupDifficultyText");
-const setupRangeText = document.getElementById("setupRangeText");
-const setupHint = document.getElementById("setupHint");
-
-const btnBackToModes = document.getElementById("btnBackToModes");
-const btnGoPlay = document.getElementById("btnGoPlay");
-const btnBackToSetup = document.getElementById("btnBackToSetup");
-
-const statGameMode = document.getElementById("statGameMode");
-const statMode = document.getElementById("statMode");
-const statDifficulty = document.getElementById("statDifficulty");
-const statStars = document.getElementById("statStars");
-const statKeys = document.getElementById("statKeys");
-const statAura = document.getElementById("statAura");
-
-const navStarCount = document.getElementById("navStarCount");
-const navKeyCount = document.getElementById("navKeyCount");
-
-const timerRing = document.getElementById("timerRing");
-const timeLeftEl = document.getElementById("timeLeft");
-const mobileTimeLeftEl = document.getElementById("mobileTimeLeft");
-const playDesc = document.getElementById("playDesc");
-const mathText = document.getElementById("mathText");
-const answerInput = document.getElementById("answerInput");
-const btnSubmit = document.getElementById("btnSubmit");
-const btnStart = document.getElementById("btnStart");
-const btnReset = document.getElementById("btnReset");
-
-const btnMobileStart = document.getElementById("btnMobileStart");
-const btnMobileReset = document.getElementById("btnMobileReset");
-const btnMobileBackToSetup = document.getElementById("btnMobileBackToSetup");
-
-const mobilePadWrap = document.getElementById("mobilePadWrap");
-const mobilePad = document.getElementById("mobilePad");
-
-const scoreEl = document.getElementById("score");
-const correctEl = document.getElementById("correct");
-const earnedStarsEl = document.getElementById("earnedStars");
-const comboCountEl = document.getElementById("comboCount");
-const hudMode = document.getElementById("hudMode");
-const hudOperation = document.getElementById("hudOperation");
-const msg = document.getElementById("msg");
-const progressFill = document.getElementById("progressFill");
-
-const feverPill = document.getElementById("feverPill");
-const feverText = document.getElementById("feverText");
-const liveEffects = document.getElementById("liveEffects");
-
-const statusAvatarCanvas = document.getElementById("statusAvatarCanvas");
-const statusAvatarGroundAuraImg = document.getElementById("statusAvatarGroundAuraImg");
-const statusAvatarBurst = document.getElementById("statusAvatarBurst");
-
-const rewardOverlay = document.getElementById("rewardOverlay");
-const rewardTitle = document.getElementById("rewardTitle");
-const rewardAmount = document.getElementById("rewardAmount");
-const rewardSub = document.getElementById("rewardSub");
-const rewardConfetti = document.getElementById("rewardConfetti");
-
-const modal = document.getElementById("modal");
-const btnClose = document.getElementById("btnClose");
-const btnAgain = document.getElementById("btnAgain");
-const rCorrect = document.getElementById("rCorrect");
-const rWrong = document.getElementById("rWrong");
-const rAcc = document.getElementById("rAcc");
-const rStars = document.getElementById("rStars");
-const rCombo = document.getElementById("rCombo");
-const rMode = document.getElementById("rMode");
-const rText = document.getElementById("rText");
-
-const rMyFriendRank = document.getElementById("rMyFriendRank");
-const rMyFriendScore = document.getElementById("rMyFriendScore");
-const rAboveFriend = document.getElementById("rAboveFriend");
-const rBelowFriend = document.getElementById("rBelowFriend");
-
-const keyExhaustedModal = document.getElementById("keyExhaustedModal");
-const btnKeyModalClose = document.getElementById("btnKeyModalClose");
-const btnLater = document.getElementById("btnLater");
-const btnOpenRanking = document.getElementById("btnOpenRanking");
-
-let totalStars = Number(PAGE_CFG.initialStars || 0);
-let remainingKeys = Number(PAGE_CFG.initialKeys || 0);
-
-let selectedGameMode = "practice";
-let selectedPracticeOperation = "add";
-
-let running = false;
-let timerId = null;
-let timeLeft = 60;
-let finalizing = false;
-let leavingInProgress = false;
-let runStartedOnServer = false;
-let runSaved = false;
-let activeRunIsGuest = false;
-
-let questionA = 0;
-let questionB = 0;
-let currentAnswer = 0;
-let currentOperation = "add";
-let score = 0;
-let correct = 0;
-let wrong = 0;
-let earnedStars = 0;
-let asked = 0;
-let goal = 25;
-
-let combo = 0;
-let bestCombo = 0;
-
-let wrongStats = {
-  add: 0,
-  sub: 0,
-  mul: 0,
-  div: 0,
-};
-
-let playAvatarData = {
-  enabled: false,
-  gender: "male",
-  hat_image_url: "",
-  cloth_image_url: "",
-  shoes_image_url: "",
-  active_effect: "",
-  active_set_code: "",
-};
-
-let currentAuraState = "idle";
-let auraLandingTimer = null;
-let sparkleTimer = null;
-
-let rankNeighborsWrap = null;
-let rankAboveValueEl = null;
-let rankMeValueEl = null;
-let rankBelowValueEl = null;
-
-function isMobilePlayUI() {
-  return window.matchMedia("(max-width: 640px)").matches;
-}
-
-function isAuthenticatedUser() {
-  return Boolean(PAGE_CFG.isAuthenticated);
-}
-
-function clamp(n, min, max) {
-  return Math.max(min, Math.min(max, n));
-}
-
-function randInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function show(screen) {
-  [screenSelect, screenSetup, screenPlay].forEach((s) => {
-    if (s) s.classList.remove("on");
-  });
-  if (screen) screen.classList.add("on");
-}
-
-function setMessage(text, type = null) {
-  if (!msg) return;
-  msg.classList.remove("good", "bad");
-  if (type) msg.classList.add(type);
-  msg.textContent = text;
-}
-
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(";").shift();
-  return "";
-}
-
-function getCurrentRankingMode() {
-  return String(selectedGameMode || "practice").toLowerCase();
-}
-
-function buildFriendNearbyRankUrl() {
-  const base = PAGE_CFG.friendNearbyRankUrlBase || PAGE_CFG.friendNearbyRankUrl || "";
-  if (!base) return "";
-  const sep = base.includes("?") ? "&" : "?";
-  return `${base}${sep}mode=${encodeURIComponent(getCurrentRankingMode())}`;
-}
-
-function buildRankingHomeUrl() {
-  const base = PAGE_CFG.rankingHomeUrlBase || PAGE_CFG.rankingHomeUrl || "";
-  if (!base) return "";
-  const sep = base.includes("?") ? "&" : "?";
-  return `${base}${sep}mode=${encodeURIComponent(getCurrentRankingMode())}`;
-}
-
-function syncRankingLinks() {
-  if (btnOpenRanking) {
-    btnOpenRanking.href = buildRankingHomeUrl();
-  }
-}
-
-function getModeConfig() {
-  return GAME_MODES[selectedGameMode];
-}
-
-function getCurrentRewardPerCorrect() {
-  return getModeConfig().reward;
-}
-
-function renderTopStatus() {
-  const stars = Math.max(0, parseInt(totalStars || 0, 10));
-  const keys = Math.max(0, parseInt(remainingKeys || 0, 10));
-
-  if (statStars) statStars.textContent = stars;
-  if (statKeys) statKeys.textContent = keys;
-  if (navStarCount) navStarCount.textContent = stars;
-  if (navKeyCount) navKeyCount.textContent = keys;
-}
-
-function syncStartButtons() {
-  const disabled = Boolean(btnStart?.disabled);
-
-  if (btnMobileStart) {
-    btnMobileStart.disabled = disabled;
-    btnMobileStart.textContent = btnStart ? btnStart.textContent : "Start";
-  }
-}
-
-function syncResetButtons() {
-  const disabled = Boolean(btnReset?.disabled);
-
-  if (btnMobileReset) {
-    btnMobileReset.disabled = disabled;
-  }
-}
-
-function clearLandingTimer() {
-  if (auraLandingTimer) {
-    clearTimeout(auraLandingTimer);
-    auraLandingTimer = null;
-  }
-}
-
-function clearSparkleTimer() {
-  if (sparkleTimer) {
-    clearInterval(sparkleTimer);
-    sparkleTimer = null;
-  }
-}
-
-function createSuperSparkle() {
-  if (!statusAvatarCanvas || currentAuraState !== "super") return;
-
-  const sparkle = document.createElement("span");
-  sparkle.className = "status-super-sparkle";
-  sparkle.style.left = `${30 + Math.random() * 40}%`;
-  sparkle.style.top = `${18 + Math.random() * 42}%`;
-  sparkle.style.animationDuration = `${0.8 + Math.random() * 0.6}s`;
-  sparkle.style.transform = `scale(${0.7 + Math.random() * 0.9})`;
-  statusAvatarCanvas.appendChild(sparkle);
-
-  setTimeout(() => {
-    sparkle.remove();
-  }, 1400);
-}
-
-function updateSuperSparkleLoop() {
-  clearSparkleTimer();
-
-  if (currentAuraState === "super") {
-    createSuperSparkle();
-    sparkleTimer = setInterval(() => {
-      createSuperSparkle();
-    }, 220);
-  }
-}
-
-function triggerLandingBurst() {
-  if (!statusAvatarCanvas || !statusAvatarBurst) return;
-
-  clearLandingTimer();
-  statusAvatarCanvas.classList.remove("is-landing");
-  statusAvatarBurst.classList.remove("is-active");
-  void statusAvatarCanvas.offsetWidth;
-  statusAvatarCanvas.classList.add("is-landing");
-  statusAvatarBurst.classList.add("is-active");
-
-  auraLandingTimer = setTimeout(() => {
-    statusAvatarCanvas.classList.remove("is-landing");
-    statusAvatarBurst.classList.remove("is-active");
-  }, 950);
-}
-
-function applyAuraVisualState(stateKey) {
-  if (!statusAvatarCanvas) return;
-
-  statusAvatarCanvas.classList.remove("is-idle", "is-combo", "is-fever", "is-super", "is-awake");
-  statusAvatarCanvas.classList.add(`is-${stateKey}`);
-
-  if (stateKey === "fever" || stateKey === "super") {
-    statusAvatarCanvas.classList.add("is-awake");
-  }
-
-  updateSuperSparkleLoop();
-}
-
-function setAuraState(stateKey) {
-  let label = AURA_STATE.idle;
-
-  if (stateKey === "combo") label = AURA_STATE.combo;
-  else if (stateKey === "fever") label = AURA_STATE.fever;
-  else if (stateKey === "super") label = AURA_STATE.super;
-
-  if (statAura) statAura.textContent = label;
-
-  const previousState = currentAuraState;
-  currentAuraState = stateKey || "idle";
-
-  if (
-    (previousState === "fever" || previousState === "super") &&
-    stateKey !== "fever" &&
-    stateKey !== "super"
-  ) {
-    triggerLandingBurst();
-  }
-
-  applyAuraVisualState(currentAuraState);
-}
-
-function stopAuraCompletely() {
-  currentAuraState = "idle";
-  clearLandingTimer();
-  clearSparkleTimer();
-
-  if (statusAvatarCanvas) {
-    statusAvatarCanvas.classList.remove("is-combo", "is-fever", "is-super", "is-awake", "is-landing");
-    statusAvatarCanvas.classList.add("is-idle", "is-breathing");
-    statusAvatarCanvas.querySelectorAll(".status-super-sparkle").forEach((el) => el.remove());
-  }
-
-  if (statusAvatarBurst) statusAvatarBurst.classList.remove("is-active");
-  if (statAura) statAura.textContent = AURA_STATE.idle;
-}
-
-function updateAuraByCombo() {
-  if (!running) {
-    stopAuraCompletely();
-    return;
-  }
-
-  if (combo >= 10) setAuraState("super");
-  else if (combo >= 5) setAuraState("fever");
-  else if (combo >= 2) setAuraState("combo");
-  else setAuraState("idle");
-}
-
-function renderRight() {
-  const modeCfg = getModeConfig();
-
-  if (statGameMode) statGameMode.textContent = modeCfg.label;
-  if (statDifficulty) statDifficulty.textContent = modeCfg.difficulty;
-
-  if (statMode) {
-    statMode.textContent =
-      selectedGameMode === "practice"
-        ? OPERATION_META[selectedPracticeOperation].label
-        : "Mixed";
-  }
-
-  if (hudMode) hudMode.textContent = modeCfg.label;
-
-  if (hudOperation) {
-    hudOperation.textContent =
-      selectedGameMode === "practice"
-        ? OPERATION_META[selectedPracticeOperation].label
-        : "Mixed";
-  }
-}
-
-function renderModeTiles() {
-  if (!gameModeTiles) return;
-  gameModeTiles.innerHTML = "";
-
-  Object.values(GAME_MODES).forEach((mode) => {
-    const tile = document.createElement("div");
-    tile.className = "tile";
-    tile.innerHTML = `
-      <div class="k">Mode</div>
-      <div class="v">${mode.label}</div>
-      ${isMobilePlayUI() ? "" : `<div class="sub" style="margin-top:8px">${mode.desc}</div>`}
-      ${isMobilePlayUI() ? "" : `<div class="sub" style="margin-top:10px"><b>${mode.reward} star${mode.reward > 1 ? "s" : ""}</b> per correct answer</div>`}
-    `;
-    tile.addEventListener("click", () => {
-      selectedGameMode = mode.key;
-      goSetupScreen();
-    });
-    gameModeTiles.appendChild(tile);
-  });
-
-  if (modeBandSummary) {
-    if (isMobilePlayUI()) {
-      modeBandSummary.innerHTML = "";
-      modeBandSummary.style.display = "none";
-    } else {
-      modeBandSummary.style.display = "";
-      modeBandSummary.innerHTML = `
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span class="modeFlag"><span class="modeMark"></span>New Mode Structure</span>
-          <b>Practice / Classic / Challenge</b>
-        </div>
-        <div class="sub">Classic and Challenge adapt to your mistakes automatically.</div>
-      `;
-    }
-  }
-}
-
-function renderPracticeOperations() {
-  if (!practiceOpSeg) return;
-  practiceOpSeg.innerHTML = "";
-
-  ["add", "sub", "mul", "div"].forEach((key) => {
-    const btn = document.createElement("button");
-    btn.className = "btn " + (selectedPracticeOperation === key ? "" : "secondary");
-    btn.textContent = OPERATION_META[key].label;
-    btn.addEventListener("click", () => {
-      selectedPracticeOperation = key;
-      renderPracticeOperations();
-      renderSetupScreen();
-      renderRight();
-      syncRankingLinks();
-    });
-    practiceOpSeg.appendChild(btn);
-  });
-}
-
-function getSetupSummary() {
-  if (selectedGameMode === "practice") {
-    return {
-      reward: "1 star / correct",
-      rule: `${OPERATION_META[selectedPracticeOperation].label} only`,
-      difficulty: "Easy → Medium by combo",
-      range:
-        selectedPracticeOperation === "mul" || selectedPracticeOperation === "div"
-          ? "1 ~ 9"
-          : "1 ~ 20",
-      hint: "Practice lets you focus on one operation. Combo starts the wind effect, Fever awakens the avatar.",
-    };
-  }
-
-  if (selectedGameMode === "classic") {
-    return {
-      reward: "3 stars / correct",
-      rule: "Mixed operations + mistake-weighted selection",
-      difficulty: "Adaptive",
-      range: "1-digit → 2-digit progression",
-      hint: "Classic automatically mixes + - × ÷ and leans toward the types you miss more often.",
-    };
-  }
-
-  return {
-    reward: "3 stars / correct",
-    rule: "Mixed operations + harder adaptive flow",
-    difficulty: "Hard Adaptive",
-    range: "Always under 100",
-    hint: "Challenge stays within two-digit numbers but becomes denser and trickier than Practice.",
+(function () {
+  "use strict";
+
+  const PAGE_CFG = window.PLAY_PAGE_CONFIG || {};
+  const playPageRoot = document.getElementById("playPageRoot");
+
+  const GAME_MODES = {
+    practice: {
+      key: "practice",
+      label: "🌱 연습 모드",
+      shortLabel: "연습 모드",
+      rewardText: '기본 1개 →<br><strong>피버 3개!</strong>',
+      ruleText: '연속으로 맞추면<br><strong>마법이 강해져요!</strong>',
+      operationLabel: "어떤 기호를 연습할까? ➕ ➖ ✖️ ➗",
+    },
+    classic: {
+      key: "classic",
+      label: "🌟 클래식",
+      shortLabel: "클래식",
+      rewardText: '기본 2개 →<br><strong>피버 4개!</strong>',
+      ruleText: '처음엔 쉽고<br><strong>점점 섞여서 나와요!</strong>',
+      operationLabel: "어떤 기호로 도전할까? ➕ ➖ ✖️ ➗",
+    },
+    challenge: {
+      key: "challenge",
+      label: "🔥 챌린지",
+      shortLabel: "챌린지",
+      rewardText: '기본 3개 →<br><strong>피버 5개!</strong>',
+      ruleText: '클래식 문제가<br><strong>사칙연산으로 섞여요!</strong>',
+      operationLabel: "",
+    },
   };
-}
 
-function renderSetupScreen() {
-  const modeCfg = getModeConfig();
-  const summary = getSetupSummary();
+  const OPERATION_META = {
+    add: { label: "더하기 ➕", sign: "+" },
+    sub: { label: "빼기 ➖", sign: "-" },
+    mul: { label: "곱하기 ✖️", sign: "×" },
+    div: { label: "나누기 ➗", sign: "÷" },
+  };
 
-  if (modeBandNow) {
-    if (isMobilePlayUI()) {
-      modeBandNow.innerHTML = "";
-      modeBandNow.style.display = "none";
-    } else {
-      modeBandNow.style.display = "";
-      modeBandNow.innerHTML = `
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span class="modeFlag"><span class="modeMark"></span>${modeCfg.label}</span>
-          <b>${modeCfg.reward} star${modeCfg.reward > 1 ? "s" : ""} per correct</b>
-        </div>
-        <div class="sub">Key is consumed at game start.</div>
-      `;
+  /*
+    아바타 방 kids-room-shop-match-patch.js 방식 그대로 가져옴.
+    핵심:
+    - bubblegum_sans 같은 영문 키도 실제 표현은 Jua 등 shop 기준 폰트로 매칭
+    - font-family를 inline style로 강제 적용
+    - effect는 effect-rainbow-flow처럼 하이픈 클래스 사용
+  */
+  const FONT_FAMILY_MAP = {
+    default: 'var(--play-font-main), "Pretendard", sans-serif',
+    pretendard: 'var(--play-font-main), "Pretendard", sans-serif',
+
+    jua: '"Jua", var(--play-font-main), sans-serif',
+    bubblegum_sans: '"Jua", var(--play-font-main), sans-serif',
+
+    gamja_flower: '"Gamja Flower", var(--play-font-main), cursive',
+    delius_swash_caps: '"Gamja Flower", var(--play-font-main), cursive',
+
+    dongle: '"Dongle", var(--play-font-main), sans-serif',
+    boogaloo: '"Dongle", var(--play-font-main), sans-serif',
+
+    hi_melody: '"Hi Melody", var(--play-font-main), cursive',
+    love_ya_like_a_sister: '"Hi Melody", var(--play-font-main), cursive',
+
+    do_hyeon: '"Do Hyeon", var(--play-font-main), sans-serif',
+    luckiest_guy: '"Do Hyeon", var(--play-font-main), sans-serif',
+
+    gaegu: '"Gaegu", var(--play-font-main), cursive',
+    coming_soon: '"Gaegu", var(--play-font-main), cursive',
+
+    cute_font: '"Cute Font", var(--play-font-main), cursive',
+    life_savers: '"Cute Font", var(--play-font-main), cursive',
+
+    single_day: '"Single Day", var(--play-font-main), cursive',
+    chewy: '"Single Day", var(--play-font-main), cursive',
+
+    poor_story: '"Poor Story", var(--play-font-main), cursive',
+    cabin_sketch: '"Poor Story", var(--play-font-main), cursive',
+
+    gugi: '"Gugi", var(--play-font-main), cursive',
+    mouse_memoirs: '"Gugi", var(--play-font-main), cursive',
+
+    black_han_sans: '"Black Han Sans", var(--play-font-main), sans-serif',
+    londrina_shadow: '"Black Han Sans", var(--play-font-main), sans-serif',
+
+    nanum_pen: '"Nanum Pen Script", var(--play-font-main), cursive',
+    nanum_pen_script: '"Nanum Pen Script", var(--play-font-main), cursive',
+    amatic_sc: '"Nanum Pen Script", var(--play-font-main), cursive',
+
+    gowun_dodum: '"Gowun Dodum", var(--play-font-main), sans-serif',
+    capriola: '"Gowun Dodum", var(--play-font-main), sans-serif',
+
+    sunflower: '"Sunflower", var(--play-font-main), sans-serif',
+    mclaren: '"Sunflower", var(--play-font-main), sans-serif',
+
+    gowun_batang: '"Gowun Batang", var(--play-font-main), serif',
+    dokdo: '"Dokdo", var(--play-font-main), cursive',
+    modak: '"Modak", var(--play-font-main), cursive',
+  };
+
+  const FONT_SIZE_MAP = {
+    default: 19,
+    pretendard: 19,
+
+    jua: 20,
+    bubblegum_sans: 20,
+
+    gamja_flower: 24,
+    delius_swash_caps: 24,
+
+    dongle: 30,
+    boogaloo: 30,
+
+    hi_melody: 25,
+    love_ya_like_a_sister: 25,
+
+    do_hyeon: 20,
+    luckiest_guy: 20,
+
+    gaegu: 23,
+    coming_soon: 23,
+
+    cute_font: 30,
+    life_savers: 30,
+
+    single_day: 24,
+    chewy: 24,
+
+    poor_story: 22,
+    cabin_sketch: 22,
+
+    gugi: 20,
+    mouse_memoirs: 20,
+
+    black_han_sans: 19,
+    londrina_shadow: 19,
+
+    nanum_pen: 27,
+    nanum_pen_script: 27,
+    amatic_sc: 27,
+
+    gowun_dodum: 20,
+    capriola: 20,
+
+    sunflower: 20,
+    mclaren: 20,
+
+    gowun_batang: 20,
+    dokdo: 26,
+    modak: 22,
+  };
+
+  const FONT_WEIGHT_MAP = {
+    default: 900,
+    pretendard: 900,
+
+    dongle: 700,
+    gaegu: 700,
+    sunflower: 700,
+    mclaren: 700,
+
+    jua: 400,
+    bubblegum_sans: 400,
+    gamja_flower: 400,
+    delius_swash_caps: 400,
+    hi_melody: 400,
+    love_ya_like_a_sister: 400,
+    do_hyeon: 400,
+    luckiest_guy: 400,
+    cute_font: 400,
+    life_savers: 400,
+    single_day: 400,
+    chewy: 400,
+    poor_story: 400,
+    cabin_sketch: 400,
+    gugi: 400,
+    mouse_memoirs: 400,
+    black_han_sans: 400,
+    londrina_shadow: 400,
+    nanum_pen: 400,
+    nanum_pen_script: 400,
+    amatic_sc: 400,
+    gowun_dodum: 400,
+    capriola: 400,
+    gowun_batang: 400,
+    dokdo: 400,
+    modak: 400,
+  };
+
+  const EFFECT_ALIAS_MAP = {
+    none: "none",
+    normal: "none",
+    default: "none",
+
+    neon: "neon_blue",
+    neonblue: "neon_blue",
+    neon_blue: "neon_blue",
+    "neon blue": "neon_blue",
+    "네온블루": "neon_blue",
+    "네온 블루": "neon_blue",
+
+    rainbow: "rainbow_flow",
+    rainbowflow: "rainbow_flow",
+    rainbow_flow: "rainbow_flow",
+    "rainbow flow": "rainbow_flow",
+    "레인보우": "rainbow_flow",
+    "무지개": "rainbow_flow",
+
+    gold: "gold_glow",
+    goldglow: "gold_glow",
+    gold_glow: "gold_glow",
+    "gold glow": "gold_glow",
+    "골드글로우": "gold_glow",
+    "골드 글로우": "gold_glow",
+    "금빛": "gold_glow",
+
+    sparkle: "sparkle",
+    "스파클": "sparkle",
+    "반짝이": "sparkle",
+
+    glitch: "glitch",
+    "글리치": "glitch",
+
+    float: "float_wave",
+    floatwave: "float_wave",
+    float_wave: "float_wave",
+    "float wave": "float_wave",
+    "물결": "float_wave",
+
+    fire: "fire_glow",
+    fireglow: "fire_glow",
+    fire_glow: "fire_glow",
+    "fire glow": "fire_glow",
+    "불꽃": "fire_glow",
+
+    ice: "ice_glow",
+    iceglow: "ice_glow",
+    ice_glow: "ice_glow",
+    "ice glow": "ice_glow",
+    "얼음": "ice_glow",
+  };
+
+  let screenSelect, screenSetup, screenPlay;
+  let gameModeTiles, practiceOpSeg, practiceOperationWrap;
+  let modeBandNow, setupRewardText, setupRuleText;
+  let sectionLabel;
+
+  let btnBackToModes, btnGoPlay, btnBackToSetup;
+  let btnStart, btnReset, btnSubmit, btnKeyModalClose, btnOpenRanking;
+
+  let timeLeftEl, progressFill, mathText, answerInput, msg, mobilePad;
+  let statStars, statKeys, statAura, statGameMode, earnedStarsEl;
+  let statusAvatarCanvas, modal, rewardOverlay, keyExhaustedModal;
+
+  let totalStars = 0;
+  let remainingKeys = 0;
+  let selectedGameMode = "practice";
+  let selectedPracticeOperation = "add";
+
+  let running = false;
+  let timerId = null;
+  let msgTimer = null;
+  let timeLeft = 60;
+
+  let questionA = 0;
+  let questionB = 0;
+  let currentAnswer = 0;
+  let currentOperation = "add";
+  let currentQuestionText = "";
+
+  let correct = 0;
+  let wrong = 0;
+  let earnedStars = 0;
+  let combo = 0;
+  let maxCombo = 0;
+
+  let activeRunId = null;
+  let avatarDataCache = null;
+  let finalizedLock = false;
+  let keySyncInProgress = false;
+
+  let nicknameStyleInjected = false;
+  let nicknameObserverStarted = false;
+  let nicknameApplyTimer = null;
+
+  function qs(id) {
+    return document.getElementById(id);
+  }
+
+  function bindElements() {
+    screenSelect = qs("screenSelect");
+    screenSetup = qs("screenSetup");
+    screenPlay = qs("screenPlay");
+
+    gameModeTiles = qs("gameModeTiles");
+    practiceOpSeg = qs("practiceOpSeg");
+    practiceOperationWrap = qs("practiceOperationWrap");
+
+    modeBandNow = qs("modeBandNow");
+    setupRewardText = qs("setupRewardText");
+    setupRuleText = qs("setupRuleText");
+    sectionLabel = document.querySelector("#practiceOperationWrap .sectionLabel");
+
+    btnBackToModes = qs("btnBackToModes");
+    btnGoPlay = qs("btnGoPlay");
+    btnBackToSetup = qs("btnBackToSetup");
+    btnStart = qs("btnStart");
+    btnReset = qs("btnReset");
+    btnSubmit = qs("btnSubmit");
+    btnKeyModalClose = qs("btnKeyModalClose");
+    btnOpenRanking = qs("btnOpenRanking");
+
+    timeLeftEl = qs("timeLeft");
+    progressFill = qs("progressFill");
+    mathText = qs("mathText");
+    answerInput = qs("answerInput");
+    msg = qs("msg");
+    mobilePad = qs("mobilePad");
+
+    statStars = qs("statStars");
+    statKeys = qs("statKeys");
+    statAura = qs("statAura");
+    statGameMode = qs("statGameMode");
+    earnedStarsEl = qs("earnedStars");
+
+    statusAvatarCanvas = qs("statusAvatarCanvas");
+    modal = qs("modal");
+    rewardOverlay = qs("rewardOverlay");
+    keyExhaustedModal = qs("keyExhaustedModal");
+  }
+
+  function isAuthenticatedUser() {
+    return Boolean(PAGE_CFG.isAuthenticated);
+  }
+
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function show(screen) {
+    [screenSelect, screenSetup, screenPlay].forEach(function (s) {
+      if (s) s.classList.remove("on");
+    });
+
+    if (screen) screen.classList.add("on");
+
+    requestAnimationFrame(applyAllNicknameStyles);
+  }
+
+  function getCookie(name) {
+    const cookies = document.cookie ? document.cookie.split(";") : [];
+
+    for (let i = 0; i < cookies.length; i += 1) {
+      const cookie = cookies[i].trim();
+
+      if (cookie.indexOf(name + "=") === 0) {
+        return decodeURIComponent(cookie.slice(name.length + 1));
+      }
+    }
+
+    return "";
+  }
+
+  function safeJsonParse(text, fallback) {
+    try {
+      if (!text) return fallback;
+      return JSON.parse(text);
+    } catch (e) {
+      return fallback;
     }
   }
 
-  if (practiceOperationWrap) {
-    practiceOperationWrap.style.display = selectedGameMode === "practice" ? "" : "none";
+  function cleanValue(value) {
+    if (value === undefined || value === null) return "";
+
+    const v = String(value).trim();
+
+    if (!v || v === "null" || v === "undefined" || v === "None") return "";
+
+    return v;
   }
 
-  renderPracticeOperations();
-
-  if (setupRewardText) setupRewardText.textContent = summary.reward;
-  if (setupRuleText) setupRuleText.textContent = summary.rule;
-  if (setupDifficultyText) setupDifficultyText.textContent = summary.difficulty;
-  if (setupRangeText) setupRangeText.textContent = summary.range;
-  if (setupHint) setupHint.textContent = isMobilePlayUI() ? "" : summary.hint;
-}
-
-function goSetupScreen() {
-  if (leftTitle) leftTitle.textContent = "Choose Mode";
-  if (leftSub) leftSub.textContent = isMobilePlayUI() ? "" : "Review the rules before starting.";
-  renderSetupScreen();
-  renderRight();
-  syncRankingLinks();
-  show(screenSetup);
-}
-
-function goPlayScreen() {
-  if (leftTitle) leftTitle.textContent = isMobilePlayUI() ? "Game" : "Play";
-  if (leftSub) leftSub.textContent = isMobilePlayUI() ? "" : "Type your answer quickly.";
-  show(screenPlay);
-
-  timeLeft = 60;
-  goal = selectedGameMode === "challenge" ? 28 : 25;
-
-  const modeLabel = getModeConfig().label;
-  const opLabel =
-    selectedGameMode === "practice" ? OPERATION_META[selectedPracticeOperation].label : "Mixed";
-
-  if (playDesc) {
-    playDesc.textContent = isMobilePlayUI() ? `${modeLabel}` : `${modeLabel} · ${opLabel} · 60s`;
+  function getDataAttr(name) {
+    if (!playPageRoot) return "";
+    return cleanValue(playPageRoot.getAttribute(name));
   }
 
-  resetGameUI();
-  renderRight();
-  renderTopStatus();
-  syncRankingLinks();
-  updateMobileInputMode();
-}
+  function getAvatarData() {
+    if (avatarDataCache) return avatarDataCache;
 
-function updateTimerUI() {
-  const total = 60;
-  const safeTimeLeft = clamp(Number(timeLeft) || 0, 0, total);
-  const pct = clamp((safeTimeLeft / total) * 100, 0, 100);
-  const deg = Math.floor((safeTimeLeft / total) * 360);
+    if (!playPageRoot) {
+      avatarDataCache = {};
+      return avatarDataCache;
+    }
 
-  if (timeLeftEl) timeLeftEl.textContent = String(safeTimeLeft);
-  if (mobileTimeLeftEl) mobileTimeLeftEl.textContent = String(safeTimeLeft);
+    const raw = playPageRoot.getAttribute("data-play-avatar-json") || "{}";
+    avatarDataCache = safeJsonParse(raw, {});
 
-  if (timerRing) {
-    timerRing.style.background =
-      `conic-gradient(var(--play-good, #36e2a3) ${deg}deg, rgba(255,255,255,.15) 0deg)`;
+    if (!avatarDataCache || typeof avatarDataCache !== "object") {
+      avatarDataCache = {};
+    }
+
+    return avatarDataCache;
   }
 
-  if (progressFill) {
-    progressFill.style.width = `${pct}%`;
-  }
-}
+  function pickValue(obj, keys) {
+    if (!obj || typeof obj !== "object") return "";
 
-function updateFeverUI() {
-  let text = "Fever Ready";
-  let active = false;
+    for (let i = 0; i < keys.length; i += 1) {
+      const key = keys[i];
+      const parts = key.split(".");
+      let cur = obj;
 
-  if (combo >= 10) {
-    text = "GOLD FEVER";
-    active = true;
-  } else if (combo >= 5) {
-    text = "FEVER MODE";
-    active = true;
-  } else if (combo >= 2) {
-    text = `Combo x${combo}`;
-  }
+      for (let j = 0; j < parts.length; j += 1) {
+        if (!cur || typeof cur !== "object") {
+          cur = undefined;
+          break;
+        }
 
-  if (feverText) feverText.textContent = text;
-  if (feverPill) feverPill.classList.toggle("active", active);
-  updateAuraByCombo();
-}
+        cur = cur[parts[j]];
+      }
 
-function ensureRankNeighborCards() {
-  if (rankNeighborsWrap && rankAboveValueEl && rankMeValueEl && rankBelowValueEl) return;
+      if (cur !== undefined && cur !== null && String(cur).trim() !== "") {
+        return cur;
+      }
+    }
 
-  const existingWrap =
-    (rAboveFriend && rAboveFriend.closest(".resultRankNeighbors")) ||
-    (rBelowFriend && rBelowFriend.closest(".resultRankNeighbors"));
-
-  if (!existingWrap) return;
-
-  rankNeighborsWrap = existingWrap;
-  rankNeighborsWrap.innerHTML = `
-    <div class="resultRankNeighborCard">
-      <div class="v" data-rank-role="above">-</div>
-    </div>
-    <div class="resultRankNeighborCard is-me">
-      <div class="v" data-rank-role="me">-</div>
-    </div>
-    <div class="resultRankNeighborCard">
-      <div class="v" data-rank-role="below">-</div>
-    </div>
-  `;
-
-  rankAboveValueEl = rankNeighborsWrap.querySelector('[data-rank-role="above"]');
-  rankMeValueEl = rankNeighborsWrap.querySelector('[data-rank-role="me"]');
-  rankBelowValueEl = rankNeighborsWrap.querySelector('[data-rank-role="below"]');
-}
-
-function setMyScoreDisplay(value) {
-  if (!rMyFriendScore) return;
-
-  if (value === null || value === undefined || value === "-") {
-    rMyFriendScore.textContent = "-";
-    return;
+    return "";
   }
 
-  rMyFriendScore.innerHTML = `
-    <span class="friend-score-inline">
-      <span class="friend-score-check">✓</span>
-      <span class="friend-score-number">${value}</span>
-    </span>
-  `;
-}
-
-function formatRankNickname(item, emptyText) {
-  if (!item) return emptyText;
-  return `#${item.rank} · ${item.nickname}`;
-}
-
-function formatMyRank(rank, totalCount) {
-  if (!rank || !totalCount) return "Unranked";
-  return `#${rank} / #${totalCount}`;
-}
-
-function resetRankResultUI() {
-  ensureRankNeighborCards();
-
-  if (rMyFriendRank) rMyFriendRank.textContent = "-";
-  setMyScoreDisplay("-");
-  if (rankAboveValueEl) rankAboveValueEl.textContent = "-";
-  if (rankMeValueEl) rankMeValueEl.textContent = "-";
-  if (rankBelowValueEl) rankBelowValueEl.textContent = "-";
-}
-
-function updateMobileInputMode() {
-  if (!answerInput) return;
-
-  if (isMobilePlayUI()) {
-    answerInput.readOnly = true;
-    answerInput.setAttribute("readonly", "readonly");
-    answerInput.setAttribute("inputmode", "none");
-    if (mobilePadWrap) mobilePadWrap.setAttribute("aria-hidden", "false");
-  } else {
-    answerInput.readOnly = false;
-    answerInput.removeAttribute("readonly");
-    answerInput.setAttribute("inputmode", "numeric");
-    if (mobilePadWrap) mobilePadWrap.setAttribute("aria-hidden", "true");
-  }
-}
-
-function resetGameUI() {
-  score = 0;
-  correct = 0;
-  wrong = 0;
-  earnedStars = 0;
-  asked = 0;
-  combo = 0;
-  bestCombo = 0;
-  wrongStats = { add: 0, sub: 0, mul: 0, div: 0 };
-
-  runStartedOnServer = false;
-  runSaved = false;
-  activeRunIsGuest = false;
-  running = false;
-  finalizing = false;
-  leavingInProgress = false;
-
-  if (timerId) {
-    clearInterval(timerId);
-    timerId = null;
+  function getAvatarImage(avatarData, keys) {
+    return cleanValue(pickValue(avatarData, keys));
   }
 
-  timeLeft = 60;
+  async function parseFetchResponse(res) {
+    const text = await res.text();
+    const data = text ? safeJsonParse(text, {}) : {};
 
-  if (scoreEl) scoreEl.textContent = "0";
-  if (correctEl) correctEl.textContent = "0";
-  if (earnedStarsEl) earnedStarsEl.textContent = "0";
-  if (comboCountEl) comboCountEl.textContent = "0";
-  if (progressFill) progressFill.style.width = "0%";
+    if (!res.ok) {
+      const err = new Error(data.message || data.error || "HTTP " + res.status);
+      err.data = data;
+      err.status = res.status;
+      throw err;
+    }
 
-  if (mathText) mathText.textContent = "Press start!";
-  if (answerInput) {
-    answerInput.value = "";
-    answerInput.disabled = true;
-    answerInput.placeholder = isMobilePlayUI() ? "Answer" : "Type your answer";
+    return data;
   }
 
-  if (btnSubmit) btnSubmit.disabled = true;
+  async function postJson(url, payload) {
+    if (!url) return null;
 
-  if (btnStart) {
-    btnStart.disabled = false;
-    btnStart.textContent = "Start";
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: JSON.stringify(payload || {}),
+      });
+
+      return await parseFetchResponse(res);
+    } catch (jsonError) {
+      const formBody = new URLSearchParams();
+
+      Object.entries(payload || {}).forEach(function ([key, value]) {
+        if (value !== undefined && value !== null) {
+          formBody.append(key, String(value));
+        }
+      });
+
+      const res = await fetch(url, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: formBody.toString(),
+      });
+
+      return await parseFetchResponse(res);
+    }
   }
 
-  if (btnReset) {
-    btnReset.disabled = false;
+  function setMessage(text, type) {
+    if (!msg) return;
+
+    if (msgTimer) clearTimeout(msgTimer);
+
+    msg.className = "msg show";
+
+    if (type) msg.classList.add(type);
+
+    msg.textContent = text;
+
+    msgTimer = setTimeout(function () {
+      msg.classList.remove("show");
+    }, 1500);
   }
 
-  syncStartButtons();
-  syncResetButtons();
+  function hideMessageInstantly() {
+    if (!msg) return;
 
-  setMessage("Press start 🙂");
-  updateTimerUI();
-  stopAuraCompletely();
-  updateFeverUI();
-  updateMobileInputMode();
-  updateMobilePadState();
-}
+    if (msgTimer) clearTimeout(msgTimer);
 
-function weightedRandomOperation() {
-  const baseWeights = {
-    add: 1,
-    sub: 1,
-    mul: 1,
-    div: 1,
-  };
-
-  Object.keys(wrongStats).forEach((key) => {
-    baseWeights[key] += wrongStats[key] * 1.35;
-  });
-
-  if (selectedGameMode === "challenge") {
-    baseWeights.mul += 0.9;
-    baseWeights.div += 0.9;
-    baseWeights.sub += 0.3;
+    msg.className = "msg";
   }
 
-  const totalWeight = Object.values(baseWeights).reduce((acc, cur) => acc + cur, 0);
-  let roll = Math.random() * totalWeight;
+  function renderTopStatus() {
+    if (statStars) statStars.textContent = String(totalStars);
+    if (statKeys) statKeys.textContent = String(remainingKeys);
 
-  for (const key of Object.keys(baseWeights)) {
-    roll -= baseWeights[key];
-    if (roll <= 0) return key;
+    const navStar = qs("navStarCount");
+    const navKey = qs("navKeyCount");
+
+    if (navStar) navStar.textContent = String(totalStars);
+    if (navKey) navKey.textContent = String(remainingKeys);
+
+    if (!isAuthenticatedUser()) {
+      localStorage.setItem("mathner_guest_stars", String(totalStars));
+      localStorage.setItem("mathner_guest_keys", String(remainingKeys));
+    }
   }
 
-  return "add";
-}
+  function initData() {
+    if (!isAuthenticatedUser()) {
+      const savedStars = localStorage.getItem("mathner_guest_stars");
+      const savedKeys = localStorage.getItem("mathner_guest_keys");
 
-function buildAddQuestion(level) {
-  if (selectedGameMode === "practice") {
-    const max = level <= 1 ? 9 : level === 2 ? 20 : 30;
-    const a = randInt(1, max);
-    const b = randInt(1, max);
-    return { a, b, answer: a + b, op: "add" };
+      totalStars = savedStars !== null ? Number(savedStars) : Number(PAGE_CFG.initialStars || 0);
+      remainingKeys = savedKeys !== null ? Number(savedKeys) : Number(PAGE_CFG.initialKeys || 3);
+    } else {
+      totalStars = Number(PAGE_CFG.initialStars || 0);
+      remainingKeys = Number(PAGE_CFG.initialKeys || 3);
+    }
+
+    if (Number.isNaN(totalStars)) totalStars = 0;
+    if (Number.isNaN(remainingKeys)) remainingKeys = 0;
+
+    renderTopStatus();
   }
 
-  if (selectedGameMode === "classic") {
-    const ranges = [[1, 9], [5, 20], [10, 35], [20, 60]];
-    const [min, max] = ranges[clamp(level - 1, 0, ranges.length - 1)];
-    const a = randInt(min, max);
-    const b = randInt(min, max);
-    return { a, b, answer: a + b, op: "add" };
+  function renderModeTiles() {
+    if (!gameModeTiles) return;
+
+    gameModeTiles.innerHTML = "";
+
+    Object.values(GAME_MODES).forEach(function (mode) {
+      const tile = document.createElement("button");
+
+      tile.type = "button";
+      tile.className = "tile";
+      tile.innerHTML =
+        '<div class="k">모드 선택</div>' +
+        '<div class="v">' + mode.label + '</div>';
+
+      tile.addEventListener("click", function () {
+        selectedGameMode = mode.key;
+
+        updateSetupPanel();
+        updateRankingLink();
+        show(screenSetup);
+      });
+
+      gameModeTiles.appendChild(tile);
+    });
   }
 
-  const ranges = [[8, 25], [12, 35], [20, 49]];
-  const [min, max] = ranges[clamp(level - 1, 0, ranges.length - 1)];
-  const a = randInt(min, max);
-  const b = randInt(min, max);
-  return { a, b, answer: a + b, op: "add" };
-}
+  function renderPracticeOperations() {
+    if (!practiceOpSeg) return;
 
-function buildSubQuestion(level) {
-  if (selectedGameMode === "practice") {
-    const max = level <= 1 ? 10 : level === 2 ? 20 : 30;
-    let a = randInt(2, max);
-    let b = randInt(1, max - 1);
-    if (b > a) [a, b] = [b, a];
-    return { a, b, answer: a - b, op: "sub" };
+    practiceOpSeg.innerHTML = "";
+
+    ["add", "sub", "mul", "div"].forEach(function (key) {
+      const btn = document.createElement("button");
+
+      btn.type = "button";
+      btn.className = "btn " + (selectedPracticeOperation === key ? "btn-primary" : "secondary");
+      btn.textContent = OPERATION_META[key].label;
+
+      btn.addEventListener("click", function () {
+        selectedPracticeOperation = key;
+        renderPracticeOperations();
+        updateSetupPanel();
+      });
+
+      practiceOpSeg.appendChild(btn);
+    });
   }
 
-  if (selectedGameMode === "classic") {
-    const ranges = [[3, 12], [8, 30], [15, 55], [30, 80]];
-    const [min, max] = ranges[clamp(level - 1, 0, ranges.length - 1)];
-    let a = randInt(min, max);
-    let b = randInt(min - 1 > 1 ? min - 1 : 1, max - 1);
-    if (b > a) [a, b] = [b, a];
-    if (a === b) a += 1;
-    return { a, b, answer: a - b, op: "sub" };
+  function updateSetupPanel() {
+    const mode = GAME_MODES[selectedGameMode] || GAME_MODES.practice;
+
+    if (modeBandNow) modeBandNow.textContent = mode.label;
+    if (statGameMode) statGameMode.textContent = mode.shortLabel;
+    if (setupRewardText) setupRewardText.innerHTML = mode.rewardText;
+    if (setupRuleText) setupRuleText.innerHTML = mode.ruleText;
+    if (sectionLabel) sectionLabel.textContent = mode.operationLabel;
+
+    if (practiceOperationWrap) {
+      practiceOperationWrap.style.display = selectedGameMode === "challenge" ? "none" : "block";
+    }
+
+    requestAnimationFrame(applyAllNicknameStyles);
   }
 
-  const ranges = [[10, 35], [20, 60], [30, 90]];
-  const [min, max] = ranges[clamp(level - 1, 0, ranges.length - 1)];
-  let a = randInt(min, max);
-  let b = randInt(1, max - 5);
-  if (b > a) [a, b] = [b, a];
-  if (a === b) a += 1;
-  if (a > 99) a = 99;
-  return { a, b, answer: a - b, op: "sub" };
-}
+  function updateCanvasParticles(stateKey) {
+    const particles = document.querySelectorAll(".canvas-particle");
 
-function buildMulQuestion(level) {
-  if (selectedGameMode === "practice") {
-    const max = level <= 1 ? 5 : level === 2 ? 7 : 9;
-    const a = randInt(1, max);
-    const b = randInt(1, max);
-    return { a, b, answer: a * b, op: "mul" };
+    particles.forEach(function (p) {
+      p.textContent = "";
+      p.classList.remove("is-wind-star", "is-fever-star", "is-super-star");
+
+      if (stateKey === "combo") p.classList.add("is-wind-star");
+      if (stateKey === "fever") p.classList.add("is-fever-star");
+      if (stateKey === "super") p.classList.add("is-super-star");
+    });
   }
 
-  if (selectedGameMode === "classic") {
-    const ranges = [[2, 5], [2, 7], [3, 9], [4, 9]];
-    const [min, max] = ranges[clamp(level - 1, 0, ranges.length - 1)];
-    const a = randInt(min, max);
-    const b = randInt(min, max);
-    return { a, b, answer: a * b, op: "mul" };
+  function setAuraState(stateKey) {
+    if (!playPageRoot) return;
+
+    playPageRoot.setAttribute("data-aura-state", stateKey);
+
+    if (statusAvatarCanvas) {
+      statusAvatarCanvas.classList.toggle(
+        "is-fever-canvas",
+        stateKey === "fever" || stateKey === "super"
+      );
+    }
+
+    updateCanvasParticles(stateKey);
+
+    if (statAura) {
+      if (stateKey === "idle") statAura.textContent = "조용함...";
+      if (stateKey === "combo") statAura.textContent = "바람부는 중 🌬️";
+      if (stateKey === "fever") statAura.textContent = "피버 모드 🔥";
+      if (stateKey === "super") statAura.textContent = "황금 피버 ⚡";
+    }
+
+    requestAnimationFrame(applyAllNicknameStyles);
   }
 
-  const ranges = [[3, 7], [4, 8], [5, 9]];
-  const [min, max] = ranges[clamp(level - 1, 0, ranges.length - 1)];
-  const a = randInt(min, max);
-  const b = randInt(min, max);
-  return { a, b, answer: a * b, op: "mul" };
-}
+  function updateAuraByCombo() {
+    if (!running) {
+      setAuraState("idle");
+      return;
+    }
 
-function buildDivQuestion(level) {
-  if (selectedGameMode === "practice") {
-    const max = level <= 1 ? 5 : level === 2 ? 7 : 9;
-    const divisor = randInt(1, max);
-    const quotient = randInt(1, max);
-    const a = divisor * quotient;
-    return { a, b: divisor, answer: quotient, op: "div" };
+    if (combo >= 10) setAuraState("super");
+    else if (combo >= 5) setAuraState("fever");
+    else if (combo >= 2) setAuraState("combo");
+    else setAuraState("idle");
   }
 
-  if (selectedGameMode === "classic") {
-    const ranges = [[2, 5], [2, 7], [3, 9], [4, 9]];
-    const [min, max] = ranges[clamp(level - 1, 0, ranges.length - 1)];
-    const divisor = randInt(min, max);
-    const quotient = randInt(min, max);
-    const a = divisor * quotient;
-    return { a, b: divisor, answer: quotient, op: "div" };
+  function updateTimerUI() {
+    if (timeLeftEl) timeLeftEl.textContent = String(timeLeft);
+
+    if (progressFill) {
+      progressFill.style.width = String((timeLeft / 60) * 100) + "%";
+    }
   }
 
-  const ranges = [[3, 6], [4, 8], [5, 9]];
-  const [min, max] = ranges[clamp(level - 1, 0, ranges.length - 1)];
-  const divisor = randInt(min, max);
-  const quotient = randInt(min, max);
-  const a = divisor * quotient;
-  return { a, b: divisor, answer: quotient, op: "div" };
-}
+  function resetGameUI() {
+    correct = 0;
+    wrong = 0;
+    earnedStars = 0;
+    combo = 0;
+    maxCombo = 0;
+    activeRunId = null;
+    finalizedLock = false;
+    running = false;
+    currentQuestionText = "";
+    currentOperation = "add";
 
-function getAdaptiveDifficultyLevel() {
-  if (selectedGameMode === "practice") {
-    if (combo >= 8) return 3;
-    if (combo >= 4) return 2;
+    if (timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+
+    timeLeft = 60;
+
+    if (earnedStarsEl) earnedStarsEl.textContent = "0";
+
+    if (mathText) {
+      mathText.textContent = "준비, 시작!";
+      mathText.classList.add("is-ready-text");
+    }
+
+    if (answerInput) {
+      answerInput.value = "";
+      answerInput.disabled = true;
+    }
+
+    if (btnSubmit) btnSubmit.disabled = true;
+
+    if (btnStart) {
+      btnStart.disabled = false;
+      btnStart.textContent = "▶️ 준비, 시작!";
+    }
+
+    hideMessageInstantly();
+    updateTimerUI();
+    setAuraState("idle");
+    applyAllNicknameStyles();
+  }
+
+  function getMixedLevel() {
+    const roll = randInt(1, 100);
+
+    if (combo >= 5) {
+      if (roll <= 25) return 1;
+      if (roll <= 65) return 2;
+      return 3;
+    }
+
+    if (combo >= 2) {
+      if (roll <= 45) return 1;
+      if (roll <= 85) return 2;
+      return 3;
+    }
+
     return 1;
   }
 
-  if (selectedGameMode === "classic") {
-    let level = 1;
-    if (correct >= 4) level = 2;
-    if (correct >= 9) level = 3;
-    if (correct >= 15) level = 4;
-    if (combo >= 8) level += 1;
-    return clamp(level, 1, 4);
+  function setQuestion(a, b, answer, opKey, text) {
+    questionA = a;
+    questionB = b;
+    currentAnswer = answer;
+    currentOperation = opKey;
+    currentQuestionText = text || "";
   }
 
-  let level = 1;
-  if (correct >= 3) level = 2;
-  if (correct >= 8) level = 3;
-  if (combo >= 8) level += 1;
-  return clamp(level, 1, 3);
-}
+  function makePracticeQuestion(opKey) {
+    currentQuestionText = "";
 
-function nextQuestion() {
-  const level = getAdaptiveDifficultyLevel();
+    if (opKey === "add") {
+      const a = randInt(1, 9);
+      const b = randInt(1, 9);
+      setQuestion(a, b, a + b, "add");
+    }
 
-  let opKey = "add";
-  if (selectedGameMode === "practice") opKey = selectedPracticeOperation;
-  else opKey = weightedRandomOperation();
+    if (opKey === "sub") {
+      let a = randInt(2, 9);
+      let b = randInt(1, 9);
 
-  let q;
-  if (opKey === "add") q = buildAddQuestion(level);
-  if (opKey === "sub") q = buildSubQuestion(level);
-  if (opKey === "mul") q = buildMulQuestion(level);
-  if (opKey === "div") q = buildDivQuestion(level);
+      if (b > a) {
+        const temp = a;
+        a = b;
+        b = temp;
+      }
 
-  questionA = q.a;
-  questionB = q.b;
-  currentAnswer = q.answer;
-  currentOperation = q.op;
+      setQuestion(a, b, a - b, "sub");
+    }
 
-  const sign = OPERATION_META[currentOperation].sign;
-  if (mathText) mathText.textContent = `${questionA} ${sign} ${questionB} = ?`;
+    if (opKey === "mul") {
+      const a = randInt(1, 9);
+      const b = randInt(1, 9);
+      setQuestion(a, b, a * b, "mul");
+    }
 
-  const currentOpLabel =
-    selectedGameMode === "practice"
-      ? OPERATION_META[selectedPracticeOperation].label
-      : OPERATION_META[currentOperation].label;
+    if (opKey === "div") {
+      const divisor = randInt(1, 9);
+      const quotient = randInt(1, 9);
+      const dividend = divisor * quotient;
 
-  if (hudOperation) hudOperation.textContent = currentOpLabel;
-  if (statMode) statMode.textContent = currentOpLabel;
-
-  if (answerInput) {
-    answerInput.value = "";
-    if (!isMobilePlayUI()) {
-      answerInput.focus();
-    } else {
-      answerInput.blur();
+      setQuestion(dividend, divisor, quotient, "div");
     }
   }
 
-  updateMobilePadState();
-}
-
-function getFeverStarBonus(comboCount) {
-  if (comboCount >= 10) return 2;
-  if (comboCount >= 5) return 1;
-  return 0;
-}
-
-function createFloatingGain(cumulativeStars, latestGain, comboCount) {
-  if (!liveEffects) return;
-
-  const el = document.createElement("div");
-  el.className = "floatingGain";
-
-  if (comboCount >= 5) el.classList.add("fever");
-  if (comboCount >= 10) el.classList.add("super");
-
-  el.textContent = `+${cumulativeStars} ★`;
-  el.title = `latest +${latestGain}`;
-  liveEffects.appendChild(el);
-  setTimeout(() => el.remove(), 1400);
-}
-
-function createSparkBurst(comboCount) {
-  if (!liveEffects) return;
-
-  let burstCount = isMobilePlayUI() ? 6 : 9;
-  if (comboCount >= 4) burstCount += 2;
-  if (comboCount >= 7) burstCount += 2;
-  if (comboCount >= 10) burstCount += 3;
-
-  for (let i = 0; i < burstCount; i += 1) {
-    const spark = document.createElement("span");
-    spark.className = "spark";
-    if (comboCount >= 5) spark.classList.add("fever");
-    if (comboCount >= 10) spark.classList.add("super");
-
-    spark.style.left = `${44 + Math.random() * 12}%`;
-    spark.style.top = `${42 + Math.random() * 14}%`;
-    spark.style.setProperty("--dx", `${(Math.random() - 0.5) * (isMobilePlayUI() ? 120 : 180)}px`);
-    spark.style.setProperty("--dy", `${(Math.random() - 0.5) * (isMobilePlayUI() ? 90 : 140)}px`);
-    liveEffects.appendChild(spark);
-    setTimeout(() => spark.remove(), 900);
-  }
-}
-
-function createRiseStars(cumulativeStars, comboCount) {
-  if (!liveEffects) return;
-
-  const star = document.createElement("span");
-  star.className = "riseStar";
-  if (comboCount >= 5) star.classList.add("fever");
-  if (comboCount >= 10) star.classList.add("super");
-
-  star.textContent = `+${cumulativeStars}★`;
-  star.style.left = "50%";
-  star.style.top = `${60 + Math.random() * 4}%`;
-
-  const spreadX = isMobilePlayUI() ? 18 : 24;
-  const spreadY = isMobilePlayUI() ? 78 : 120;
-
-  star.style.setProperty("--rise-x", `${(Math.random() - 0.5) * spreadX}px`);
-  star.style.setProperty("--rise-y", `${-(52 + Math.random() * spreadY)}px`);
-
-  liveEffects.appendChild(star);
-  setTimeout(() => star.remove(), 1450);
-}
-
-function burstRewardConfetti() {
-  if (!rewardConfetti) return;
-  rewardConfetti.innerHTML = "";
-
-  const colors = ["#ffd76a", "#7ea8ff", "#5ce1c2", "#ff7aa8", "#ffffff"];
-
-  for (let i = 0; i < 36; i += 1) {
-    const piece = document.createElement("span");
-    piece.className = "rewardPiece";
-    piece.style.left = `${Math.random() * 100}%`;
-    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-    piece.style.animationDuration = `${2.2 + Math.random() * 1.2}s`;
-    rewardConfetti.appendChild(piece);
-  }
-}
-
-function showRewardOverlay(amount, subtitle) {
-  if (!rewardOverlay || !rewardTitle || !rewardAmount || !rewardSub) return;
-  rewardTitle.textContent = "Stars Earned";
-  rewardAmount.textContent = `+${amount}`;
-  rewardSub.textContent = subtitle;
-  burstRewardConfetti();
-  rewardOverlay.classList.add("show");
-
-  setTimeout(() => {
-    rewardOverlay.classList.remove("show");
-    if (rewardConfetti) rewardConfetti.innerHTML = "";
-  }, 2400);
-}
-
-function openKeyExhaustedModal() {
-  if (!keyExhaustedModal) return;
-  keyExhaustedModal.classList.add("on");
-}
-
-function closeKeyExhaustedModal() {
-  if (!keyExhaustedModal) return;
-  keyExhaustedModal.classList.remove("on");
-}
-
-function buildFinalizePayload(reason) {
-  return {
-    reason,
-    earned_stars: earnedStars,
-    correct_count: correct,
-    wrong_count: wrong,
-    score,
-    best_combo: bestCombo,
-    game_mode: selectedGameMode,
-    operation: selectedGameMode === "practice" ? selectedPracticeOperation : "mixed",
-  };
-}
-
-async function recordRankingRun() {
-  if (!isAuthenticatedUser() || !PAGE_CFG.rankingRecordUrl) return;
-
-  try {
-    await fetch(PAGE_CFG.rankingRecordUrl, {
-      method: "POST",
-      credentials: "same-origin",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
-        "X-Requested-With": "XMLHttpRequest",
-      },
-      body: JSON.stringify({
-        score,
-        correct_count: correct,
-        wrong_count: wrong,
-        earned_stars: earnedStars,
-        best_combo: bestCombo,
-        game_mode: selectedGameMode,
-        operation: selectedGameMode === "practice" ? selectedPracticeOperation : "mixed",
-      }),
-    });
-  } catch (error) {
-    console.error("recordRankingRun error:", error);
-  }
-}
-
-async function loadFriendNearbyRank() {
-  resetRankResultUI();
-
-  if (!isAuthenticatedUser()) {
-    if (rMyFriendRank) rMyFriendRank.textContent = "Login required";
-    setMyScoreDisplay("-");
-    if (rankAboveValueEl) rankAboveValueEl.textContent = "Friend ranking is available after login.";
-    if (rankMeValueEl) rankMeValueEl.textContent = "-";
-    if (rankBelowValueEl) rankBelowValueEl.textContent = "Friend ranking is available after login.";
-    return;
-  }
-
-  const nearbyUrl = buildFriendNearbyRankUrl();
-  if (!nearbyUrl) return;
-
-  try {
-    const response = await fetch(nearbyUrl, {
-      method: "GET",
-      credentials: "same-origin",
-      headers: {
-        "X-Requested-With": "XMLHttpRequest",
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || !data.ok) {
-      if (rankAboveValueEl) rankAboveValueEl.textContent = data.message || "Failed to load ranking.";
-      if (rankMeValueEl) rankMeValueEl.textContent = "-";
-      if (rankBelowValueEl) rankBelowValueEl.textContent = data.message || "Failed to load ranking.";
+  function makeClassicAdd(level) {
+    if (level === 1) {
+      const a = randInt(1, 9);
+      const b = randInt(1, 9);
+      setQuestion(a, b, a + b, "add", `${a} + ${b} = ?`);
       return;
     }
 
-    if (rMyFriendRank) {
-      rMyFriendRank.textContent =
-        data.my_rank && data.total_count
-          ? formatMyRank(data.my_rank, data.total_count)
-          : "Unranked";
+    if (level === 2) {
+      const a = randInt(10, 29);
+      const b = randInt(1, 9);
+      setQuestion(a, b, a + b, "add", `${a} + ${b} = ?`);
+      return;
     }
 
-    setMyScoreDisplay(
-      data.my_score !== null && data.my_score !== undefined ? String(data.my_score) : "-"
-    );
+    const a = randInt(1, 9);
+    const b = randInt(1, 9);
+    const c = randInt(1, 9);
+    setQuestion(a, b, a + b + c, "add", `${a} + ${b} + ${c} = ?`);
+  }
 
-    if (rankAboveValueEl) {
-      rankAboveValueEl.textContent = formatRankNickname(data.above, "No friend above you");
+  function makeClassicSub(level) {
+    if (level === 1) {
+      let a = randInt(2, 9);
+      let b = randInt(1, 9);
+
+      if (b > a) {
+        const temp = a;
+        a = b;
+        b = temp;
+      }
+
+      setQuestion(a, b, a - b, "sub", `${a} - ${b} = ?`);
+      return;
     }
 
-    if (rankMeValueEl) {
-      const domNickname =
-        document.getElementById("statusAvatarName")?.textContent?.trim() ||
-        document.querySelector(".status-avatar-name")?.textContent?.trim() ||
-        document.getElementById("navNickname")?.textContent?.trim() ||
-        document.querySelector("[data-user-nickname]")?.getAttribute("data-user-nickname")?.trim() ||
-        "";
+    if (level === 2) {
+      const a = randInt(10, 39);
+      const b = randInt(1, 9);
+      setQuestion(a, b, a - b, "sub", `${a} - ${b} = ?`);
+      return;
+    }
 
-      const myNickname =
-        data.my_nickname ||
-        data.my_name ||
-        data.my_display_name ||
-        data.nickname ||
-        data.display_name ||
-        data.username ||
-        data.me?.nickname ||
-        data.me?.display_name ||
-        data.me?.username ||
-        data.user?.nickname ||
-        data.user?.display_name ||
-        data.user?.username ||
-        PAGE_CFG.nickname ||
-        PAGE_CFG.displayName ||
-        PAGE_CFG.username ||
-        domNickname ||
-        "Me";
+    let a = randInt(20, 59);
+    let b = randInt(10, 39);
 
-      if (data.my_rank) {
-        rankMeValueEl.textContent = `#${data.my_rank} · ${myNickname}`;
+    if (b > a) {
+      const temp = a;
+      a = b;
+      b = temp;
+    }
+
+    setQuestion(a, b, a - b, "sub", `${a} - ${b} = ?`);
+  }
+
+  function makeClassicMul(level) {
+    let a;
+    let b;
+
+    if (level === 1) {
+      a = randInt(2, 5);
+      b = randInt(2, 5);
+    } else if (level === 2) {
+      a = randInt(2, 9);
+      b = randInt(2, 5);
+    } else {
+      a = randInt(2, 9);
+      b = randInt(2, 9);
+    }
+
+    setQuestion(a, b, a * b, "mul", `${a} × ${b} = ?`);
+  }
+
+  function makeClassicDiv(level) {
+    let divisor;
+    let quotient;
+
+    if (level === 1) {
+      divisor = randInt(2, 5);
+      quotient = randInt(2, 5);
+    } else if (level === 2) {
+      divisor = randInt(2, 9);
+      quotient = randInt(2, 5);
+    } else {
+      divisor = randInt(2, 9);
+      quotient = randInt(2, 9);
+    }
+
+    const dividend = divisor * quotient;
+    setQuestion(dividend, divisor, quotient, "div", `${dividend} ÷ ${divisor} = ?`);
+  }
+
+  function makeClassicQuestion(opKey) {
+    const level = getMixedLevel();
+
+    if (opKey === "add") makeClassicAdd(level);
+    if (opKey === "sub") makeClassicSub(level);
+    if (opKey === "mul") makeClassicMul(level);
+    if (opKey === "div") makeClassicDiv(level);
+  }
+
+  function makeChallengeQuestion() {
+    const ops = ["add", "sub", "mul", "div"];
+    const opKey = ops[randInt(0, ops.length - 1)];
+
+    makeClassicQuestion(opKey);
+  }
+
+  function nextQuestion() {
+    const opKey = selectedPracticeOperation;
+
+    if (selectedGameMode === "challenge") {
+      makeChallengeQuestion();
+    } else if (selectedGameMode === "classic") {
+      makeClassicQuestion(opKey);
+    } else {
+      makePracticeQuestion(opKey);
+    }
+
+    if (mathText) {
+      mathText.classList.remove("is-ready-text");
+
+      if (currentQuestionText) {
+        mathText.textContent = currentQuestionText;
       } else {
-        rankMeValueEl.textContent = "Unranked";
+        mathText.textContent =
+          String(questionA) +
+          " " +
+          OPERATION_META[currentOperation].sign +
+          " " +
+          String(questionB) +
+          " = ?";
       }
     }
 
-    if (rankBelowValueEl) {
-      rankBelowValueEl.textContent = formatRankNickname(data.below, "No friend below you");
+    if (answerInput) {
+      answerInput.value = "";
+
+      if (window.innerWidth > 900) {
+        answerInput.focus();
+      }
     }
 
-    if (rAboveFriend) rAboveFriend.textContent = "";
-    if (rBelowFriend) rBelowFriend.textContent = "";
-  } catch (error) {
-    if (rankAboveValueEl) rankAboveValueEl.textContent = "Network error";
-    if (rankMeValueEl) rankMeValueEl.textContent = "-";
-    if (rankBelowValueEl) rankBelowValueEl.textContent = "Network error";
-  }
-}
-
-async function startRunOnServer() {
-  const response = await fetch(PAGE_CFG.startRunUrl, {
-    method: "POST",
-    credentials: "same-origin",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCookie("csrftoken"),
-      "X-Requested-With": "XMLHttpRequest",
-    },
-    body: JSON.stringify({
-      game_mode: selectedGameMode,
-      operation: selectedGameMode === "practice" ? selectedPracticeOperation : "mixed",
-    }),
-  });
-
-  const data = await response.json();
-
-  if (!response.ok || !data.ok) {
-    throw new Error(data.message || data.error || "Failed to start run.");
+    requestAnimationFrame(applyAllNicknameStyles);
   }
 
-  runStartedOnServer = true;
-  remainingKeys = Number(data.remaining_keys ?? remainingKeys);
-  totalStars = Number(data.total_stars ?? totalStars);
-  renderTopStatus();
-}
-
-function startLocalGuestRun() {
-  remainingKeys = Math.max(0, remainingKeys - 1);
-  activeRunIsGuest = true;
-  runStartedOnServer = false;
-  runSaved = false;
-  renderTopStatus();
-}
-
-function applyRunStartedUI() {
-  running = true;
-  leavingInProgress = false;
-  runSaved = false;
-
-  timeLeft = 60;
-  goal = selectedGameMode === "challenge" ? 28 : 25;
-
-  score = 0;
-  correct = 0;
-  wrong = 0;
-  earnedStars = 0;
-  asked = 0;
-  combo = 0;
-  bestCombo = 0;
-  wrongStats = { add: 0, sub: 0, mul: 0, div: 0 };
-
-  if (scoreEl) scoreEl.textContent = "0";
-  if (correctEl) correctEl.textContent = "0";
-  if (earnedStarsEl) earnedStarsEl.textContent = "0";
-  if (comboCountEl) comboCountEl.textContent = "0";
-  if (progressFill) progressFill.style.width = "0%";
-
-  if (answerInput) {
-    answerInput.disabled = false;
-    answerInput.value = "";
-  }
-
-  if (btnSubmit) btnSubmit.disabled = false;
-
-  if (btnStart) {
-    btnStart.disabled = true;
-    btnStart.textContent = "Running";
-  }
-
-  if (btnReset) {
-    btnReset.disabled = false;
-  }
-
-  syncStartButtons();
-  syncResetButtons();
-
-  updateTimerUI();
-  updateFeverUI();
-
-  const startMsg = activeRunIsGuest
-    ? "Game started! Guest mode is running with local key usage."
-    : "Game started! Build combo to awaken the wind aura.";
-
-  setMessage(startMsg);
-  nextQuestion();
-
-  if (timerId) clearInterval(timerId);
-  timerId = setInterval(() => {
-    const nextTime = clamp(timeLeft - 1, 0, 60);
-    timeLeft = nextTime;
-    updateTimerUI();
-
-    if (nextTime <= 0) {
-      finalizeRun("timeout");
+  function getStarGain() {
+    if (selectedGameMode === "classic") {
+      if (combo >= 5) return 4;
+      if (combo >= 2) return 3;
+      return 2;
     }
-  }, 1000);
 
-  updateMobilePadState();
-}
+    if (selectedGameMode === "challenge") {
+      if (combo >= 5) return 5;
+      if (combo >= 2) return 4;
+      return 3;
+    }
 
-async function startGame() {
-  if (running || finalizing) return;
-
-  if (remainingKeys <= 0) {
-    setMessage("No keys left today.", "bad");
-    openKeyExhaustedModal();
-    return;
+    if (combo >= 5) return 3;
+    if (combo >= 2) return 2;
+    return 1;
   }
 
-  if (btnStart) {
-    btnStart.disabled = true;
-    btnStart.textContent = isAuthenticatedUser() ? "Starting..." : "Running";
+  function optimisticConsumeKey() {
+    remainingKeys = Math.max(remainingKeys - 1, 0);
+    renderTopStatus();
   }
-  syncStartButtons();
 
-  if (isAuthenticatedUser()) {
-    activeRunIsGuest = false;
+  async function syncStartRunInBackground() {
+    if (keySyncInProgress) return;
+    if (!isAuthenticatedUser() || !PAGE_CFG.startRunUrl) return;
+
+    keySyncInProgress = true;
 
     try {
-      await startRunOnServer();
-    } catch (error) {
-      setMessage(error.message || "Failed to start run.", "bad");
-      if (btnStart) {
-        btnStart.disabled = false;
-        btnStart.textContent = "Start";
-      }
-      syncStartButtons();
-      return;
-    }
-  } else {
-    startLocalGuestRun();
-  }
-
-  applyRunStartedUI();
-}
-
-function submitAnswer() {
-  if (!running || finalizing || !answerInput) return;
-
-  const val = answerInput.value.trim();
-  if (val === "") {
-    setMessage("Type an answer 🙂");
-    if (!isMobilePlayUI()) answerInput.focus();
-    return;
-  }
-
-  asked += 1;
-
-  if (Number(val) === currentAnswer) {
-    correct += 1;
-    combo += 1;
-    bestCombo = Math.max(bestCombo, combo);
-
-    const baseStarGain = getCurrentRewardPerCorrect();
-    const feverStarBonus = getFeverStarBonus(combo);
-    const totalStarGain = baseStarGain + feverStarBonus;
-
-    score += 10 + combo;
-    earnedStars += totalStarGain;
-
-    let text = `Correct! +${baseStarGain} stars`;
-    if (feverStarBonus > 0) text += ` · Fever +${feverStarBonus}`;
-    if (combo >= 2) text += ` · Combo x${combo}`;
-
-    setMessage(text, "good");
-    createFloatingGain(earnedStars, totalStarGain, combo);
-    createSparkBurst(combo);
-    createRiseStars(earnedStars, combo);
-  } else {
-    wrong += 1;
-    wrongStats[currentOperation] += 1;
-    combo = 0;
-    score = Math.max(0, score - 3);
-    setMessage(`Wrong! Correct answer: ${currentAnswer}`, "bad");
-  }
-
-  if (scoreEl) scoreEl.textContent = String(score);
-  if (correctEl) correctEl.textContent = String(correct);
-  if (earnedStarsEl) earnedStarsEl.textContent = String(earnedStars);
-  if (comboCountEl) comboCountEl.textContent = String(combo);
-
-
-
-  updateFeverUI();
-
-  if (running) nextQuestion();
-}
-
-function appendAnswerDigit(digit) {
-  if (!answerInput || answerInput.disabled || !running) return;
-  if (String(answerInput.value).length >= 4) return;
-  answerInput.value = `${answerInput.value}${digit}`;
-  updateMobilePadState();
-}
-
-function backspaceAnswerDigit() {
-  if (!answerInput || answerInput.disabled || !running) return;
-  answerInput.value = String(answerInput.value).slice(0, -1);
-  updateMobilePadState();
-}
-
-function clearAnswerDigits() {
-  if (!answerInput || answerInput.disabled || !running) return;
-  answerInput.value = "";
-  updateMobilePadState();
-}
-
-function updateMobilePadState() {
-  if (!mobilePad) return;
-
-  const disabled = !running || finalizing || !answerInput || answerInput.disabled;
-  mobilePad.querySelectorAll("[data-pad]").forEach((btn) => {
-    btn.disabled = disabled;
-  });
-}
-
-function bindMobilePad() {
-  if (!mobilePad) return;
-
-  mobilePad.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-pad]");
-    if (!btn) return;
-
-    const key = btn.getAttribute("data-pad");
-    if (!key) return;
-
-    if (key === "clear") {
-      clearAnswerDigits();
-      return;
-    }
-
-    if (key === "back") {
-      backspaceAnswerDigit();
-      return;
-    }
-
-    appendAnswerDigit(key);
-  });
-
-  if (answerInput) {
-    answerInput.addEventListener("click", (e) => {
-      if (isMobilePlayUI()) {
-        e.preventDefault();
-        answerInput.blur();
-      }
-    });
-
-    answerInput.addEventListener("focus", () => {
-      if (isMobilePlayUI()) {
-        answerInput.blur();
-      }
-    });
-  }
-}
-
-function openResultModal(reason) {
-  const total = correct + wrong;
-  const acc = total === 0 ? 0 : Math.round((correct / total) * 100);
-
-  resetRankResultUI();
-
-  if (rCorrect) rCorrect.textContent = String(correct);
-  if (rWrong) rWrong.textContent = String(wrong);
-  if (rAcc) rAcc.textContent = `${acc}%`;
-  if (rStars) rStars.textContent = String(earnedStars);
-  if (rCombo) rCombo.textContent = String(bestCombo);
-  if (rMode) rMode.textContent = getModeConfig().label;
-
-  if (activeRunIsGuest) {
-    if (rText) {
-      if (reason === "reset") rText.textContent = `Guest run reset. ${earnedStars} stars shown for this run.`;
-      else if (reason === "leave") rText.textContent = `Guest run ended because you left the game.`;
-      else if (reason === "timeout") rText.textContent = `Time is up. Guest run finished.`;
-      else rText.textContent = `Guest run ended.`;
-    }
-    if (rMyFriendRank) rMyFriendRank.textContent = "Login required";
-    setMyScoreDisplay("-");
-    if (rankAboveValueEl) rankAboveValueEl.textContent = "Friend ranking is available after login.";
-    if (rankMeValueEl) rankMeValueEl.textContent = "-";
-    if (rankBelowValueEl) rankBelowValueEl.textContent = "Friend ranking is available after login.";
-  }
-
-  showRewardOverlay(earnedStars, `${earnedStars} stars earned this run`);
-  setTimeout(() => {
-    if (modal) modal.classList.add("on");
-  }, 260);
-}
-
-async function finalizeRun(reason, options = {}) {
-  const { silent = false, navigateTo = null, onDone = null } = options;
-
-  if (finalizing) {
-    if (typeof onDone === "function") onDone();
-    if (navigateTo) window.location.href = navigateTo;
-    return;
-  }
-
-  finalizing = true;
-  running = false;
-  timeLeft = clamp(timeLeft, 0, 60);
-
-  if (timerId) {
-    clearInterval(timerId);
-    timerId = null;
-  }
-
-  updateTimerUI();
-  stopAuraCompletely();
-
-  if (answerInput) answerInput.disabled = true;
-  if (btnSubmit) btnSubmit.disabled = true;
-
-  if (btnStart) {
-    btnStart.disabled = false;
-    btnStart.textContent = "Start";
-  }
-
-  if (btnReset) {
-    btnReset.disabled = true;
-  }
-
-  syncStartButtons();
-  syncResetButtons();
-  updateMobilePadState();
-
-  try {
-    if (isAuthenticatedUser() && runStartedOnServer && !runSaved) {
-      const response = await fetch(PAGE_CFG.finalizeRunUrl, {
-        method: "POST",
-        credentials: "same-origin",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": getCookie("csrftoken"),
-          "X-Requested-With": "XMLHttpRequest",
-        },
-        body: JSON.stringify(buildFinalizePayload(reason)),
-        keepalive: reason === "leave",
+      const data = await postJson(PAGE_CFG.startRunUrl, {
+        game: PAGE_CFG.gameName || "aura",
+        game_name: PAGE_CFG.gameName || "aura",
+        mode: selectedGameMode,
+        operation: selectedGameMode === "challenge" ? "mixed" : selectedPracticeOperation,
       });
 
-      const data = await response.json();
-
-      if (!response.ok || !data.ok) {
-        if (!silent) setMessage(data.message || data.error || "Failed to save run result.", "bad");
-        finalizing = false;
-        if (btnReset) btnReset.disabled = false;
-        syncResetButtons();
-        updateMobilePadState();
-        if (typeof onDone === "function") onDone();
-        if (navigateTo) window.location.href = navigateTo;
+      if (data && (data.ok === false || data.allowed === false || data.error === "NO_KEYS")) {
         return;
       }
 
-      runSaved = true;
-      runStartedOnServer = false;
+      activeRunId = data && (data.run_id || data.game_run_id || data.id)
+        ? data.run_id || data.game_run_id || data.id
+        : activeRunId;
 
-      totalStars = Number(data.total_stars ?? totalStars);
-      remainingKeys = Number(data.remaining_keys ?? remainingKeys);
+      if (data && data.remaining_keys !== undefined) {
+        remainingKeys = Number(data.remaining_keys);
+      } else if (data && data.keys !== undefined) {
+        remainingKeys = Number(data.keys);
+      }
+
+      if (data && data.total_stars !== undefined) {
+        totalStars = Number(data.total_stars);
+      }
+
+      if (data && data.stars !== undefined && data.total_stars === undefined) {
+        totalStars = Number(data.stars);
+      }
+
+      if (Number.isNaN(remainingKeys)) remainingKeys = 0;
+      if (Number.isNaN(totalStars)) totalStars = 0;
+
       renderTopStatus();
-
-      if (!silent) {
-        await recordRankingRun();
-        await loadFriendNearbyRank();
-
-        if (rText) {
-          if (reason === "reset") rText.textContent = `Run reset. ${earnedStars} stars saved. 1 key was used.`;
-          else if (reason === "leave") rText.textContent = `Run ended because you left the game. ${earnedStars} stars saved.`;
-          else if (reason === "timeout") rText.textContent = `Time is up. ${earnedStars} stars saved.`;
-          else rText.textContent = `Run ended. ${earnedStars} stars saved.`;
-        }
-
-        openResultModal(reason);
-      }
-    } else {
-      if (!silent) {
-        openResultModal(reason);
-      }
-      runSaved = true;
-      runStartedOnServer = false;
+    } catch (e) {
+      console.warn("start run sync failed:", e);
+    } finally {
+      keySyncInProgress = false;
     }
-
-    resetGameUI();
-    renderTopStatus();
-    syncRankingLinks();
-  } catch (error) {
-    if (!silent) setMessage("Network error while saving run.", "bad");
-  } finally {
-    finalizing = false;
-    if (btnReset) btnReset.disabled = false;
-    syncResetButtons();
-    updateMobilePadState();
-    if (typeof onDone === "function") onDone();
-    if (navigateTo) window.location.href = navigateTo;
-  }
-}
-
-function finalizeRunOnUnload() {
-  if (!isAuthenticatedUser()) return;
-  if (!runStartedOnServer || runSaved || leavingInProgress) return;
-
-  leavingInProgress = true;
-  running = false;
-
-  if (timerId) {
-    clearInterval(timerId);
-    timerId = null;
   }
 
-  stopAuraCompletely();
+  function startGame() {
+    if (running) return;
 
-  const payload = JSON.stringify(buildFinalizePayload("leave"));
-
-  try {
-    if (navigator.sendBeacon) {
-      const blob = new Blob([payload], { type: "application/json" });
-      navigator.sendBeacon(PAGE_CFG.finalizeRunUrl, blob);
-    } else {
-      fetch(PAGE_CFG.finalizeRunUrl, {
-        method: "POST",
-        credentials: "same-origin",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": getCookie("csrftoken"),
-          "X-Requested-With": "XMLHttpRequest",
-        },
-        body: payload,
-        keepalive: true,
-      });
-    }
-    runSaved = true;
-    runStartedOnServer = false;
-  } catch (error) {}
-}
-
-function closeModal() {
-  if (modal) modal.classList.remove("on");
-}
-
-function isNavigationElement(el) {
-  if (!el) return false;
-
-  const tag = el.tagName ? el.tagName.toLowerCase() : "";
-  if (tag === "a") {
-    const href = el.getAttribute("href") || "";
-    if (!href || href.startsWith("#") || href.startsWith("javascript:")) return false;
-    return true;
-  }
-
-  if (tag === "button") {
-    const href = el.getAttribute("data-href");
-    return Boolean(href);
-  }
-
-  return false;
-}
-
-function getNavigationTarget(el) {
-  if (!el) return null;
-  const tag = el.tagName ? el.tagName.toLowerCase() : "";
-  if (tag === "a") return el.href;
-  if (tag === "button") return el.getAttribute("data-href");
-  return null;
-}
-
-async function leaveCurrentRunIfNeeded(callback) {
-  if (running && !finalizing) {
-    await finalizeRun("leave", {
-      silent: true,
-      onDone: callback,
-    });
-    return;
-  }
-  if (typeof callback === "function") callback();
-}
-
-function bindLeaveProtection() {
-  document.addEventListener("click", async (e) => {
-    const navEl = e.target.closest("a, button");
-    if (!navEl) return;
-
-    if (
-      navEl.id === "btnStart" ||
-      navEl.id === "btnSubmit" ||
-      navEl.id === "btnReset" ||
-      navEl.id === "btnMobileStart" ||
-      navEl.id === "btnMobileReset" ||
-      navEl.id === "btnMobileBackToSetup"
-    ) {
+    if (remainingKeys <= 0) {
+      if (keyExhaustedModal) keyExhaustedModal.classList.add("on");
       return;
     }
 
-    if (!isNavigationElement(navEl)) return;
+    optimisticConsumeKey();
+    syncStartRunInBackground();
 
-    const targetUrl = getNavigationTarget(navEl);
-    if (!targetUrl) return;
+    running = true;
+    finalizedLock = false;
+    timeLeft = 60;
+    correct = 0;
+    wrong = 0;
+    earnedStars = 0;
+    combo = 0;
+    maxCombo = 0;
+    currentQuestionText = "";
 
-    if (running && !finalizing) {
-      e.preventDefault();
-      e.stopPropagation();
-      await finalizeRun("leave", { silent: true, navigateTo: targetUrl });
+    if (earnedStarsEl) earnedStarsEl.textContent = "0";
+
+    if (answerInput) {
+      answerInput.disabled = false;
+      answerInput.value = "";
     }
-  });
 
-  window.addEventListener("pagehide", finalizeRunOnUnload);
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") finalizeRunOnUnload();
-  });
-  window.addEventListener("beforeunload", finalizeRunOnUnload);
-}
+    if (btnSubmit) btnSubmit.disabled = false;
 
-function forceWebp(url) {
-  if (!url) return "";
-  const cleanUrl = String(url).trim();
-  if (!cleanUrl) return "";
+    if (btnStart) {
+      btnStart.disabled = true;
+      btnStart.textContent = "게임 진행 중! 💦";
+    }
 
-  const parts = cleanUrl.split("?");
-  const pathOnly = parts[0];
-  const query = parts.length > 1 ? `?${parts.slice(1).join("?")}` : "";
+    hideMessageInstantly();
+    updateTimerUI();
+    nextQuestion();
+    applyAllNicknameStyles();
 
-  if (/\.webp$/i.test(pathOnly)) return `${pathOnly}${query}`;
-  if (/\.(png|jpg|jpeg|gif)$/i.test(pathOnly)) {
-    return `${pathOnly.replace(/\.(png|jpg|jpeg|gif)$/i, ".webp")}${query}`;
+    timerId = setInterval(function () {
+      timeLeft -= 1;
+      updateTimerUI();
+
+      if (timeLeft <= 0) {
+        finalizeRun();
+      }
+    }, 1000);
   }
-  return `${pathOnly}${query}`;
-}
 
-function avatarBaseSet(gender) {
-  if (!playPageRoot) return {};
+  function createTinyStarTrail(effectBox, amount) {
+    const count = Math.min(7, Math.max(3, amount + 2));
 
-  if (gender === "female") {
+    for (let i = 0; i < count; i += 1) {
+      const tiny = document.createElement("div");
+
+      tiny.className = "riseStarTrail";
+      tiny.textContent = i % 3 === 0 ? "★" : "✦";
+
+      tiny.style.setProperty("--sx", String(randInt(-34, 34)) + "px");
+      tiny.style.setProperty("--ex", String(randInt(-92, 92)) + "px");
+      tiny.style.animationDelay = String(i * 0.07) + "s";
+
+      effectBox.appendChild(tiny);
+
+      setTimeout(function () {
+        if (tiny && tiny.parentNode) {
+          tiny.parentNode.removeChild(tiny);
+        }
+      }, 2300);
+    }
+  }
+
+  function showRisingStar(amount) {
+    const effectBox = qs("liveEffects") || qs("questionBox");
+
+    if (!effectBox) return;
+
+    const star = document.createElement("div");
+
+    star.className = "riseStarAnim";
+    star.innerHTML =
+      '<span class="rise-star-core">⭐ <span class="rise-star-amount">+' +
+      String(amount) +
+      "</span></span>";
+
+    star.style.marginLeft = String(randInt(-8, 8)) + "px";
+
+    effectBox.appendChild(star);
+    createTinyStarTrail(effectBox, amount);
+
+    setTimeout(function () {
+      if (star && star.parentNode) {
+        star.parentNode.removeChild(star);
+      }
+    }, 2350);
+  }
+
+  function submitAnswer() {
+    if (!running || !answerInput) return;
+
+    const val = answerInput.value.trim();
+
+    if (val === "") return;
+
+    if (Number(val) === currentAnswer) {
+      correct += 1;
+      combo += 1;
+      maxCombo = Math.max(maxCombo, combo);
+
+      const gain = getStarGain();
+
+      earnedStars += gain;
+
+      setMessage("정답! 별 +" + String(gain) + "개!", "good");
+      showRisingStar(gain);
+    } else {
+      wrong += 1;
+      combo = 0;
+
+      setMessage("앗! 정답은 " + String(currentAnswer) + " 였어! 다시 해보자!", "bad");
+    }
+
+    if (earnedStarsEl) earnedStarsEl.textContent = String(earnedStars);
+
+    updateAuraByCombo();
+    nextQuestion();
+  }
+
+  function buildResultPayload() {
     return {
-      body: forceWebp(playPageRoot.dataset.baseBodyFemale || ""),
-      head: forceWebp(playPageRoot.dataset.baseHeadFemale || ""),
-      rear_hair: forceWebp(playPageRoot.dataset.baseHairBackFemale || ""),
-      front_hair: forceWebp(playPageRoot.dataset.baseHairFrontFemale || ""),
-      eyes: forceWebp(playPageRoot.dataset.baseEyesFemale || ""),
-      eyebrow: forceWebp(playPageRoot.dataset.baseEyebrowFemale || ""),
-      mouth: forceWebp(playPageRoot.dataset.baseMouthFemale || ""),
+      run_id: activeRunId,
+      game: PAGE_CFG.gameName || "aura",
+      game_name: PAGE_CFG.gameName || "aura",
+      mode: selectedGameMode,
+      operation: selectedGameMode === "challenge" ? "mixed" : selectedPracticeOperation,
+      current_operation: currentOperation,
+      score: correct,
+      correct: correct,
+      correct_count: correct,
+      wrong: wrong,
+      wrong_count: wrong,
+      earned_stars: earnedStars,
+      stars: earnedStars,
+      max_combo: maxCombo,
+      time_left: Math.max(timeLeft, 0),
+      duration_seconds: 60 - Math.max(timeLeft, 0),
     };
   }
 
-  return {
-    body: forceWebp(playPageRoot.dataset.baseBodyMale || ""),
-    head: forceWebp(playPageRoot.dataset.baseHeadMale || ""),
-    rear_hair: forceWebp(playPageRoot.dataset.baseHairBackMale || ""),
-    front_hair: forceWebp(playPageRoot.dataset.baseHairFrontMale || ""),
-    eyes: forceWebp(playPageRoot.dataset.baseEyesMale || ""),
-    eyebrow: forceWebp(playPageRoot.dataset.baseEyebrowMale || ""),
-    mouth: forceWebp(playPageRoot.dataset.baseMouthMale || ""),
-  };
-}
+  async function saveGameResultToServer(payload) {
+    if (!isAuthenticatedUser() || !PAGE_CFG.finalizeRunUrl) return null;
 
-function createAvatarLayer(src, className, altText = "") {
-  if (!src) return null;
-  const img = document.createElement("img");
-  img.className = `status-avatar-layer ${className}`;
-  img.src = forceWebp(src);
-  img.alt = altText;
-  img.loading = "eager";
-  img.decoding = "async";
-  return img;
-}
+    try {
+      const data = await postJson(PAGE_CFG.finalizeRunUrl, payload);
 
-function renderStatusAvatar() {
-  if (!statusAvatarCanvas) return;
+      if (data && data.total_stars !== undefined) {
+        totalStars = Number(data.total_stars);
+      } else if (data && data.stars_total !== undefined) {
+        totalStars = Number(data.stars_total);
+      } else if (data && data.user_total_stars !== undefined) {
+        totalStars = Number(data.user_total_stars);
+      }
 
-  const oldStack = statusAvatarCanvas.querySelector(".status-avatar-stack");
-  if (oldStack) oldStack.remove();
+      if (data && data.remaining_keys !== undefined) {
+        remainingKeys = Number(data.remaining_keys);
+      } else if (data && data.keys !== undefined) {
+        remainingKeys = Number(data.keys);
+      }
 
-  if (statusAvatarGroundAuraImg && playPageRoot?.dataset.windAuraUrl) {
-    statusAvatarGroundAuraImg.src = playPageRoot.dataset.windAuraUrl;
+      if (Number.isNaN(totalStars)) totalStars = 0;
+      if (Number.isNaN(remainingKeys)) remainingKeys = 0;
+
+      renderTopStatus();
+
+      return data;
+    } catch (e) {
+      return null;
+    }
   }
 
-  const isGuestFallback = !playAvatarData || !playAvatarData.enabled;
-  const gender = (playAvatarData && playAvatarData.gender) ? playAvatarData.gender : "male";
-  const base = avatarBaseSet(gender);
+  async function recordRankingScore(payload) {
+    if (!isAuthenticatedUser() || !PAGE_CFG.rankingRecordUrl) return null;
 
-  const stack = document.createElement("div");
-  stack.className = "status-avatar-stack";
-  stack.id = "statusAvatarStack";
+    try {
+      return await postJson(PAGE_CFG.rankingRecordUrl, payload);
+    } catch (e) {
+      return null;
+    }
+  }
 
-  const bodyLayer = createAvatarLayer(base.body, "status-avatar-layer-body", "Avatar body");
-  const rearHairLayer = createAvatarLayer(base.rear_hair, "status-avatar-layer-hair-rear", "Rear hair");
-  const headLayer = createAvatarLayer(base.head, "status-avatar-layer-head", "Avatar head");
-  const eyebrowLayer = createAvatarLayer(base.eyebrow, "status-avatar-layer-eyebrow", "Eyebrow");
-  const eyesLayer = createAvatarLayer(base.eyes, "status-avatar-layer-eyes", "Eyes");
-  const mouthLayer = createAvatarLayer(base.mouth, "status-avatar-layer-mouth", "Mouth");
-  const frontHairLayer = createAvatarLayer(base.front_hair, "status-avatar-layer-hair-front", "Front hair");
+  function extractRank(data) {
+    if (!data) return null;
 
-  const clothLayer = !isGuestFallback && playAvatarData.cloth_image_url
-    ? createAvatarLayer(playAvatarData.cloth_image_url, "status-avatar-layer-cloth", "Cloth")
-    : null;
+    return data.my_rank ||
+      data.rank ||
+      data.ranking ||
+      data.friend_rank ||
+      data.position ||
+      null;
+  }
 
-  const shoesLayer = !isGuestFallback && playAvatarData.shoes_image_url
-    ? createAvatarLayer(playAvatarData.shoes_image_url, "status-avatar-layer-shoes", "Shoes")
-    : null;
+  function updateRankingLink() {
+    if (!btnOpenRanking) return;
 
-  const hatLayer = !isGuestFallback && playAvatarData.hat_image_url
-    ? createAvatarLayer(playAvatarData.hat_image_url, "status-avatar-layer-hat", "Hat")
-    : null;
+    try {
+      const base = PAGE_CFG.rankingHomeUrlBase || btnOpenRanking.getAttribute("href") || "/";
+      const url = new URL(base, window.location.origin);
 
-  if (bodyLayer) stack.appendChild(bodyLayer);
-  if (shoesLayer) stack.appendChild(shoesLayer);
+      url.searchParams.set("game", PAGE_CFG.gameName || "aura");
+      url.searchParams.set("mode", selectedGameMode);
 
-  const auraLayer = document.createElement("div");
-  auraLayer.className = "status-avatar-foot-aura";
-  auraLayer.setAttribute("aria-hidden", "true");
-  auraLayer.innerHTML = `
-    <img
-      class="status-avatar-foot-aura-img"
-      src="${playPageRoot?.dataset.windAuraUrl || ""}"
-      alt=""
-    >
-  `;
-  stack.appendChild(auraLayer);
+      btnOpenRanking.href = url.toString();
+    } catch (e) {
+      btnOpenRanking.href = PAGE_CFG.rankingHomeUrlBase || "/";
+    }
+  }
 
-  if (rearHairLayer) stack.appendChild(rearHairLayer);
-  if (clothLayer) stack.appendChild(clothLayer);
-  if (headLayer) stack.appendChild(headLayer);
-  if (eyebrowLayer) stack.appendChild(eyebrowLayer);
-  if (eyesLayer) stack.appendChild(eyesLayer);
-  if (mouthLayer) stack.appendChild(mouthLayer);
-  if (frontHairLayer) stack.appendChild(frontHairLayer);
-  if (hatLayer) stack.appendChild(hatLayer);
+  async function loadSimpleFriendRanking() {
+    const summaryBox = qs("friendRankSummary");
+    const rankText = qs("friendRankText");
 
-  statusAvatarCanvas.appendChild(stack);
-  stopAuraCompletely();
-}
+    if (!summaryBox || !rankText) return;
 
-function parsePlayAvatarData() {
-  if (!playPageRoot) return;
-  try {
-    playAvatarData = JSON.parse(playPageRoot.dataset.playAvatarJson || "{}");
-  } catch (e) {
-    playAvatarData = {
-      enabled: false,
-      gender: "male",
-      hat_image_url: "",
-      cloth_image_url: "",
-      shoes_image_url: "",
-      active_effect: "",
-      active_set_code: "",
+    summaryBox.style.display = "block";
+
+    if (!isAuthenticatedUser()) {
+      rankText.textContent = "로그인하면 친구 랭킹이 보여요! 🔒";
+      return;
+    }
+
+    const base = PAGE_CFG.friendNearbyRankUrlBase;
+
+    if (!base) {
+      rankText.textContent = "랭킹 주소가 아직 연결되지 않았어요. 💦";
+      return;
+    }
+
+    try {
+      rankText.textContent = "랭킹 확인 중... ⏳";
+
+      const url = new URL(base, window.location.origin);
+
+      url.searchParams.set("game", PAGE_CFG.gameName || "aura");
+      url.searchParams.set("game_name", PAGE_CFG.gameName || "aura");
+      url.searchParams.set("mode", selectedGameMode);
+      url.searchParams.set("score", String(correct));
+
+      const res = await fetch(url.toString(), {
+        credentials: "same-origin",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      });
+
+      const data = await res.json();
+      const rank = extractRank(data);
+
+      if ((data.ok === undefined || data.ok) && rank) {
+        const myNick = getCurrentNickname();
+
+        rankText.innerHTML =
+          "#" +
+          String(rank) +
+          '위 (<span class="friend-rank-nickname synced-nickname" data-nickname-sync="1"></span>) 🏆';
+
+        const nickSpan = rankText.querySelector(".friend-rank-nickname");
+
+        if (nickSpan) {
+          nickSpan.textContent = myNick;
+          applyNicknameStyle(nickSpan);
+        }
+      } else if (data.message) {
+        rankText.textContent = data.message;
+      } else {
+        rankText.textContent = "랭킹에 아직 친구가 없어요! 🌱";
+      }
+    } catch (e) {
+      rankText.textContent = "랭킹을 불러오지 못했어요. 💦";
+    }
+  }
+
+  async function syncResultAndRanking() {
+    const payload = buildResultPayload();
+
+    await saveGameResultToServer(payload);
+    await recordRankingScore(payload);
+    await loadSimpleFriendRanking();
+  }
+
+  function clearRewardRain() {
+    const rewardConfetti = document.querySelector(".rewardConfetti");
+
+    if (!rewardConfetti) return;
+
+    rewardConfetti.innerHTML = "";
+  }
+
+  function createRewardRain(amount) {
+    const rewardConfetti = document.querySelector(".rewardConfetti");
+
+    if (!rewardConfetti) return;
+
+    rewardConfetti.innerHTML = "";
+
+    const starCount = Math.min(40, Math.max(18, amount * 3));
+
+    for (let i = 0; i < starCount; i += 1) {
+      const star = document.createElement("div");
+
+      star.className = "rewardRainStar";
+      star.textContent = i % 4 === 0 ? "⭐" : "✦";
+
+      star.style.left = String(randInt(0, 100)) + "%";
+      star.style.setProperty("--drift", String(randInt(-90, 90)) + "px");
+      star.style.setProperty("--size", String(randInt(14, 34)) + "px");
+      star.style.setProperty("--dur", String((randInt(190, 330) / 100).toFixed(2)) + "s");
+      star.style.animationDelay = String((randInt(0, 85) / 100).toFixed(2)) + "s";
+
+      rewardConfetti.appendChild(star);
+    }
+  }
+
+  function showRewardOverlay() {
+    const rewardAmount = qs("rewardAmount");
+
+    if (rewardAmount) rewardAmount.textContent = "+" + String(earnedStars);
+
+    createRewardRain(earnedStars);
+
+    if (rewardOverlay) rewardOverlay.classList.add("show");
+
+    setTimeout(function () {
+      if (rewardOverlay) rewardOverlay.classList.remove("show");
+      clearRewardRain();
+
+      if (modal) modal.classList.add("on");
+
+      requestAnimationFrame(applyAllNicknameStyles);
+    }, 2800);
+  }
+
+  async function finalizeRun() {
+    if (finalizedLock) return;
+
+    finalizedLock = true;
+    running = false;
+
+    if (timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+
+    totalStars += earnedStars;
+    renderTopStatus();
+
+    setAuraState("idle");
+    hideMessageInstantly();
+
+    if (answerInput) answerInput.disabled = true;
+    if (btnSubmit) btnSubmit.disabled = true;
+
+    if (btnStart) {
+      btnStart.disabled = false;
+      btnStart.textContent = "▶️ 준비, 시작!";
+    }
+
+    const rCorrect = qs("rCorrect");
+    const rWrong = qs("rWrong");
+    const rStars = qs("rStars");
+
+    if (rCorrect) rCorrect.textContent = String(correct);
+    if (rWrong) rWrong.textContent = String(wrong);
+    if (rStars) rStars.textContent = String(earnedStars);
+
+    const rankText = qs("friendRankText");
+    const rankSummary = qs("friendRankSummary");
+
+    if (rankSummary) rankSummary.style.display = "block";
+    if (rankText) rankText.textContent = "랭킹 저장 중... ⏳";
+
+    updateRankingLink();
+
+    const rankingPromise = syncResultAndRanking();
+
+    showRewardOverlay();
+
+    await rankingPromise;
+
+    applyAllNicknameStyles();
+  }
+
+  function normalizePlainKey(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/-/g, "_")
+      .replace(/\s+/g, "_")
+      .replace(/[^a-z0-9_가-힣]/g, "")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "");
+  }
+
+  function normalizeFontKey(fontKey) {
+    return normalizePlainKey(fontKey || "");
+  }
+
+  function normalizeEffectKey(effectKey) {
+    const raw = String(effectKey || "none").trim();
+    const lower = raw.toLowerCase();
+
+    if (EFFECT_ALIAS_MAP[lower]) return EFFECT_ALIAS_MAP[lower];
+
+    const normalized = normalizePlainKey(raw);
+
+    if (EFFECT_ALIAS_MAP[normalized]) return EFFECT_ALIAS_MAP[normalized];
+
+    const compact = normalized.replace(/_/g, "");
+
+    if (EFFECT_ALIAS_MAP[compact]) return EFFECT_ALIAS_MAP[compact];
+
+    return normalized || "none";
+  }
+
+  function fontClassFromKey(fontKey) {
+    const key = normalizeFontKey(fontKey);
+
+    return key ? "font-" + key : "font-default";
+  }
+
+  function effectClassFromKey(effectKey) {
+    const key = normalizeEffectKey(effectKey || "none");
+
+    return "effect-" + key.replace(/_/g, "-");
+  }
+
+  function getFontFamily(fontKey) {
+    const key = normalizeFontKey(fontKey);
+
+    return FONT_FAMILY_MAP[key] || FONT_FAMILY_MAP.default;
+  }
+
+  function getFontBaseSize(fontKey) {
+    const key = normalizeFontKey(fontKey);
+
+    return FONT_SIZE_MAP[key] || FONT_SIZE_MAP.default;
+  }
+
+  function getFontWeight(fontKey) {
+    const key = normalizeFontKey(fontKey);
+
+    if (Object.prototype.hasOwnProperty.call(FONT_WEIGHT_MAP, key)) {
+      return FONT_WEIGHT_MAP[key];
+    }
+
+    return 400;
+  }
+
+  function clampValue(value, min, max, fallback) {
+    const n = Number(value);
+
+    if (!Number.isFinite(n)) return fallback;
+
+    return Math.min(max, Math.max(min, n));
+  }
+
+  function cleanClassString(value) {
+    if (!value || typeof value !== "string") return "";
+
+    return value
+      .split(/\s+/)
+      .map(function (v) {
+        return v.trim();
+      })
+      .filter(function (v) {
+        return /^[A-Za-z0-9_-]+$/.test(v);
+      })
+      .join(" ");
+  }
+
+  function getCurrentNickname() {
+    const avatarData = getAvatarData();
+
+    return cleanValue(
+      PAGE_CFG.nickname ||
+      PAGE_CFG.myNickname ||
+      PAGE_CFG.displayName ||
+      PAGE_CFG.username ||
+      pickValue(avatarData, [
+        "nickname",
+        "display_name",
+        "displayName",
+        "username",
+        "user.username",
+        "owner.display_name",
+        "owner.nickname",
+        "owner.username",
+      ])
+    ) || "마법사님";
+  }
+
+  function getNicknameStyleInfo() {
+    const avatarData = getAvatarData();
+
+    const rawFontKey = cleanValue(
+      pickValue(avatarData, [
+        "nickname_font_key",
+        "nicknameFontKey",
+        "font_key",
+        "fontKey",
+
+        "owner_font_pref.nickname_font_key",
+        "ownerFontPref.nickname_font_key",
+        "ownerFontPref.nicknameFontKey",
+        "viewer_font_pref.nickname_font_key",
+        "viewerFontPref.nickname_font_key",
+        "viewerFontPref.nicknameFontKey",
+        "font_pref.nickname_font_key",
+        "fontPref.nickname_font_key",
+        "fontPref.nicknameFontKey",
+
+        "selected_font_key",
+        "selectedFontKey",
+        "equipped_font_key",
+        "equippedFontKey",
+        "profile_font_key",
+
+        "font.key",
+        "font.font_key",
+        "font.fontKey",
+        "nickname_font.key",
+        "nickname_font.font_key",
+        "nickname_font.fontKey",
+        "equipped_font.key",
+        "equipped_font.font_key",
+      ]) ||
+      PAGE_CFG.nicknameFontKey ||
+      PAGE_CFG.fontKey ||
+      ""
+    );
+
+    const rawEffectKey = cleanValue(
+      pickValue(avatarData, [
+        "nickname_effect_key",
+        "nicknameEffectKey",
+        "effect_key",
+        "effectKey",
+
+        "owner_font_pref.nickname_effect_key",
+        "ownerFontPref.nickname_effect_key",
+        "ownerFontPref.nicknameEffectKey",
+        "viewer_font_pref.nickname_effect_key",
+        "viewerFontPref.nickname_effect_key",
+        "viewerFontPref.nicknameEffectKey",
+        "font_pref.nickname_effect_key",
+        "fontPref.nickname_effect_key",
+        "fontPref.nicknameEffectKey",
+
+        "selected_effect_key",
+        "selectedEffectKey",
+        "equipped_effect_key",
+        "equippedEffectKey",
+        "profile_effect_key",
+
+        "effect.key",
+        "effect.effect_key",
+        "effect.effectKey",
+        "nickname_effect.key",
+        "nickname_effect.effect_key",
+        "nickname_effect.effectKey",
+        "equipped_effect.key",
+        "equipped_effect.effect_key",
+      ]) ||
+      PAGE_CFG.nicknameEffectKey ||
+      PAGE_CFG.effectKey ||
+      "none"
+    );
+
+    const rawFontClass = cleanClassString(String(
+      pickValue(avatarData, [
+        "nickname_font_class",
+        "nicknameFontClass",
+        "font_class",
+        "fontClass",
+        "font_css_class",
+        "fontCssClass",
+        "font.preview_class",
+        "font.previewClass",
+        "font.css_class",
+        "font.cssClass",
+        "font.class_name",
+        "font.className",
+        "nickname_font.preview_class",
+        "nickname_font.previewClass",
+        "nickname_font.css_class",
+        "nickname_font.cssClass",
+        "nickname_font.class_name",
+        "nickname_font.className",
+      ]) ||
+      PAGE_CFG.nicknameFontClass ||
+      PAGE_CFG.fontClass ||
+      ""
+    ));
+
+    const rawEffectClass = cleanClassString(String(
+      pickValue(avatarData, [
+        "nickname_effect_class",
+        "nicknameEffectClass",
+        "font_effect_class",
+        "fontEffectClass",
+        "effect_class",
+        "effectClass",
+        "effect_css_class",
+        "effectCssClass",
+        "effect.preview_class",
+        "effect.previewClass",
+        "effect.css_class",
+        "effect.cssClass",
+        "effect.class_name",
+        "effect.className",
+        "nickname_effect.preview_class",
+        "nickname_effect.previewClass",
+        "nickname_effect.css_class",
+        "nickname_effect.cssClass",
+        "nickname_effect.class_name",
+        "nickname_effect.className",
+      ]) ||
+      PAGE_CFG.nicknameEffectClass ||
+      PAGE_CFG.effectClass ||
+      ""
+    ));
+
+    const rawScale = pickValue(avatarData, [
+      "nickname_scale",
+      "nicknameScale",
+      "owner_font_pref.nickname_scale",
+      "ownerFontPref.nickname_scale",
+      "ownerFontPref.nicknameScale",
+      "viewer_font_pref.nickname_scale",
+      "viewerFontPref.nickname_scale",
+      "viewerFontPref.nicknameScale",
+      "font_pref.nickname_scale",
+      "fontPref.nickname_scale",
+      "fontPref.nicknameScale",
+    ]);
+
+    const rawSpacing = pickValue(avatarData, [
+      "nickname_letter_spacing",
+      "nicknameLetterSpacing",
+      "owner_font_pref.nickname_letter_spacing",
+      "ownerFontPref.nickname_letter_spacing",
+      "ownerFontPref.nicknameLetterSpacing",
+      "viewer_font_pref.nickname_letter_spacing",
+      "viewerFontPref.nickname_letter_spacing",
+      "viewerFontPref.nicknameLetterSpacing",
+      "font_pref.nickname_letter_spacing",
+      "fontPref.nickname_letter_spacing",
+      "fontPref.nicknameLetterSpacing",
+    ]);
+
+    const color = cleanValue(
+      pickValue(avatarData, [
+        "nickname_color",
+        "nicknameColor",
+        "font_color",
+        "fontColor",
+        "owner_font_pref.nickname_color",
+        "ownerFontPref.nickname_color",
+        "viewer_font_pref.nickname_color",
+        "viewerFontPref.nickname_color",
+        "font_pref.nickname_color",
+        "fontPref.nickname_color",
+      ]) ||
+      PAGE_CFG.nicknameColor ||
+      "#fff8ea"
+    );
+
+    const fontKey = normalizeFontKey(rawFontKey);
+    const effectKey = normalizeEffectKey(rawEffectKey);
+
+    const keyFontClass = fontClassFromKey(fontKey);
+    const keyEffectClass = effectClassFromKey(effectKey);
+
+    return {
+      fontKey,
+      effectKey,
+      fontClass: cleanClassString([rawFontClass, keyFontClass].filter(Boolean).join(" ")),
+      effectClass: cleanClassString([rawEffectClass, keyEffectClass].filter(Boolean).join(" ")),
+      scale: clampValue(rawScale, 0.8, 1.6, 1),
+      spacing: clampValue(rawSpacing, -1, 6, 0),
+      color,
     };
   }
-}
 
-function applyMobilePlayTweaks() {
-  if (!playPageRoot) return;
+  function buildNicknameInlineStyle(info) {
+    const fontKey = info.fontKey || "";
+    const baseSize = getFontBaseSize(fontKey);
+    const size = Math.max(14, Math.round(baseSize * info.scale));
+    const family = getFontFamily(fontKey);
+    const weight = getFontWeight(fontKey);
+    const spacing = clampValue(info.spacing, -1, 6, 0);
 
-  playPageRoot.classList.toggle("mobile-play-ui", isMobilePlayUI());
+    return {
+      family,
+      size,
+      weight,
+      spacing,
+    };
+  }
 
-  if (isMobilePlayUI()) {
-    if (leftTitle && screenSelect?.classList.contains("on")) leftTitle.textContent = "Choose Mode";
-    if (leftSub) leftSub.textContent = "";
-    if (answerInput) answerInput.placeholder = "Answer";
-  } else {
-    if (answerInput) answerInput.placeholder = "Type your answer";
-    if (screenSelect?.classList.contains("on")) {
-      if (leftTitle) leftTitle.textContent = "Choose Mode";
-      if (leftSub) leftSub.textContent = "Pick Practice, Classic, or Challenge.";
+  function injectNicknameStylePatch() {
+    if (nicknameStyleInjected) return;
+
+    nicknameStyleInjected = true;
+
+    if (document.getElementById("mathnerAuraAvatarRoomNicknamePatch")) return;
+
+    const style = document.createElement("style");
+    style.id = "mathnerAuraAvatarRoomNicknamePatch";
+
+    style.textContent = `
+      .play-page .status-avatar-name {
+        width: 100% !important;
+        max-width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        overflow: visible !important;
+      }
+
+      .play-page .status-avatar-name-text,
+      .play-page .status-avatar-name-text.synced-nickname,
+      .play-page .status-avatar-name-text.mn-aura-nickname-force,
+      .play-page .friend-rank-nickname.mn-aura-nickname-force {
+        display: inline-block !important;
+        width: auto !important;
+        max-width: 100% !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        padding: 0 !important;
+        line-height: 1.05 !important;
+        white-space: nowrap !important;
+        text-align: center !important;
+        vertical-align: middle !important;
+        transform-origin: center center !important;
+        animation-play-state: running !important;
+        position: relative !important;
+        z-index: 2 !important;
+      }
+
+      .play-page .effect-rainbow-flow,
+      .play-page .font-effect-rainbow,
+      .play-page .rainbow-flow,
+      .play-page .fx-rainbow-flow {
+        background-image: linear-gradient(90deg, #ff4d6d, #ff9f1a, #00b894, #0984e3, #a29bfe, #ff4d6d) !important;
+        background-size: 300% 100% !important;
+        background-color: transparent !important;
+        -webkit-background-clip: text !important;
+        background-clip: text !important;
+        color: transparent !important;
+        -webkit-text-fill-color: transparent !important;
+        text-shadow: none !important;
+        -webkit-text-stroke: 0 !important;
+        filter: drop-shadow(0 1px 1px rgba(0,0,0,0.18)) !important;
+        animation: nicknameRainbowFlow 6s linear infinite !important;
+      }
+
+      .play-page .effect-float-wave {
+        animation: auraNicknameFloatWave 1.8s ease-in-out infinite !important;
+      }
+
+      .play-page .effect-neon-blue {
+        color: #18DDE2 !important;
+        -webkit-text-fill-color: #18DDE2 !important;
+        text-shadow:
+          0 0 4px rgba(125,249,255,.72),
+          0 0 9px rgba(0,210,211,.46),
+          0 1px 3px rgba(0,0,0,.22) !important;
+      }
+
+      .play-page .effect-gold-glow {
+        color: #F5B800 !important;
+        -webkit-text-fill-color: #F5B800 !important;
+        text-shadow:
+          0 0 4px rgba(255,215,0,0.68),
+          0 0 9px rgba(255,143,0,0.36),
+          0 1px 3px rgba(0,0,0,0.22) !important;
+      }
+
+      .play-page .effect-sparkle {
+        color: #E9A800 !important;
+        -webkit-text-fill-color: #E9A800 !important;
+        text-shadow:
+          0 0 4px rgba(255,255,255,0.75),
+          0 0 9px rgba(255,215,0,0.50),
+          0 1px 3px rgba(0,0,0,0.20) !important;
+      }
+
+      .play-page .effect-glitch {
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
+        text-shadow:
+          1px 0 rgba(255,0,90,0.65),
+          -1px 0 rgba(0,210,255,0.65),
+          0 1px 3px rgba(0,0,0,0.24) !important;
+      }
+
+      .play-page .effect-fire-glow {
+        color: #ff9f1a !important;
+        -webkit-text-fill-color: #ff9f1a !important;
+        text-shadow:
+          0 0 4px rgba(255,215,0,.60),
+          0 0 9px rgba(255,99,0,.45),
+          0 1px 3px rgba(0,0,0,.22) !important;
+      }
+
+      .play-page .effect-ice-glow {
+        color: #00bcd4 !important;
+        -webkit-text-fill-color: #00bcd4 !important;
+        text-shadow:
+          0 0 4px rgba(180,255,255,.68),
+          0 0 10px rgba(0,180,255,.42),
+          0 1px 3px rgba(0,0,0,.22) !important;
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  function ensureStatusNicknameTextLayer() {
+    const root = qs("statusAvatarName");
+
+    if (!root) return null;
+
+    let layer = qs("statusAvatarNameText") || root.querySelector(".status-avatar-name-text");
+
+    if (!layer) {
+      const currentText = String(root.textContent || "").trim();
+
+      root.innerHTML = "";
+
+      layer = document.createElement("span");
+      layer.id = "statusAvatarNameText";
+      layer.className = "status-avatar-name-text synced-nickname";
+      layer.dataset.nicknameSync = "1";
+      layer.textContent = currentText || getCurrentNickname();
+
+      root.appendChild(layer);
+    }
+
+    root.classList.remove("synced-nickname", "mn-aura-nickname-force");
+    root.style.setProperty("width", "100%", "important");
+    root.style.setProperty("display", "flex", "important");
+    root.style.setProperty("align-items", "center", "important");
+    root.style.setProperty("justify-content", "center", "important");
+    root.style.setProperty("text-align", "center", "important");
+
+    return layer;
+  }
+
+  function clearFontEffectClasses(el) {
+    if (!el || !el.classList) return;
+
+    Array.from(el.classList).forEach(function (cls) {
+      if (
+        cls.startsWith("font-") ||
+        cls.startsWith("effect-") ||
+        cls.startsWith("font-effect-") ||
+        cls === "rainbow-flow" ||
+        cls === "neon-blue" ||
+        cls === "gold-glow" ||
+        cls.startsWith("fx-")
+      ) {
+        el.classList.remove(cls);
+      }
+    });
+  }
+
+  function clearNicknameVisualInline(el) {
+    if (!el || !el.style) return;
+
+    [
+      "font-family",
+      "font-size",
+      "font-weight",
+      "letter-spacing",
+      "line-height",
+      "white-space",
+      "color",
+      "-webkit-text-fill-color",
+      "background",
+      "background-image",
+      "background-size",
+      "background-position",
+      "background-repeat",
+      "background-clip",
+      "-webkit-background-clip",
+      "text-shadow",
+      "filter",
+      "animation",
+      "animation-play-state",
+      "transform",
+      "opacity",
+    ].forEach(function (prop) {
+      el.style.removeProperty(prop);
+    });
+  }
+
+  function applyNicknameStyle(el) {
+    if (!el) return;
+
+    injectNicknameStylePatch();
+
+    const info = getNicknameStyleInfo();
+    const visual = buildNicknameInlineStyle(info);
+    const hasRainbow = info.effectKey === "rainbow_flow" || info.effectClass.indexOf("rainbow") >= 0;
+
+    clearFontEffectClasses(el);
+    clearNicknameVisualInline(el);
+
+    el.classList.add("synced-nickname");
+    el.classList.add("mn-aura-nickname-force");
+
+    if (info.fontClass) {
+      info.fontClass.split(/\s+/).forEach(function (cls) {
+        if (cls) el.classList.add(cls);
+      });
+    } else {
+      el.classList.add(fontClassFromKey(info.fontKey));
+    }
+
+    if (info.effectClass) {
+      info.effectClass.split(/\s+/).forEach(function (cls) {
+        if (cls) el.classList.add(cls);
+      });
+    } else {
+      el.classList.add(effectClassFromKey(info.effectKey));
+    }
+
+    el.dataset.fontKey = info.fontKey || "";
+    el.dataset.effectKey = info.effectKey || "none";
+
+    el.style.setProperty("font-family", visual.family, "important");
+    el.style.setProperty("font-size", String(visual.size) + "px", "important");
+    el.style.setProperty("font-weight", String(visual.weight), "important");
+    el.style.setProperty("letter-spacing", String(visual.spacing) + "px", "important");
+    el.style.setProperty("line-height", "1.05", "important");
+    el.style.setProperty("white-space", "nowrap", "important");
+    el.style.setProperty("display", "inline-block", "important");
+    el.style.setProperty("text-align", "center", "important");
+    el.style.setProperty("animation-play-state", "running", "important");
+
+    if (hasRainbow) {
+      el.style.setProperty("color", "transparent", "important");
+      el.style.setProperty("-webkit-text-fill-color", "transparent", "important");
+      el.style.setProperty("background-clip", "text", "important");
+      el.style.setProperty("-webkit-background-clip", "text", "important");
+    } else if (info.effectKey === "none" || info.effectKey === "default" || info.effectKey === "normal") {
+      const color = info.color || "#fff8ea";
+      el.style.setProperty("color", color, "important");
+      el.style.setProperty("-webkit-text-fill-color", color, "important");
+      el.style.setProperty(
+        "text-shadow",
+        "0 0 6px rgba(255,211,123,0.55), 0 1px 2px rgba(0,0,0,0.32)",
+        "important"
+      );
     }
   }
 
-  renderModeTiles();
-  renderSetupScreen();
-  renderRight();
-  syncRankingLinks();
-  updateMobileInputMode();
-  updateMobilePadState();
-  syncStartButtons();
-  syncResetButtons();
-  updateTimerUI();
-}
+  function isUsableNicknameElement(el) {
+    if (!el || !el.tagName) return false;
 
-if (btnBackToModes) {
-  btnBackToModes.addEventListener("click", async () => {
-    await leaveCurrentRunIfNeeded(() => {
-      if (leftTitle) leftTitle.textContent = "Choose Mode";
-      if (leftSub) leftSub.textContent = isMobilePlayUI() ? "" : "Pick Practice, Classic, or Challenge.";
-      syncRankingLinks();
-      show(screenSelect);
-      renderRight();
-    });
-  });
-}
+    const tag = el.tagName.toLowerCase();
 
-if (btnGoPlay) btnGoPlay.addEventListener("click", goPlayScreen);
-
-if (btnBackToSetup) {
-  btnBackToSetup.addEventListener("click", async () => {
-    await leaveCurrentRunIfNeeded(() => {
-      if (leftTitle) leftTitle.textContent = "Choose Mode";
-      if (leftSub) leftSub.textContent = "";
-      syncRankingLinks();
-      show(screenSetup);
-    });
-  });
-}
-
-if (btnMobileBackToSetup) {
-  btnMobileBackToSetup.addEventListener("click", async () => {
-    await leaveCurrentRunIfNeeded(() => {
-      if (leftTitle) leftTitle.textContent = "Choose Mode";
-      if (leftSub) leftSub.textContent = "";
-      syncRankingLinks();
-      show(screenSetup);
-    });
-  });
-}
-
-if (btnStart) btnStart.addEventListener("click", startGame);
-if (btnMobileStart) btnMobileStart.addEventListener("click", startGame);
-
-function handleResetClick() {
-  if (running) {
-    finalizeRun("reset");
-  } else {
-    resetGameUI();
-  }
-}
-
-if (btnReset) {
-  btnReset.addEventListener("click", handleResetClick);
-}
-
-if (btnMobileReset) {
-  btnMobileReset.addEventListener("click", handleResetClick);
-}
-
-if (btnSubmit) btnSubmit.addEventListener("click", submitAnswer);
-
-if (answerInput) {
-  answerInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      submitAnswer();
+    if (["script", "style", "input", "textarea", "select", "option", "canvas", "img", "svg", "path"].indexOf(tag) >= 0) {
+      return false;
     }
-  });
-}
 
-if (btnClose) btnClose.addEventListener("click", closeModal);
+    return true;
+  }
 
-if (btnAgain) {
-  btnAgain.addEventListener("click", () => {
-    closeModal();
-    goPlayScreen();
-  });
-}
+  function getNicknameCandidateElements() {
+    const list = [];
+    const seen = new Set();
 
-if (modal) {
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) closeModal();
-  });
-}
+    const mainLayer = ensureStatusNicknameTextLayer();
 
-if (btnKeyModalClose) btnKeyModalClose.addEventListener("click", closeKeyExhaustedModal);
-if (btnLater) btnLater.addEventListener("click", closeKeyExhaustedModal);
+    if (mainLayer) {
+      seen.add(mainLayer);
+      list.push(mainLayer);
+    }
 
-if (keyExhaustedModal) {
-  keyExhaustedModal.addEventListener("click", (e) => {
-    if (e.target === keyExhaustedModal) closeKeyExhaustedModal();
-  });
-}
+    const selectors = [
+      "#statusAvatarNameText",
+      ".status-avatar-name-text",
+      ".friend-rank-nickname",
+      "[data-nickname-sync]",
+      "[data-sync-nickname]",
+      "[data-nickname-style]",
+      ".player-nickname",
+      ".status-nickname",
+      ".avatar-nickname",
+      ".aura-nickname",
+      ".game-nickname",
+      ".result-nickname",
+      ".my-nickname",
+      ".nickname-text",
+      ".nicknameLabel",
+      ".nickname-label",
+      "#statusNickname",
+      "#playerNickname",
+      "#playNickname",
+      "#gameNickname",
+      "#auraNickname",
+      "#avatarNickname",
+      "#resultNickname",
+      "#nicknameText",
+      "#nicknameLabel",
+      "#myNickname",
+      "#statusAvatarNickname",
+      "#auraPlayerNickname"
+    ];
 
-function init() {
-  parsePlayAvatarData();
-  renderStatusAvatar();
-  renderTopStatus();
-  renderRight();
-  renderModeTiles();
-  renderSetupScreen();
-  stopAuraCompletely();
-  ensureRankNeighborCards();
-  resetRankResultUI();
-  syncRankingLinks();
-  show(screenSelect);
-  bindLeaveProtection();
-  bindMobilePad();
-  applyMobilePlayTweaks();
-  updateMobileInputMode();
-  updateMobilePadState();
-  updateTimerUI();
-  syncStartButtons();
-  syncResetButtons();
+    selectors.forEach(function (selector) {
+      document.querySelectorAll(selector).forEach(function (el) {
+        if (!isUsableNicknameElement(el)) return;
+        if (seen.has(el)) return;
 
-  window.addEventListener("resize", applyMobilePlayTweaks);
-}
+        seen.add(el);
+        list.push(el);
+      });
+    });
 
-init();
+    return list;
+  }
+
+  function applyAllNicknameStyles() {
+    const targets = getNicknameCandidateElements();
+
+    targets.forEach(function (el) {
+      applyNicknameStyle(el);
+    });
+  }
+
+  function scheduleApplyNicknameStyles() {
+    if (nicknameApplyTimer) clearTimeout(nicknameApplyTimer);
+
+    nicknameApplyTimer = setTimeout(function () {
+      applyAllNicknameStyles();
+    }, 60);
+  }
+
+  function observeNicknameTargets() {
+    if (nicknameObserverStarted) return;
+    if (!window.MutationObserver) return;
+
+    nicknameObserverStarted = true;
+
+    const root = playPageRoot || document.body;
+
+    const observer = new MutationObserver(function () {
+      scheduleApplyNicknameStyles();
+    });
+
+    observer.observe(root, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+  }
+
+  function addAvatarLayer(stack, src, cls, z) {
+    const cleanSrc = cleanValue(src);
+
+    if (!cleanSrc) return;
+
+    const img = document.createElement("img");
+
+    img.className = "status-avatar-layer " + cls;
+    img.src = cleanSrc;
+    img.alt = "";
+    img.style.zIndex = String(z);
+
+    img.onerror = function () {
+      img.style.display = "none";
+    };
+
+    stack.appendChild(img);
+  }
+
+  function renderStatusAvatar() {
+    const stack = qs("statusAvatarStack");
+
+    if (!stack || !playPageRoot) return;
+
+    try {
+      stack.innerHTML = "";
+
+      const avatarData = getAvatarData();
+      const genderRaw = cleanValue(avatarData.gender || "male");
+      const gender = genderRaw || "male";
+
+      const baseBody = getDataAttr("data-base-body-" + gender) || getDataAttr("data-base-body-male");
+      const baseHead = getDataAttr("data-base-head-" + gender) || getDataAttr("data-base-head-male");
+      const baseHairBack = getDataAttr("data-base-hair-back-" + gender) || getDataAttr("data-base-hair-back-male");
+      const baseHairFront = getDataAttr("data-base-hair-front-" + gender) || getDataAttr("data-base-hair-front-male");
+      const baseEyes = getDataAttr("data-base-eyes-" + gender) || getDataAttr("data-base-eyes-male");
+      const baseEyebrow = getDataAttr("data-base-eyebrow-" + gender) || getDataAttr("data-base-eyebrow-male");
+      const baseMouth = getDataAttr("data-base-mouth-" + gender) || getDataAttr("data-base-mouth-male");
+      const windAuraUrl = getDataAttr("data-wind-aura-url");
+
+      const auraLayer = document.createElement("div");
+      auraLayer.className = "status-avatar-foot-aura";
+
+      if (windAuraUrl) {
+        auraLayer.innerHTML =
+          '<img class="status-avatar-foot-aura-img" src="' + windAuraUrl + '" alt="">';
+      }
+
+      stack.appendChild(auraLayer);
+
+      const customUnique = getAvatarImage(avatarData, [
+        "unique_image_url",
+        "effect_image_url",
+        "unique.image_url",
+        "effect.image_url",
+        "equipped_unique.image_url",
+      ]);
+
+      const customRearHair = getAvatarImage(avatarData, [
+        "rear_hair_image_url",
+        "hair_back_image_url",
+        "rearHairImageUrl",
+        "hairBackImageUrl",
+        "rear_hair.image_url",
+        "hair_back.image_url",
+      ]);
+
+      const customFrontHair = getAvatarImage(avatarData, [
+        "front_hair_image_url",
+        "hair_front_image_url",
+        "frontHairImageUrl",
+        "hairFrontImageUrl",
+        "front_hair.image_url",
+        "hair_front.image_url",
+      ]);
+
+      const customEyes = getAvatarImage(avatarData, [
+        "eyes_image_url",
+        "eye_image_url",
+        "eyes.image_url",
+        "eye.image_url",
+      ]);
+
+      const customEyebrow = getAvatarImage(avatarData, [
+        "eyebrow_image_url",
+        "brow_image_url",
+        "eyebrow.image_url",
+        "brow.image_url",
+      ]);
+
+      const customMouth = getAvatarImage(avatarData, [
+        "mouth_image_url",
+        "mouth.image_url",
+      ]);
+
+      const customCloth = getAvatarImage(avatarData, [
+        "cloth_image_url",
+        "clothes_image_url",
+        "top_image_url",
+        "cloth.image_url",
+        "clothes.image_url",
+        "top.image_url",
+      ]);
+
+      const customPants = getAvatarImage(avatarData, [
+        "pants_image_url",
+        "bottom_image_url",
+        "pants.image_url",
+        "bottom.image_url",
+      ]);
+
+      const customShoes = getAvatarImage(avatarData, [
+        "shoes_image_url",
+        "shoe_image_url",
+        "shoes.image_url",
+        "shoe.image_url",
+      ]);
+
+      const customHat = getAvatarImage(avatarData, [
+        "hat_image_url",
+        "head_item_image_url",
+        "hat.image_url",
+        "head_item.image_url",
+      ]);
+
+      addAvatarLayer(stack, customUnique, "status-avatar-layer-unique-back", 8);
+      addAvatarLayer(stack, customRearHair || baseHairBack, "status-avatar-layer-hair-rear", 20);
+      addAvatarLayer(stack, baseBody, "status-avatar-layer-body", 30);
+      addAvatarLayer(stack, customPants, "status-avatar-layer-pants", 34);
+      addAvatarLayer(stack, customShoes, "status-avatar-layer-shoes", 35);
+      addAvatarLayer(stack, customCloth, "status-avatar-layer-cloth", 40);
+      addAvatarLayer(stack, baseHead, "status-avatar-layer-head", 50);
+      addAvatarLayer(stack, customEyebrow || baseEyebrow, "status-avatar-layer-eyebrow", 60);
+      addAvatarLayer(stack, customEyes || baseEyes, "status-avatar-layer-eyes", 70);
+      addAvatarLayer(stack, customMouth || baseMouth, "status-avatar-layer-mouth", 80);
+      addAvatarLayer(stack, customFrontHair || baseHairFront, "status-avatar-layer-hair-front", 90);
+      addAvatarLayer(stack, customHat, "status-avatar-layer-hat", 100);
+
+      applyAllNicknameStyles();
+    } catch (e) {
+      console.error("renderStatusAvatar error:", e);
+    }
+  }
+
+  function bindEvents() {
+    if (btnBackToModes) {
+      btnBackToModes.addEventListener("click", function () {
+        show(screenSelect);
+      });
+    }
+
+    if (btnGoPlay) {
+      btnGoPlay.addEventListener("click", function () {
+        show(screenPlay);
+        resetGameUI();
+        applyAllNicknameStyles();
+      });
+    }
+
+    if (btnBackToSetup) {
+      btnBackToSetup.addEventListener("click", function () {
+        show(screenSetup);
+      });
+    }
+
+    if (btnStart) {
+      btnStart.addEventListener("click", startGame);
+    }
+
+    if (btnReset) {
+      btnReset.addEventListener("click", function () {
+        if (running) finalizeRun();
+        else resetGameUI();
+      });
+    }
+
+    if (btnSubmit) {
+      btnSubmit.addEventListener("click", submitAnswer);
+    }
+
+    if (answerInput) {
+      answerInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          submitAnswer();
+        }
+      });
+    }
+
+    const btnClose = qs("btnClose");
+
+    if (btnClose) {
+      btnClose.addEventListener("click", function () {
+        if (modal) modal.classList.remove("on");
+        applyAllNicknameStyles();
+      });
+    }
+
+    const btnAgain = qs("btnAgain");
+
+    if (btnAgain) {
+      btnAgain.addEventListener("click", function () {
+        if (modal) modal.classList.remove("on");
+        resetGameUI();
+        applyAllNicknameStyles();
+      });
+    }
+
+    if (btnKeyModalClose) {
+      btnKeyModalClose.addEventListener("click", function () {
+        if (keyExhaustedModal) keyExhaustedModal.classList.remove("on");
+      });
+    }
+
+    if (mobilePad) {
+      mobilePad.addEventListener("click", function (e) {
+        if (!running || !answerInput) return;
+
+        const btn = e.target.closest("[data-pad]");
+
+        if (!btn) return;
+
+        const key = btn.getAttribute("data-pad");
+
+        if (key === "clear") {
+          answerInput.value = "";
+        } else if (key === "back") {
+          answerInput.value = String(answerInput.value).slice(0, -1);
+        } else if (answerInput.value.length < 5) {
+          answerInput.value += key;
+        }
+      });
+    }
+  }
+
+  function initPage() {
+    bindElements();
+
+    try { initData(); } catch (e) { console.error("initData error:", e); }
+    try { injectNicknameStylePatch(); } catch (e) { console.error("injectNicknameStylePatch error:", e); }
+    try { ensureStatusNicknameTextLayer(); } catch (e) { console.error("ensureStatusNicknameTextLayer error:", e); }
+    try { renderModeTiles(); } catch (e) { console.error("renderModeTiles error:", e); }
+    try { renderPracticeOperations(); } catch (e) { console.error("renderPracticeOperations error:", e); }
+    try { updateSetupPanel(); } catch (e) { console.error("updateSetupPanel error:", e); }
+    try { updateRankingLink(); } catch (e) { console.error("updateRankingLink error:", e); }
+    try { show(screenSelect); } catch (e) { console.error("show screen error:", e); }
+    try { renderStatusAvatar(); } catch (e) { console.error("renderStatusAvatar outer error:", e); }
+    try { bindEvents(); } catch (e) { console.error("bindEvents error:", e); }
+    try { observeNicknameTargets(); } catch (e) { console.error("observeNicknameTargets error:", e); }
+
+    try {
+      updateTimerUI();
+      setAuraState("idle");
+      applyAllNicknameStyles();
+
+      setTimeout(applyAllNicknameStyles, 100);
+      setTimeout(applyAllNicknameStyles, 400);
+      setTimeout(applyAllNicknameStyles, 1000);
+      setTimeout(applyAllNicknameStyles, 1800);
+    } catch (e) {
+      console.error("final init error:", e);
+    }
+
+    window.MathnerApplyAuraNicknameStyles = applyAllNicknameStyles;
+    window.MathnerGetAuraNicknameStyleInfo = getNicknameStyleInfo;
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initPage);
+  } else {
+    initPage();
+  }
+})();

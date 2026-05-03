@@ -1,0 +1,221 @@
+.effect-none {
+  color: #f7fbff !important;
+  text-shadow:
+    0 0 3px rgba(255, 255, 255, 0.48),
+    0 0 10px rgba(255, 255, 255, 0.14) !important;
+}
+
+.effect-neon-blue {
+  color: #d8fbff !important;
+  text-shadow:
+    0 0 3px rgba(130, 240, 255, 0.96),
+    0 0 9px rgba(90, 210, 255, 0.76),
+    0 0 18px rgba(60, 170, 255, 0.38) !important;
+  animation: shopNeonPulse 1.7s ease-in-out infinite;
+}
+
+.effect-rainbow-flow {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  min-width: max-content !important;
+  max-width: 100% !important;
+  padding: 0 8px !important;
+  background-image: linear-gradient(
+    90deg,
+    #ff1744 0%,
+    #ff9100 12%,
+    #ffea00 24%,
+    #00e676 36%,
+    #00e5ff 48%,
+    #2979ff 60%,
+    #7c4dff 72%,
+    #ff00c8 84%,
+    #ff1744 100%
+  ) !important;
+  background-size: 260% 100% !important;
+  background-position: 0% 50% !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: none !important;
+  filter: brightness(1.18) saturate(1.4);
+  animation:
+    shopRainbowFlowMove 0.85s linear infinite,
+    shopRainbowHueRotate 2.2s linear infinite,
+    shopRainbowGlowPulse 1.2s ease-in-out infinite !important;
+}
+
+.effect-gold-glow {
+  color: #fff1b8 !important;
+  text-shadow:
+    0 0 3px rgba(255, 230, 150, 0.96),
+    0 0 9px rgba(255, 205, 90, 0.78),
+    0 0 18px rgba(255, 170, 30, 0.42) !important;
+  animation: shopGoldPulse 1.8s ease-in-out infinite;
+}
+
+.effect-sparkle {
+  color: #fffbe6 !important;
+  text-shadow:
+    0 0 3px rgba(255, 255, 255, 1),
+    0 0 9px rgba(255, 245, 170, 0.78),
+    0 0 18px rgba(255, 220, 90, 0.42) !important;
+  animation: shopSparkleBlink 1.15s ease-in-out infinite;
+}
+
+.effect-glitch {
+  color: #ffffff !important;
+  text-shadow:
+    -1px 0 rgba(255, 0, 110, 0.78),
+    1px 0 rgba(0, 245, 255, 0.78),
+    0 0 7px rgba(255, 255, 255, 0.22) !important;
+  animation: shopGlitchShake 1.1s steps(2, end) infinite;
+}
+
+.effect-float-wave {
+  color: #e7fbff !important;
+  text-shadow:
+    0 0 5px rgba(120, 230, 255, 0.58),
+    0 0 13px rgba(120, 230, 255, 0.28) !important;
+  animation: shopFloatWave 1.9s ease-in-out infinite;
+}
+
+.effect-fire-glow {
+  color: #fff0da !important;
+  text-shadow:
+    0 0 3px rgba(255, 170, 70, 0.96),
+    0 0 9px rgba(255, 120, 30, 0.66),
+    0 0 18px rgba(255, 80, 0, 0.38) !important;
+  animation: shopFireFlicker 1.05s ease-in-out infinite;
+}
+
+.effect-ice-glow {
+  color: #f2fdff !important;
+  text-shadow:
+    0 0 3px rgba(180, 240, 255, 0.96),
+    0 0 9px rgba(120, 220, 255, 0.7),
+    0 0 18px rgba(80, 180, 255, 0.34) !important;
+  animation: shopIcePulse 1.55s ease-in-out infinite;
+}
+
+@keyframes shopNeonPulse {
+  0%, 100% {
+    filter: brightness(1);
+  }
+
+  50% {
+    filter: brightness(1.2);
+  }
+}
+
+@keyframes shopGoldPulse {
+  0%, 100% {
+    filter: brightness(1);
+  }
+
+  50% {
+    filter: brightness(1.15);
+  }
+}
+
+@keyframes shopRainbowFlowMove {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  100% {
+    background-position: 260% 50%;
+  }
+}
+
+@keyframes shopRainbowHueRotate {
+  0% {
+    filter: hue-rotate(0deg) brightness(1.12) saturate(1.25);
+  }
+
+  100% {
+    filter: hue-rotate(360deg) brightness(1.25) saturate(1.55);
+  }
+}
+
+@keyframes shopRainbowGlowPulse {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-1px) scale(1.035);
+  }
+}
+
+@keyframes shopSparkleBlink {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+
+  50% {
+    opacity: 0.74;
+    filter: brightness(1.24);
+  }
+}
+
+@keyframes shopGlitchShake {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+
+  20% {
+    transform: translate(-1px, 0);
+  }
+
+  40% {
+    transform: translate(1px, 0);
+  }
+
+  60% {
+    transform: translate(0, -1px);
+  }
+
+  80% {
+    transform: translate(0, 1px);
+  }
+}
+
+@keyframes shopFloatWave {
+  0%, 100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes shopFireFlicker {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+
+  50% {
+    opacity: 0.9;
+    filter: brightness(1.15);
+  }
+}
+
+@keyframes shopIcePulse {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+
+  50% {
+    opacity: 0.88;
+    filter: brightness(1.18);
+  }
+}

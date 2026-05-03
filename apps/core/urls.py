@@ -4,8 +4,10 @@ from . import views
 app_name = "core"
 
 urlpatterns = [
-    path("", views.landing_view, name="landing"),
+    path("", views.app_home_view, name="home"),
     path("app/", views.app_home_view, name="app_home"),
+    path("landing/", views.landing_view, name="landing"),
+
     path("play/", views.play_view, name="play"),
 
     path("start-game-run/", views.start_game_run, name="start_game_run"),

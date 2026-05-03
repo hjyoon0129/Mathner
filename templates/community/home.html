@@ -2,12 +2,16 @@
 {% load static %}
 {% load community_extras %}
 
-{% block title %}Community - mathner{% endblock %}
+{% block title %}놀이터 - mathner{% endblock %}
 
 {% block extra_css %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Boogaloo&family=Bubblegum+Sans&family=Cabin+Sketch:wght@400;700&family=Capriola&family=Chewy&family=Coming+Soon&family=Delius+Swash+Caps&family=Dokdo&family=Dongle:wght@400;700&family=Gaegu:wght@400;700&family=Gowun+Batang:wght@400;700&family=Life+Savers:wght@400;700;800&family=Londrina+Shadow&family=Love+Ya+Like+A+Sister&family=Luckiest+Guy&family=McLaren&family=Modak&family=Mouse+Memoirs&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
+<!-- 프리텐다드 폰트 적용 -->
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<style>
+  body, .community-page, .community-page * {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif !important;
+  }
+</style>
 <link rel="stylesheet" href="{% static 'community/css/community.css' %}">
 {% endblock %}
 
@@ -16,8 +20,8 @@
   <div class="community-wrap">
     <div class="community-head">
       <div>
-        <h1 class="community-title">Community</h1>
-        <p class="community-sub">Posts, notices, comments, and likes in one board.</p>
+        <h1 class="community-title">놀이터</h1>
+        <p class="community-sub">게시글, 공지사항, 댓글, 좋아요를 하나의 게시판에서 확인하세요.</p>
       </div>
     </div>
 
@@ -28,7 +32,7 @@
           name="q"
           value="{{ search_query }}"
           class="community-search-input"
-          placeholder="Search title, content, nickname..."
+          placeholder="제목, 내용, 닉네임 검색..."
         >
 
         <input type="hidden" name="sort" id="communitySortInput" value="{{ sort_key|default:'latest' }}">
@@ -43,32 +47,32 @@
           >
             <span class="community-sort-trigger-label" id="communitySortLabel">
               {% if sort_key == 'likes' %}
-                Most Likes
+                좋아요순
               {% elif sort_key == 'views' %}
-                Most Views
+                조회수순
               {% elif sort_key == 'popular' %}
-                Popular
+                인기순
               {% else %}
-                Latest
+                최신순
               {% endif %}
             </span>
             <span class="community-sort-trigger-arrow">▾</span>
           </button>
 
           <div class="community-sort-menu" id="communitySortMenu" role="listbox">
-            <button type="button" class="community-sort-option {% if sort_key == 'latest' %}is-active{% endif %}" data-sort-value="latest">Latest</button>
-            <button type="button" class="community-sort-option {% if sort_key == 'likes' %}is-active{% endif %}" data-sort-value="likes">Most Likes</button>
-            <button type="button" class="community-sort-option {% if sort_key == 'views' %}is-active{% endif %}" data-sort-value="views">Most Views</button>
-            <button type="button" class="community-sort-option {% if sort_key == 'popular' %}is-active{% endif %}" data-sort-value="popular">Popular</button>
+            <button type="button" class="community-sort-option {% if sort_key == 'latest' %}is-active{% endif %}" data-sort-value="latest">최신순</button>
+            <button type="button" class="community-sort-option {% if sort_key == 'likes' %}is-active{% endif %}" data-sort-value="likes">좋아요순</button>
+            <button type="button" class="community-sort-option {% if sort_key == 'views' %}is-active{% endif %}" data-sort-value="views">조회수순</button>
+            <button type="button" class="community-sort-option {% if sort_key == 'popular' %}is-active{% endif %}" data-sort-value="popular">인기순</button>
           </div>
         </div>
 
-        <button type="submit" class="community-search-btn">Search</button>
+        <button type="submit" class="community-search-btn">검색</button>
 
         {% if user.is_authenticated %}
-          <a href="{% url 'community:create' %}" class="community-write-btn community-write-btn-inline">Write Post</a>
+          <a href="{% url 'community:create' %}" class="community-write-btn community-write-btn-inline">글쓰기</a>
         {% else %}
-          <a href="{% url 'account_login' %}?next={% url 'community:create' %}" class="community-write-btn community-write-btn-inline">Write Post</a>
+          <a href="{% url 'account_login' %}?next={% url 'community:create' %}" class="community-write-btn community-write-btn-inline">글쓰기</a>
         {% endif %}
       </form>
     </div>
@@ -76,15 +80,15 @@
     {% if notice_posts %}
     <div class="community-notice-card">
       <div class="community-notice-card-head">
-        <div class="community-notice-title">📌 Notice</div>
-        <div class="community-notice-sub">Pinned posts from admin</div>
+        <div class="community-notice-title">📌 공지사항</div>
+        <div class="community-notice-sub">관리자가 등록한 주요 안내</div>
       </div>
 
       <div class="community-notice-list">
         {% for post in notice_posts %}
         <a href="{% url 'community:detail' post.pk %}" class="community-notice-item">
           <div class="community-notice-item-left">
-            <span class="notice-badge">Notice</span>
+            <span class="notice-badge">공지</span>
 
             <div class="community-notice-main">
               <div class="community-notice-post-title">{{ post.title }}</div>
@@ -108,14 +112,14 @@
                 </span>
 
                 <span>·</span>
-                <span>{{ post.created_at|date:"Y-m-d" }}</span>
+                <span>{{ post.created_at|date:"y-m-d" }}</span>
               </div>
             </div>
           </div>
 
           <div class="community-notice-item-right">
             {% if post.images.count > 0 %}
-              <span class="row-chip">IMG {{ post.images.count }}</span>
+              <span class="row-chip">이미지 {{ post.images.count }}</span>
             {% endif %}
             <span class="row-chip row-chip-like">
               <span class="thumb-icon thumb-icon-sm" aria-hidden="true">
@@ -138,12 +142,12 @@
         <table class="community-table">
           <thead>
             <tr>
-              <th class="col-num col-head-left">No</th>
-              <th class="col-title col-head-left">Title</th>
-              <th class="col-writer col-head-left">Nickname</th>
-              <th class="col-like col-head-center">Like</th>
-              <th class="col-views col-head-center">Views</th>
-              <th class="col-date col-head-center">Date</th>
+              <th class="col-num col-head-left">번호</th>
+              <th class="col-title col-head-left">제목</th>
+              <th class="col-writer col-head-left">닉네임</th>
+              <th class="col-like col-head-center">좋아요</th>
+              <th class="col-views col-head-center">조회수</th>
+              <th class="col-date col-head-center">작성일</th>
             </tr>
           </thead>
 
@@ -160,10 +164,10 @@
 
                   <span class="title-chips">
                     {% if post.is_notice %}
-                      <span class="notice-badge">Notice</span>
+                      <span class="notice-badge">공지</span>
                     {% endif %}
                     {% if post.images.count > 0 %}
-                      <span class="row-chip">IMG {{ post.images.count }}</span>
+                      <span class="row-chip">이미지 {{ post.images.count }}</span>
                     {% endif %}
                   </span>
                 </a>
@@ -207,13 +211,13 @@
               </td>
 
               <td class="col-date col-cell-center">
-                <div class="community-stat-cell">{{ post.created_at|date:"Y-m-d" }}</div>
+                <div class="community-stat-cell">{{ post.created_at|date:"y-m-d" }}</div>
               </td>
             </tr>
             {% empty %}
             <tr>
               <td colspan="6">
-                <div class="community-empty">No posts yet.</div>
+                <div class="community-empty">아직 작성된 게시글이 없습니다.</div>
               </td>
             </tr>
             {% endfor %}
@@ -224,9 +228,9 @@
       {% if page_obj.paginator.num_pages > 1 %}
       <div class="community-pagination">
         {% if page_obj.has_previous %}
-          <a href="?q={{ search_query|urlencode }}&sort={{ sort_key }}&page={{ page_obj.previous_page_number }}" class="page-btn">‹ Prev</a>
+          <a href="?q={{ search_query|urlencode }}&sort={{ sort_key }}&page={{ page_obj.previous_page_number }}" class="page-btn">‹ 이전</a>
         {% else %}
-          <span class="page-btn is-disabled">‹ Prev</span>
+          <span class="page-btn is-disabled">‹ 이전</span>
         {% endif %}
 
         {% for num in page_obj.paginator.page_range %}
@@ -238,9 +242,9 @@
         {% endfor %}
 
         {% if page_obj.has_next %}
-          <a href="?q={{ search_query|urlencode }}&sort={{ sort_key }}&page={{ page_obj.next_page_number }}" class="page-btn">Next ›</a>
+          <a href="?q={{ search_query|urlencode }}&sort={{ sort_key }}&page={{ page_obj.next_page_number }}" class="page-btn">다음 ›</a>
         {% else %}
-          <span class="page-btn is-disabled">Next ›</span>
+          <span class="page-btn is-disabled">다음 ›</span>
         {% endif %}
       </div>
       {% endif %}

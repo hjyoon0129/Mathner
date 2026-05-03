@@ -1,130 +1,141 @@
 ﻿{% extends "base_app.html" %}
 {% load static %}
 
-{% block title %}Ranking | Mathner{% endblock %}
+{% block title %}명예의 전당 | Mathner{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'ranking/css/ranking.css' %}">
 <style>
-  .ranking-game-tab-row{
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    margin-bottom:14px;
-    padding:14px 16px 0;
+  .ranking-game-tab-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 14px 16px 0;
   }
 
   .ranking-game-tab-btn,
-  .ranking-tab-btn{
-    min-height:42px;
-    padding:0 16px;
-    border-radius:14px;
-    border:1px solid rgba(126,168,255,.18);
-    background:#112243;
-    color:#dce8ff;
-    font-size:14px;
-    font-weight:900;
-    cursor:pointer;
-    transition:all .16s ease;
+  .ranking-tab-btn {
+    min-height: 42px;
+    padding: 0 16px;
+    border-radius: 20px;
+    border: 2px solid #FFD54F;
+    background: #FFFFFF;
+    color: #555555;
+    font-size: 15px;
+    font-weight: 800;
+    font-family: 'Pretendard', sans-serif;
+    cursor: pointer;
+    transition: all .16s ease;
+    box-shadow: 0 4px 0 #FFE082;
   }
 
   .ranking-game-tab-btn:hover,
-  .ranking-tab-btn:hover{
-    transform:translateY(-1px);
-    border-color:rgba(126,168,255,.32);
+  .ranking-tab-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 #FFE082;
+  }
+
+  .ranking-game-tab-btn:active,
+  .ranking-tab-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 0 0 #FFE082;
   }
 
   .ranking-game-tab-btn.is-active,
-  .ranking-tab-btn.is-active{
-    background:linear-gradient(135deg, #6f7fff, #53deb0);
-    color:#081120;
-    border-color:transparent;
+  .ranking-tab-btn.is-active {
+    background: #FFB74D;
+    color: #FFFFFF;
+    border-color: #F57C00;
+    box-shadow: 0 4px 0 #F57C00;
   }
 
-  .ranking-tab-row{
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    padding:14px 16px 0;
-    margin-bottom:0;
+  .ranking-tab-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 16px 0;
+    margin-bottom: 0;
   }
 
-  .ranking-board-head{
-    display:flex;
-    align-items:flex-end;
-    justify-content:space-between;
-    gap:12px;
-    flex-wrap:wrap;
+  .ranking-board-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
   }
 
-  .ranking-board-sub{
-    color:#9fc0ff;
-    font-size:14px;
-    font-weight:800;
+  .ranking-board-sub {
+    color: #0288D1;
+    font-size: 14px;
+    font-weight: 800;
   }
 
-  .ranking-notice{
-    margin-bottom:16px;
+  .ranking-notice {
+    margin-bottom: 16px;
   }
 
-  .ranking-summary-strip{
-    display:grid;
-    grid-template-columns:repeat(3, minmax(0, 1fr));
-    gap:10px;
-    margin:16px 16px 0;
+  .ranking-summary-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 16px 16px 0;
   }
 
-  .ranking-summary-card{
-    background:rgba(255,255,255,.05);
-    border:1px solid rgba(255,255,255,.08);
-    border-radius:18px;
-    padding:14px 16px;
-    min-width:0;
+  .ranking-summary-card {
+    background: #FFFFFF;
+    border: 2px solid #81D4FA;
+    border-radius: 20px;
+    box-shadow: 0 4px 0 #81D4FA;
+    padding: 14px 16px;
+    min-width: 0;
   }
 
-  .ranking-summary-label{
-    color:#93a7cf;
-    font-size:12px;
-    font-weight:900;
-    text-transform:uppercase;
-    letter-spacing:.04em;
-    margin-bottom:8px;
+  .ranking-summary-label {
+    color: #0288D1;
+    font-size: 13px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 8px;
   }
 
-  .ranking-summary-value{
-    color:#f4f8ff;
-    font-size:22px;
-    font-weight:1000;
-    line-height:1.1;
-    min-width:0;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
+  .ranking-summary-value {
+    color: #333333;
+    font-size: 22px;
+    font-weight: 900;
+    line-height: 1.1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .ranking-row-me td{
-    box-shadow:inset 3px 0 0 #67e0cb;
-    background:rgba(103,224,203,.08);
+  .ranking-row-me td {
+    box-shadow: inset 4px 0 0 #FF6B6B;
+    background: #FFF5F5 !important;
+    color: #D32F2F !important;
   }
 
-  @media (max-width: 760px){
-    .ranking-summary-strip{
-      grid-template-columns:1fr;
+  @media (max-width: 760px) {
+    .ranking-summary-strip {
+      grid-template-columns: 1fr;
     }
 
-    .ranking-game-tab-row{
-      padding:12px 14px 0;
-      display:grid;
-      grid-template-columns:repeat(3, minmax(0, 1fr));
-      gap:8px;
+    .ranking-game-tab-row {
+      padding: 12px 14px 0;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
     }
 
     .ranking-game-tab-btn,
-    .ranking-tab-btn{
-      min-width:0;
-      width:100%;
-      padding:0 8px;
-      font-size:13px;
+    .ranking-tab-btn {
+      min-width: 0;
+      width: 100%;
+      padding: 0 8px;
+      font-size: 13px;
     }
   }
 </style>
@@ -135,20 +146,20 @@
   <div class="ranking-wrap">
     <section class="ranking-hero-card">
       <div class="ranking-hero-copy">
-        <h1>Ranking</h1>
+        <h1>🏆 명예의 전당 (리더보드)</h1>
         <p>
-          Total ranking first, then per-game ranking for Avatar Aura and Math Rain.
-          Each board can be switched between global ranking and friend ranking.
+          전체 랭킹과 마법 놀이(마법 오라 키우기, 쏟아지는 수학 비)별 랭킹을 확인할 수 있어요!<br>
+          전 세계 친구들과 내 순위를 비교해 보세요.
         </p>
       </div>
     </section>
 
     <section class="ranking-board-card">
       <div class="ranking-board-head">
-        <h2>Leaderboard</h2>
+        <h2>리더보드</h2>
         <div class="ranking-board-sub">
-          Current game:
-          <strong id="rankingGameLabel">{{ selected_game_label }}</strong>
+          현재 게임:
+          <strong id="rankingGameLabel">전체 랭킹</strong>
         </div>
       </div>
 
@@ -165,27 +176,27 @@
       </div>
 
       <div class="ranking-tab-row">
-        <button type="button" class="ranking-tab-btn is-active" id="tabGlobal">Global Ranking</button>
-        <button type="button" class="ranking-tab-btn" id="tabFriends">Friend Ranking</button>
+        <button type="button" class="ranking-tab-btn is-active" id="tabGlobal">🌍 글로벌 랭킹</button>
+        <button type="button" class="ranking-tab-btn" id="tabFriends">🤝 친구 랭킹</button>
       </div>
 
       <div class="ranking-summary-strip">
         <div class="ranking-summary-card">
-          <div class="ranking-summary-label">Board</div>
-          <div class="ranking-summary-value" id="summaryBoard">{{ selected_game_label }}</div>
+          <div class="ranking-summary-label">보드</div>
+          <div class="ranking-summary-value" id="summaryBoard">전체 랭킹</div>
         </div>
         <div class="ranking-summary-card">
-          <div class="ranking-summary-label">Scope</div>
-          <div class="ranking-summary-value" id="summaryScope">Global</div>
+          <div class="ranking-summary-label">범위</div>
+          <div class="ranking-summary-value" id="summaryScope">글로벌</div>
         </div>
         <div class="ranking-summary-card">
-          <div class="ranking-summary-label">Rows</div>
+          <div class="ranking-summary-label">순위 개수</div>
           <div class="ranking-summary-value" id="summaryCount">0</div>
         </div>
       </div>
 
       <div class="ranking-notice" id="rankingNotice">
-        Loading ranking data...
+        랭킹 데이터를 불러오는 중이에요... 🚀
       </div>
 
       <div class="ranking-table-wrap">
@@ -199,16 +210,16 @@
           </colgroup>
           <thead>
             <tr>
-              <th scope="col" class="col-rank">Rank</th>
-              <th scope="col" class="col-name">Nickname</th>
-              <th scope="col" class="col-correct">Total Correct</th>
-              <th scope="col" class="col-combo">Best Combo</th>
-              <th scope="col" class="col-stars">Stars Earned</th>
+              <th scope="col" class="col-rank">순위</th>
+              <th scope="col" class="col-name">닉네임</th>
+              <th scope="col" class="col-correct">정답 수</th>
+              <th scope="col" class="col-combo">최고 콤보</th>
+              <th scope="col" class="col-stars">획득한 별 🌟</th>
             </tr>
           </thead>
           <tbody id="rankingTableBody">
             <tr>
-              <td colspan="5" class="ranking-empty">Loading...</td>
+              <td colspan="5" class="ranking-empty">로딩 중...</td>
             </tr>
           </tbody>
         </table>
@@ -243,19 +254,25 @@
       .replace(/'/g, "&#039;");
   }
 
+  // 전달받은 영어 이름을 귀여운 한글 이름으로 강제 통일
   function prettyGame(game) {
     const map = {
-      total: "Total Ranking",
-      avatar_aura: "Avatar Aura",
-      math_rain: "Math Rain",
-      tug_of_war: "Tug of War",
+      total: "전체 랭킹",
+      avatar_aura: "마법 오라 키우기",
+      math_rain: "쏟아지는 수학 비",
+      tug_of_war: "영차영차 줄다리기",
     };
-    return map[game] || "Total Ranking";
+    return map[game] || "전체 랭킹";
   }
 
   function prettyScope(scope) {
-    return scope === "friends" ? "Friends" : "Global";
+    return scope === "friends" ? "친구" : "글로벌";
   }
+
+  // 탭 버튼들의 텍스트를 게임 한글 이름으로 업데이트
+  gameButtons.forEach((btn) => {
+    btn.textContent = prettyGame(btn.dataset.game);
+  });
 
   function setActiveScope(scope) {
     selectedScope = scope;
@@ -291,7 +308,7 @@
 
   function renderRows(entries) {
     if (!entries || !entries.length) {
-      renderEmpty("No ranking data yet.");
+      renderEmpty("아직 랭킹 데이터가 없어요.");
       return;
     }
 
@@ -312,7 +329,7 @@
   }
 
   async function loadBoard() {
-    renderEmpty("Loading...");
+    renderEmpty("로딩 중... 🚀");
 
     try {
       const url = `{% url 'ranking:api_leaderboard' %}?scope=${encodeURIComponent(selectedScope)}&game=${encodeURIComponent(selectedGame)}`;
@@ -327,20 +344,25 @@
       const data = await response.json();
 
       if (!response.ok || !data.ok) {
-        rankingNotice.textContent = data.message || "Failed to load leaderboard.";
-        renderEmpty("No ranking data yet.");
+        let errorMsg = data.message || "리더보드를 불러오는 데 실패했어요.";
+        // 영어 에러 메시지가 올 경우 아이들이 이해할 수 있게 변환
+        if (errorMsg.includes("Login required") || errorMsg.includes("login")) {
+          errorMsg = "친구 랭킹을 보려면 로그인이 필요해요! 🔑";
+        }
+        rankingNotice.textContent = errorMsg;
+        renderEmpty("아직 랭킹 데이터가 없어요.");
         return;
       }
 
       rankingNotice.textContent =
         selectedScope === "global"
-          ? `Showing all users ranked by lifetime total correct answers for ${prettyGame(selectedGame)}.`
-          : `Showing you and your accepted friends ranked by lifetime total correct answers for ${prettyGame(selectedGame)}.`;
+          ? `${prettyGame(selectedGame)}의 전 세계 누적 정답 수 랭킹입니다. 🌍`
+          : `${prettyGame(selectedGame)}의 나와 친구들의 누적 정답 수 랭킹입니다. 🤝`;
 
       renderRows(data.entries || []);
     } catch (error) {
-      rankingNotice.textContent = "Network error.";
-      renderEmpty("No ranking data yet.");
+      rankingNotice.textContent = "네트워크 오류가 발생했어요. 다시 시도해 주세요!";
+      renderEmpty("아직 랭킹 데이터가 없어요.");
     }
   }
 

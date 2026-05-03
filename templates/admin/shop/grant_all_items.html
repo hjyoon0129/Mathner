@@ -1,15 +1,176 @@
 ﻿{% extends "admin/base_site.html" %}
 
+{% block extrastyle %}
+{{ block.super }}
+{{ mathner_admin_style|safe }}
+
+<style>
+  .mathner-grant-page {
+    max-width: 760px;
+    padding: 24px 0 48px;
+  }
+
+  .mathner-grant-page,
+  .mathner-grant-page * {
+    box-sizing: border-box;
+  }
+
+  .mathner-grant-page h1,
+  .mathner-grant-page h2,
+  .mathner-grant-page p,
+  .mathner-grant-page label,
+  .mathner-grant-page strong,
+  .mathner-grant-page span {
+    color: #f9fafb !important;
+  }
+
+  .mathner-grant-title {
+    margin: 0 0 20px;
+    color: #f9fafb !important;
+    font-size: 24px;
+    font-weight: 800;
+  }
+
+  .mathner-grant-subtitle {
+    margin: 0 0 18px;
+    color: #e5e7eb !important;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .mathner-info-panel {
+    max-width: 720px;
+    margin: 14px 0 22px;
+    padding: 14px 16px;
+    background: #082f49 !important;
+    border: 1px solid #0369a1 !important;
+    border-radius: 14px;
+    color: #e0f2fe !important;
+    line-height: 1.6;
+  }
+
+  .mathner-info-panel strong {
+    color: #fef08a !important;
+  }
+
+  .mathner-grant-form {
+    max-width: 720px;
+  }
+
+  .mathner-grant-form p {
+    margin: 14px 0;
+  }
+
+  .mathner-grant-form label {
+    display: inline-block;
+    min-width: 130px;
+    color: #f9fafb !important;
+    font-weight: 800;
+  }
+
+  .mathner-grant-form select,
+  .mathner-grant-form input,
+  .mathner-grant-form textarea {
+    background: #111827 !important;
+    color: #f9fafb !important;
+    border: 1px solid #4b5563 !important;
+    border-radius: 8px !important;
+    padding: 8px 10px !important;
+    min-height: 34px;
+  }
+
+  .mathner-grant-form select option {
+    background: #111827 !important;
+    color: #f9fafb !important;
+  }
+
+  .mathner-grant-form input[type="checkbox"] {
+    min-height: auto !important;
+    width: 18px;
+    height: 18px;
+    accent-color: #2563eb;
+  }
+
+  .mathner-grant-form .help,
+  .mathner-grant-form .helptext {
+    color: #cbd5e1 !important;
+  }
+
+  .mathner-grant-form .errorlist {
+    margin: 8px 0;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #450a0a !important;
+    border: 1px solid #991b1b !important;
+    color: #fecaca !important;
+  }
+
+  .mathner-grant-form .errorlist li {
+    color: #fecaca !important;
+  }
+
+  .mathner-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  .mathner-actions button,
+  .mathner-actions input[type="submit"] {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border: 1px solid #1d4ed8 !important;
+    border-radius: 9px !important;
+    padding: 9px 15px !important;
+    font-weight: 900 !important;
+    cursor: pointer;
+  }
+
+  .mathner-actions button:hover,
+  .mathner-actions input[type="submit"]:hover {
+    background: #1d4ed8 !important;
+  }
+
+  .mathner-actions a {
+    color: #7dd3fc !important;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .mathner-actions a:hover {
+    color: #bae6fd !important;
+    text-decoration: underline;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-  <h1>{{ title }}</h1>
+<div class="mathner-grant-page">
+  <h1 class="mathner-grant-title">{{ title }}</h1>
+  <h2 class="mathner-grant-subtitle">Grant all ShopItems to a user</h2>
 
-  <p><strong>Active shop item count:</strong> {{ preview_count }}</p>
+  <div class="mathner-info-panel">
+    Active shop item count:
+    <strong>{{ preview_count }}</strong><br>
+    활성 아이템만 지급하려면 <strong>Only active items</strong>를 체크한 상태로 두면 됩니다.
+  </div>
 
-  <form method="post" style="max-width:720px;">
+  <form method="post" class="mathner-grant-form" novalidate>
     {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="errorlist">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
     {{ form.as_p }}
 
-    <button type="submit" class="default">Grant all shop items</button>
-    <a href="../" style="margin-left:10px;">Cancel</a>
+    <div class="mathner-actions">
+      <button type="submit" class="default">Grant all shop items</button>
+      <a href="../">Cancel</a>
+    </div>
   </form>
+</div>
 {% endblock %}

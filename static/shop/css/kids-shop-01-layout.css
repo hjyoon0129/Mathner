@@ -1,0 +1,105 @@
+.kids-theme {
+  min-height: 100vh;
+  padding: 0 0 44px !important;
+  margin-top: 0 !important;
+  background:
+    radial-gradient(circle at 18% 4%, rgba(126, 200, 255, 0.2), transparent 34%),
+    radial-gradient(circle at 85% 0%, rgba(255, 224, 130, 0.16), transparent 32%),
+    linear-gradient(180deg, #f7fcff 0%, #eef8ff 46%, #f7fcff 100%);
+}
+
+.kids-wrap {
+  width: min(1240px, calc(100vw - 28px));
+  margin: 0 auto;
+  padding-top: 0 !important;
+  overflow: visible !important;
+}
+
+.kids-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 288px;
+  gap: 20px;
+  align-items: start;
+  overflow: visible !important;
+}
+
+.shop-main,
+.shop-side,
+.shop-section,
+.kids-inventory-grid {
+  min-width: 0;
+  overflow: visible !important;
+}
+
+.cute-card {
+  background: var(--kids-card-bg);
+  border-radius: var(--kids-radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.96);
+  box-shadow: var(--kids-shadow);
+}
+
+.shop-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 28px 30px;
+  margin-top: 0 !important;
+  margin-bottom: 22px;
+}
+
+.shop-title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.15;
+  color: var(--kids-orange);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.shop-sub {
+  margin: 8px 0 0;
+  color: var(--kids-text-mid);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.shop-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.star-balance-box {
+  min-height: 48px;
+  background: #fff7d6;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 900;
+  border: 2px solid #ffd15a;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 18px rgba(255, 180, 40, 0.14);
+}
+
+.star-label {
+  font-size: 14px;
+  color: #6a5434;
+}
+
+.star-amount {
+  font-size: 21px;
+  color: #3d3740;
+  letter-spacing: -0.02em;
+}
+
+.kids-inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}

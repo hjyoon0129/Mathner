@@ -1,7 +1,7 @@
 ﻿{% extends "base_app.html" %}
 {% load static %}
 
-{% block title %}Math Rain | Mathner{% endblock %}
+{% block title %}쏟아지는 수학 비 | Mathner{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'game/css/math_rain.css' %}?v=mobile_pad_2btn_nokey_v1">
@@ -14,35 +14,35 @@
   <div class="game-shell">
     <header class="rain-head">
       <div class="brand-box">
-        <h1 class="logo">MATH RAIN</h1>
+        <h1 class="logo">☔ 쏟아지는 수학 비</h1>
         <p class="tagline">
-          1 key is consumed when you press Start. Stars are settled when the run ends, resets, or you leave.
+          시작 버튼을 누르면 열쇠가 1개 사용돼요. 게임이 끝나면 내가 맞힌 만큼 예쁜 별을 받을 수 있어요! 🌟
         </p>
       </div>
     </header>
 
     <section class="control-strip">
       <div class="operation-panel">
-        <div class="panel-title">Operations</div>
+        <div class="panel-title">어떤 계산을 할까요? 🤔</div>
         <div class="op-buttons">
           <button class="op-btn active" data-op="+">+</button>
           <button class="op-btn" data-op="-">−</button>
           <button class="op-btn" data-op="*">×</button>
           <button class="op-btn" data-op="/">÷</button>
-          <button class="op-btn op-btn-mixed" data-op="mixed">Mixed</button>
+          <button class="op-btn op-btn-mixed" data-op="mixed">섞어서</button>
         </div>
       </div>
 
       <div class="status-panel compact-status">
-        <div class="panel-title hearts-title">Hearts</div>
+        <div class="panel-title hearts-title">내 생명 💖</div>
         <div class="hearts-panel">
           <div id="heartsBar" class="hearts-bar" aria-label="Hearts"></div>
         </div>
       </div>
 
       <div class="button-panel">
-        <button id="startBtn" class="main-btn" type="button">Start</button>
-        <button id="resetBtn" class="secondary-btn" type="button">Reset</button>
+        <button id="startBtn" class="main-btn" type="button">🚀 시작하기</button>
+        <button id="resetBtn" class="secondary-btn" type="button">🔄 다시하기</button>
       </div>
     </section>
 
@@ -56,13 +56,13 @@
 
       <div id="startOverlay" class="overlay start-overlay show">
         <div class="overlay-card start-card">
-          <h2>Math Rain</h2>
-          <button id="startOverlayBtn" class="main-btn start-overlay-btn" type="button">Start Game</button>
+          <h2>쏟아지는 수학 비 ☔</h2>
+          <button id="startOverlayBtn" class="main-btn start-overlay-btn" type="button">게임 시작! 🎉</button>
         </div>
       </div>
 
       <div id="levelIntro" class="level-intro hidden">
-        <div id="levelIntroText" class="level-intro-text">LEVEL 1</div>
+        <div id="levelIntroText" class="level-intro-text">1 단계</div>
       </div>
 
       <div id="rewardIntroOverlay" class="overlay reward-intro-overlay">
@@ -70,7 +70,7 @@
           <div class="reward-intro-bg"></div>
           <div id="rewardIntroFx" class="reward-intro-fx" aria-hidden="true"></div>
 
-          <div class="reward-intro-badge">STARS EARNED</div>
+          <div class="reward-intro-badge">🌟 획득한 별 🌟</div>
 
           <div class="reward-intro-star-wrap">
             <div class="reward-intro-star-core">★</div>
@@ -79,7 +79,7 @@
           </div>
 
           <div class="reward-intro-amount" id="rewardIntroAmount">+0</div>
-          <div class="reward-intro-text" id="rewardIntroText">Amazing! Your stars have been settled.</div>
+          <div class="reward-intro-text" id="rewardIntroText">우와 대단해요! 별을 성공적으로 모았어요.</div>
         </div>
       </div>
 
@@ -87,12 +87,12 @@
         <div class="overlay-card finish-card">
           <div class="finish-back-shine"></div>
 
-          <div class="finish-badge" id="finishBadge">Finish</div>
-          <h2 id="finishTitle">Run Complete</h2>
+          <div class="finish-badge" id="finishBadge">끝!</div>
+          <h2 id="finishTitle">도전 완료! 🥳</h2>
           <p id="finishDesc" class="finish-desc hidden"></p>
 
           <div class="finish-hero-stars" id="finishHeroStars">
-            <div class="finish-star-label">Stars gained</div>
+            <div class="finish-star-label">내가 모은 별</div>
             <div class="finish-star-value">
               <span class="finish-star-plus">+</span>
               <span id="finishStarsBig">0</span>
@@ -102,22 +102,22 @@
 
           <div class="result-grid finish-result-grid">
             <div class="result-item">
-              <span class="result-k">Cleared</span>
+              <span class="result-k">맞힌 개수</span>
               <span id="finalCleared" class="result-v">0</span>
             </div>
             <div class="result-item">
-              <span class="result-k">Stars</span>
+              <span class="result-k">별점</span>
               <span id="finalStars" class="result-v">0</span>
             </div>
           </div>
 
           <div class="finish-actions finish-actions-top">
-            <button id="restartBtnOverlay" class="main-btn start-overlay-btn" type="button">Play Again</button>
-            <button id="finishCloseBtn" class="secondary-btn finish-close-btn" type="button">Close</button>
+            <button id="restartBtnOverlay" class="main-btn start-overlay-btn" type="button">한 번 더 할래! 🎮</button>
+            <button id="finishCloseBtn" class="secondary-btn finish-close-btn" type="button">닫기 ✖️</button>
           </div>
 
           <div class="finish-actions finish-actions-bottom">
-            <a id="openRankingBtn" class="main-btn ranking-link-btn" href="/ranking/">Open Ranking</a>
+            <a id="openRankingBtn" class="main-btn ranking-link-btn" href="/ranking/">🏆 랭킹 보러가기</a>
           </div>
         </div>
       </div>
@@ -126,13 +126,13 @@
         <div class="overlay-card finish-card no-key-card">
           <div class="finish-back-shine"></div>
 
-          <div class="finish-badge">No Keys</div>
-          <h2>No Keys Left</h2>
-          <p>You have used all of today’s free keys. You can upgrade to continue, or come back later.</p>
+          <div class="finish-badge">열쇠가 없어요 🗝️</div>
+          <h2>앗! 열쇠를 다 썼어요 😢</h2>
+          <p>오늘 받은 무료 열쇠를 모두 사용했어요. 내일 다시 오거나 이용권을 확인해 보세요!</p>
 
           <div class="finish-actions finish-actions-top">
-            <a id="goPricingBtn" class="main-btn" href="/#pricing">View Pricing</a>
-            <button id="playLaterBtn" class="secondary-btn" type="button">Maybe Later</button>
+            <a id="goPricingBtn" class="main-btn" href="/#pricing">이용권 보기 🎟️</a>
+            <button id="playLaterBtn" class="secondary-btn" type="button">다음에 할게요 👋</button>
           </div>
         </div>
       </div>
@@ -146,10 +146,10 @@
           type="text"
           inputmode="numeric"
           pattern="[0-9]*"
-          placeholder="Type answer"
+          placeholder="정답을 입력해요"
           autocomplete="off"
         />
-        <button id="submitBtn" class="submit-btn" type="button">Submit</button>
+        <button id="submitBtn" class="submit-btn" type="button">정답! 🎯</button>
       </div>
 
       <div class="mobile-pad-wrap" id="mobilePadWrap" aria-hidden="true">
@@ -157,7 +157,7 @@
           <button type="button" class="mobile-pad-btn" data-pad="1">1</button>
           <button type="button" class="mobile-pad-btn" data-pad="2">2</button>
           <button type="button" class="mobile-pad-btn" data-pad="3">3</button>
-          <button type="button" class="mobile-pad-btn mobile-pad-btn-util" data-pad="back">⌫</button>
+          <button type="button" class="mobile-pad-btn mobile-pad-btn-util" data-pad="back">← 지우기</button>
 
           <button type="button" class="mobile-pad-btn" data-pad="4">4</button>
           <button type="button" class="mobile-pad-btn" data-pad="5">5</button>
@@ -171,8 +171,8 @@
         </div>
 
         <div class="mobile-action-row">
-          <button id="mobileStartBtn" class="main-btn mobile-action-btn" type="button">Start</button>
-          <button id="mobileResetBtn" class="secondary-btn mobile-action-btn" type="button">Reset</button>
+          <button id="mobileStartBtn" class="main-btn mobile-action-btn" type="button">🚀 시작하기</button>
+          <button id="mobileResetBtn" class="secondary-btn mobile-action-btn" type="button">🔄 다시하기</button>
         </div>
       </div>
     </section>
@@ -183,7 +183,6 @@
 {% block footer %}{% endblock %}
 
 {% block extra_js %}
-
 <script>
   window.MATHNER_GAME_EVENT_CONFIG = {
     trackEventUrl: "{% url 'core:track_game_event' %}",

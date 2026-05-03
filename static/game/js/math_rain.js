@@ -227,82 +227,44 @@ function makeLevelPattern(op) {
   return { kind: "three", size: "one-one-one", op };
 }
 
-function randOneDigit() {
-  return randomInt(1, 9);
-}
-
-function randTwoDigit() {
-  return randomInt(10, 19);
-}
+function randOneDigit() { return randomInt(1, 9); }
+function randTwoDigit() { return randomInt(10, 19); }
 
 function buildTwoTermQuestion(op, size) {
-  let a = 1;
-  let b = 1;
+  let a = 1, b = 1;
 
-  if (size === "one-one") {
-    a = randOneDigit();
-    b = randOneDigit();
-  } else {
-    a = randTwoDigit();
-    b = randOneDigit();
-  }
+  if (size === "one-one") { a = randOneDigit(); b = randOneDigit(); }
+  else { a = randTwoDigit(); b = randOneDigit(); }
 
   if (op === "+") return { text: `${a}+${b}`, answer: a + b };
-
   if (op === "-") {
     if (b > a) [a, b] = [b, a];
     if (a === b) a += 1;
     return { text: `${a}-${b}`, answer: a - b };
   }
-
   if (op === "*") {
-    if (size === "two-one") {
-      a = randTwoDigit();
-      b = randomInt(2, 5);
-    } else {
-      a = randomInt(2, 9);
-      b = randomInt(2, 9);
-    }
+    if (size === "two-one") { a = randTwoDigit(); b = randomInt(2, 5); }
+    else { a = randomInt(2, 9); b = randomInt(2, 9); }
     return { text: `${a}×${b}`, answer: a * b };
   }
 
-  let divisor = 2;
-  let quotient = 2;
-
-  if (size === "two-one") {
-    divisor = randomInt(2, 5);
-    quotient = randTwoDigit();
-  } else {
-    divisor = randomInt(2, 9);
-    quotient = randomInt(2, 9);
-  }
-
+  let divisor = 2, quotient = 2;
+  if (size === "two-one") { divisor = randomInt(2, 5); quotient = randTwoDigit(); }
+  else { divisor = randomInt(2, 9); quotient = randomInt(2, 9); }
   const dividend = divisor * quotient;
   return { text: `${dividend}÷${divisor}`, answer: quotient };
 }
 
 function buildThreeTermQuestion(op) {
-  const a = randOneDigit();
-  const b = randOneDigit();
-  const c = randOneDigit();
+  const a = randOneDigit(), b = randOneDigit(), c = randOneDigit();
 
   if (op === "+") return { text: `${a}+${b}+${c}`, answer: a + b + c };
-
-  if (op === "-") {
-    const sum = a + b + c;
-    return { text: `${sum}-${a}-${b}`, answer: c };
-  }
-
+  if (op === "-") { const sum = a + b + c; return { text: `${sum}-${a}-${b}`, answer: c }; }
   if (op === "*") {
-    const aa = randomInt(1, 4);
-    const bb = randomInt(1, 4);
-    const cc = randomInt(1, 4);
+    const aa = randomInt(1, 4), bb = randomInt(1, 4), cc = randomInt(1, 4);
     return { text: `${aa}×${bb}×${cc}`, answer: aa * bb * cc };
   }
-
-  const divisor = randomInt(2, 4);
-  const q1 = randomInt(2, 4);
-  const q2 = randomInt(2, 4);
+  const divisor = randomInt(2, 4), q1 = randomInt(2, 4), q2 = randomInt(2, 4);
   const dividend = divisor * q1 * q2;
   return { text: `${dividend}÷${divisor}÷${q1}`, answer: q2 };
 }
@@ -311,11 +273,9 @@ function buildNormalEquation() {
   const ops = getOperationPool();
   const op = ops[randomInt(0, ops.length - 1)];
   const pattern = makeLevelPattern(op);
-
   let built;
   if (pattern.kind === "three") built = buildThreeTermQuestion(op);
   else built = buildTwoTermQuestion(op, pattern.size);
-
   return { type: "normal", text: built.text, answer: built.answer };
 }
 
@@ -358,12 +318,7 @@ function spawnEquation() {
   gameArea.appendChild(el);
 
   equations.push({
-    ...data,
-    el,
-    x: left,
-    y: -18,
-    height: 46,
-    speed: getFallSpeed(data.type)
+    ...data, el, x: left, y: -18, height: 46, speed: getFallSpeed(data.type)
   });
 }
 
@@ -405,9 +360,10 @@ function showRewardFloat(x, y, amount) {
   setTimeout(() => wrap.remove(), 1050);
 }
 
+// "LEVEL N"을 "N 단계"로 한글화
 function showLevelIntro(levelNumber, callback) {
   isLevelIntroShowing = true;
-  if (levelIntroTextEl) levelIntroTextEl.textContent = `LEVEL ${levelNumber}`;
+  if (levelIntroTextEl) levelIntroTextEl.textContent = `${levelNumber} 단계`;
   if (levelIntroEl) levelIntroEl.classList.remove("hidden");
 
   setTimeout(() => {
@@ -463,15 +419,10 @@ function clearAllCurrentEquations() {
       item.el.classList.add("hit");
       rewardCurrentHit(item);
     }
-
-    setTimeout(() => {
-      if (item.el && item.el.parentNode) item.el.remove();
-    }, 180);
+    setTimeout(() => { if (item.el && item.el.parentNode) item.el.remove(); }, 180);
   });
 
-  setTimeout(() => {
-    maybeStartPendingLevel();
-  }, 220);
+  setTimeout(() => { maybeStartPendingLevel(); }, 220);
 }
 
 function handleCorrectNormal(item) {
@@ -492,7 +443,7 @@ function handleCorrectRingWing(item) {
   gameArea.appendChild(item.el);
   currentCombo += 1;
   if (currentCombo > bestCombo) bestCombo = currentCombo;
-  showFloatText("MAGIC CLEAR!", item.x - 4, item.y, "ring");
+  showFloatText("마법 정답! ✨", item.x - 14, item.y, "ring");
 
   setTimeout(() => {
     if (item.el && item.el.parentNode) item.el.remove();
@@ -552,11 +503,6 @@ function handleGroundHit(item) {
 
   if (item.type === "bomb") {
     currentCombo = 0;
-  } else if (item.type === "ringwing") {
-    hearts = Math.max(0, hearts - 1);
-    wrongCount += 1;
-    currentCombo = 0;
-    showFloatText("-1 ♥", item.x + 12, item.y, "bad");
   } else {
     hearts = Math.max(0, hearts - 1);
     wrongCount += 1;
@@ -611,9 +557,7 @@ function clearAllEquationsNow() {
 }
 
 function openNoKeyOverlay() {
-  if (goPricingBtn) {
-    goPricingBtn.setAttribute("href", getPricingUrl());
-  }
+  if (goPricingBtn) goPricingBtn.setAttribute("href", getPricingUrl());
   if (noKeyOverlay) noKeyOverlay.classList.add("show");
 }
 
@@ -680,9 +624,7 @@ async function recordRankingScore() {
     });
 
     const data = await response.json().catch(() => ({}));
-    if (response.ok && data.ok) {
-      rankingRecorded = true;
-    }
+    if (response.ok && data.ok) rankingRecorded = true;
   } catch (error) {}
 }
 
@@ -701,30 +643,31 @@ function buildFinalizePayload(reason) {
   });
 }
 
+// 결과 모달창 내용도 한글로 예쁘게
 function getFinishMeta(reason) {
   if (reason === "game_over") {
     return {
-      badge: "Finish",
-      title: "Game Over",
+      badge: "끝!",
+      title: "게임 오버 😭",
       desc: "",
-      rewardText: "Your stars have been settled.",
+      rewardText: "내가 모은 별이 안전하게 저장되었어요!",
     };
   }
 
   if (reason === "reset") {
     return {
-      badge: "Settled",
-      title: "Run Settled",
+      badge: "저장 완료",
+      title: "다시하기",
       desc: "",
-      rewardText: "Run reset complete. Saved stars awarded.",
+      rewardText: "새로 시작하기 전에, 모은 별을 모두 담았어요!",
     };
   }
 
   return {
-    badge: "Finish",
-    title: "Run Complete",
+    badge: "끝!",
+    title: "도전 완료! 🥳",
     desc: "",
-    rewardText: "Great job! Stars awarded.",
+    rewardText: "정말 잘했어요! 예쁜 별을 획득했어요.",
   };
 }
 
@@ -818,9 +761,7 @@ function openFinishOverlay(reason) {
   if (finalClearedEl) finalClearedEl.textContent = String(cleared);
   if (finalStarsEl) finalStarsEl.textContent = String(runEarnedStars);
 
-  if (openRankingBtn) {
-    openRankingBtn.setAttribute("href", getRankingUrl());
-  }
+  if (openRankingBtn) openRankingBtn.setAttribute("href", getRankingUrl());
 
   if (finishOverlay) finishOverlay.classList.add("show");
 
@@ -912,9 +853,7 @@ async function finalizeRun(reason, options = {}) {
   saveHighScore();
   updateUI();
 
-  if (!silent) {
-    openRewardIntroThenFinish(reason);
-  }
+  if (!silent) openRewardIntroThenFinish(reason);
 
   finalizing = false;
 }
@@ -948,7 +887,6 @@ async function startGame() {
       ) {
         openNoKeyOverlay();
       }
-
       return;
     }
   } else {
@@ -1071,7 +1009,7 @@ function updateMobileInputMode() {
 function syncMobileButtons() {
   if (mobileStartBtn) {
     mobileStartBtn.disabled = Boolean(startBtn?.disabled);
-    mobileStartBtn.textContent = startBtn ? startBtn.textContent : "Start";
+    mobileStartBtn.textContent = startBtn ? startBtn.textContent : "🚀 시작하기";
   }
 
   if (mobileResetBtn) {

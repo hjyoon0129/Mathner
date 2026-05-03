@@ -2,18 +2,21 @@ document.addEventListener("DOMContentLoaded", function () {
   const page = document.getElementById("socialPage");
   if (!page) return;
 
-  const myRoomUrl = page.dataset.myRoomUrl || "/avatar/my-room/";
-  const friendAvatarBase = page.dataset.friendAvatarBase || "/avatar/room/";
-  const socialFriendRequestUrlBase = page.dataset.socialFriendRequestUrlBase || "/social/api/friends/request/";
-  const socialFriendRespondUrlBase = page.dataset.socialFriendRespondUrlBase || "/social/api/friends/respond/";
+  const DEFAULT_FRIEND_AVATAR_BASE = "/avatar/room/";
+  const DEFAULT_FRIEND_REQUEST_URL_BASE = "/social/api/friends/request/";
+  const DEFAULT_FRIEND_RESPOND_URL_BASE = "/social/api/friends/respond/";
+
+  const friendAvatarBase = page.dataset.friendAvatarBase || DEFAULT_FRIEND_AVATAR_BASE;
+  const socialFriendRequestUrlBase =
+    page.dataset.socialFriendRequestUrlBase || DEFAULT_FRIEND_REQUEST_URL_BASE;
+  const socialFriendRespondUrlBase =
+    page.dataset.socialFriendRespondUrlBase || DEFAULT_FRIEND_RESPOND_URL_BASE;
   const socialFriendRequestsUrl = page.dataset.socialFriendRequestsUrl || "";
-  const socialFriendListUrl = page.dataset.socialFriendListUrl || "";
   const socialRoomListUrl = page.dataset.socialRoomListUrl || "";
 
   let currentSearchQuery = "";
   let roomDirectoryLoaded = false;
   let friendRequestsLoaded = false;
-  let friendOptionsLoaded = false;
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -24,22 +27,57 @@ document.addEventListener("DOMContentLoaded", function () {
       .replace(/'/g, "&#039;");
   }
 
+  function getCookie(name) {
+    const cookieValue = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith(`${name}=`));
+
+    if (!cookieValue) return "";
+    return decodeURIComponent(cookieValue.split("=")[1] || "");
+  }
+
+  function getCsrfToken() {
+    return window.CSRF_TOKEN || getCookie("csrftoken") || "";
+  }
+
+  function normalizeKey(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "_")
+      .replace(/-/g, "_")
+      .replace(/[^a-z0-9_]/g, "")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "");
+  }
+
   function fontClassFromKey(key) {
-    if (!key) return "font-default";
-    return `font-${String(key).trim()}`;
+    const normalized = normalizeKey(key);
+    if (!normalized) return "font-default";
+    return `font-${normalized}`;
   }
 
   function effectClassFromKey(key) {
-    const normalized = String(key || "none").trim().replace(/_/g, "-");
+    const normalized = normalizeKey(key || "none").replace(/_/g, "-");
     return `effect-${normalized || "none"}`;
   }
 
   function getNicknameFontKey(item) {
-    return String(item?.nickname_font_key || "").trim();
+    return String(
+      item?.nickname_font_key ||
+      item?.font_key ||
+      item?.font_family_key ||
+      item?.profile_font_key ||
+      ""
+    ).trim();
   }
 
   function getNicknameEffectKey(item) {
-    return String(item?.nickname_effect_key || "none").trim();
+    return String(
+      item?.nickname_effect_key ||
+      item?.effect_key ||
+      "none"
+    ).trim();
   }
 
   function getNicknameScale(item) {
@@ -55,12 +93,13 @@ document.addEventListener("DOMContentLoaded", function () {
   function buildNicknameStyle(item, baseSize = 14) {
     const scale = getNicknameScale(item);
     const spacing = getNicknameLetterSpacing(item);
-    const fontSize = Math.max(14, Math.round(baseSize * scale));
+    const fontSize = Math.max(12, Math.round(baseSize * scale));
     return `font-size:${fontSize}px; letter-spacing:${spacing}px;`;
   }
 
   function getDisplayName(item) {
-    if (!item) return "Player";
+    if (!item) return "플레이어";
+
     return String(
       item.display_name ||
       item.nickname ||
@@ -73,12 +112,13 @@ document.addEventListener("DOMContentLoaded", function () {
       item.from_username ||
       item.owner_username ||
       item.author_username ||
-      "Player"
+      "플레이어"
     );
   }
 
   function getUsername(item) {
     if (!item) return "";
+
     return String(
       item.username ||
       item.from_username ||
@@ -91,6 +131,21 @@ document.addEventListener("DOMContentLoaded", function () {
   function getRoomUrl(item) {
     const username = getUsername(item);
     return item?.room_url || `${friendAvatarBase}${username}/`;
+  }
+
+  function getDateOnly(item) {
+    const raw = String(item?.created_date || item?.created_at || "").trim();
+    if (!raw) return "";
+
+    if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+      return raw.slice(2, 10);
+    }
+
+    if (/^\d{2}-\d{2}-\d{2}/.test(raw)) {
+      return raw.slice(0, 8);
+    }
+
+    return raw.split(" ")[0] || raw;
   }
 
   function getFriendshipStatus(item) {
@@ -114,16 +169,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
       try {
         data = text ? JSON.parse(text) : {};
-      } catch (e) {
-        data = { ok: false, error: "Invalid JSON response." };
+      } catch (error) {
+        data = {
+          ok: false,
+          error: "잘못된 JSON 응답입니다.",
+        };
       }
 
       if (!("ok" in data)) data.ok = res.ok;
-      if (!res.ok && !data.error) data.error = `Request failed (${res.status})`;
+      if (!res.ok && !data.error) data.error = `요청 실패 (${res.status})`;
 
       return data;
     } catch (error) {
-      return { ok: false, error: "Network error." };
+      return {
+        ok: false,
+        error: "네트워크 오류가 발생했습니다.",
+      };
     }
   }
 
@@ -132,7 +193,7 @@ document.addEventListener("DOMContentLoaded", function () {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": window.CSRF_TOKEN || "",
+        "X-CSRFToken": getCsrfToken(),
         "X-Requested-With": "XMLHttpRequest",
       },
       body: JSON.stringify(payload || {}),
@@ -143,142 +204,236 @@ document.addEventListener("DOMContentLoaded", function () {
 
         try {
           data = text ? JSON.parse(text) : {};
-        } catch (e) {
-          data = { ok: false, error: "Server returned invalid JSON." };
+        } catch (error) {
+          data = {
+            ok: false,
+            error: "서버 오류가 발생했습니다.",
+          };
         }
 
         if (!("ok" in data)) data.ok = res.ok;
-        if (!res.ok && !data.error) data.error = `Request failed (${res.status})`;
+        if (!res.ok && !data.error) data.error = `요청 실패 (${res.status})`;
+
         return data;
       })
-      .catch(() => ({ ok: false, error: "Network error." }));
+      .catch(() => ({
+        ok: false,
+        error: "네트워크 오류가 발생했습니다.",
+      }));
   }
 
   function invalidateLists() {
     friendRequestsLoaded = false;
-    friendOptionsLoaded = false;
     roomDirectoryLoaded = false;
   }
 
-  async function refreshAllLists() {
+  async function refreshAllLists(skipDirectory = false) {
     invalidateLists();
-    await Promise.all([
-      loadFriendRequests(true),
-      loadFriendSelectOptions(true),
-      loadRoomDirectory(currentSearchQuery, true),
-    ]);
+
+    const tasks = [];
+
+    if (socialFriendRequestsUrl) {
+      tasks.push(loadFriendRequests(true));
+    }
+
+    if (!skipDirectory && socialRoomListUrl) {
+      tasks.push(loadRoomDirectory(currentSearchQuery, true));
+    }
+
+    await Promise.all(tasks);
   }
 
-  function renderFriendRequests(items) {
-    const wrap = document.getElementById("friendRequestList");
-    if (!wrap) return;
+  function setButtonLoading(btn, loadingText = "처리중...") {
+    if (!btn) return;
 
-    if (!items.length) {
-      wrap.innerHTML = `<div class="empty-text">No pending requests.</div>`;
+    btn.dataset.originalText = btn.textContent.trim();
+    btn.disabled = true;
+    btn.textContent = loadingText;
+  }
+
+  function restoreButton(btn) {
+    if (!btn) return;
+
+    btn.disabled = false;
+
+    if (btn.dataset.originalText) {
+      btn.textContent = btn.dataset.originalText;
+    }
+  }
+
+  function inferFriendActionFromButton(btn) {
+    const rawAction = String(btn.dataset.friendAction || "").trim().toLowerCase();
+
+    if (rawAction) return rawAction;
+
+    const status = String(btn.dataset.friendshipStatus || "").trim();
+    const direction = String(btn.dataset.friendshipDirection || "").trim();
+
+    if (btn.classList.contains("is-friend") || status === "accepted") {
+      return "remove";
+    }
+
+    if (btn.classList.contains("is-pending") || (status === "pending" && direction === "outgoing")) {
+      return "cancel";
+    }
+
+    if (btn.classList.contains("is-incoming") || (status === "pending" && direction === "incoming")) {
+      return "accept";
+    }
+
+    return "add";
+  }
+
+  function getFriendshipFromResult(result) {
+    return result?.friendship || {
+      friendship_id: result?.friendship_id || "",
+      friendship_status: result?.friendship_status || "none",
+      friendship_direction: result?.friendship_direction || "none",
+    };
+  }
+
+  function applyFriendStateToButton(btn, state) {
+    if (!btn || !state) return;
+
+    const status = String(state.friendship_status || "none");
+    const direction = String(state.friendship_direction || "none");
+
+    btn.dataset.friendshipStatus = status;
+    btn.dataset.friendshipDirection = direction;
+    btn.dataset.friendshipId = state.friendship_id || "";
+
+    btn.classList.remove(
+      "is-friend",
+      "is-pending",
+      "is-incoming",
+      "social-btn-primary",
+      "social-btn-secondary",
+      "social-btn-yellow"
+    );
+
+    btn.classList.add("social-btn");
+
+    if (status === "accepted") {
+      btn.classList.add("social-btn-secondary", "is-friend");
+      btn.textContent = btn.dataset.friendText || "친구 취소";
+      btn.dataset.friendAction = "remove";
       return;
     }
 
-    wrap.innerHTML = "";
-
-    items.forEach((item) => {
-      const displayName = getDisplayName(item);
-      const roomUrl = getRoomUrl(item);
-
-      const card = document.createElement("div");
-      card.className = "friend-request-card";
-      card.innerHTML = `
-        <div class="friend-request-top">
-          <div class="friend-request-head-left">
-            <div
-              class="friend-request-name ${fontClassFromKey(getNicknameFontKey(item))} ${effectClassFromKey(getNicknameEffectKey(item))}"
-              style="${buildNicknameStyle(item, 14)}"
-            >
-              ${escapeHtml(displayName)}
-            </div>
-          </div>
-          <div class="friend-request-sub">${escapeHtml(item.created_at || "")}</div>
-        </div>
-        <div class="friend-request-actions">
-          <a href="${roomUrl}" class="social-btn social-btn-secondary">Visit</a>
-          <button type="button" class="social-btn social-btn-primary friend-accept-btn" data-id="${item.id}">Accept</button>
-          <button type="button" class="social-btn social-btn-secondary friend-reject-btn" data-id="${item.id}">Reject</button>
-        </div>
-      `;
-      wrap.appendChild(card);
-    });
-
-    wrap.querySelectorAll(".friend-accept-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const id = btn.dataset.id;
-        btn.disabled = true;
-
-        const result = await postJson(`${socialFriendRespondUrlBase}${id}/`, { action: "accept" });
-
-        btn.disabled = false;
-
-        if (!result.ok) {
-          alert(result.error || "Accept failed.");
-          return;
-        }
-
-        await refreshAllLists();
-      });
-    });
-
-    wrap.querySelectorAll(".friend-reject-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const id = btn.dataset.id;
-        btn.disabled = true;
-
-        const result = await postJson(`${socialFriendRespondUrlBase}${id}/`, { action: "reject" });
-
-        btn.disabled = false;
-
-        if (!result.ok) {
-          alert(result.error || "Reject failed.");
-          return;
-        }
-
-        await refreshAllLists();
-      });
-    });
-  }
-
-  async function loadFriendRequests(force = false) {
-    const wrap = document.getElementById("friendRequestList");
-    if (!socialFriendRequestsUrl) return;
-    if (friendRequestsLoaded && !force) return;
-
-    if (wrap) {
-      wrap.innerHTML = `<div class="empty-text">Loading requests...</div>`;
+    if (status === "pending" && direction === "outgoing") {
+      btn.classList.add("social-btn-secondary", "is-pending");
+      btn.textContent = btn.dataset.pendingText || "요청 취소";
+      btn.dataset.friendAction = "cancel";
+      return;
     }
 
-    const result = await fetchJson(socialFriendRequestsUrl);
-    if (result.ok) {
-      renderFriendRequests(result.requests || []);
-      friendRequestsLoaded = true;
-    } else if (wrap) {
-      wrap.innerHTML = `<div class="empty-text">${escapeHtml(result.error || "Failed to load requests.")}</div>`;
+    if (status === "pending" && direction === "incoming") {
+      btn.classList.add("social-btn-primary", "is-incoming");
+      btn.textContent = btn.dataset.incomingText || "수락";
+      btn.dataset.friendAction = "accept";
+      return;
+    }
+
+    btn.classList.add("social-btn-yellow");
+    btn.textContent = btn.dataset.addText || "친구 신청";
+    btn.dataset.friendAction = "add";
+  }
+
+  async function handleFriendButtonClick(btn, options = {}) {
+    const username =
+      btn.dataset.username ||
+      btn.dataset.friendUsername ||
+      btn.dataset.friendshipUsername ||
+      btn.dataset.targetUsername ||
+      "";
+
+    if (!username) {
+      alert("대상 사용자를 찾을 수 없습니다.");
+      return;
+    }
+
+    const action = inferFriendActionFromButton(btn);
+
+    if (action === "remove") {
+      const ok = confirm("정말 친구를 삭제하시겠습니까?");
+      if (!ok) return;
+    }
+
+    setButtonLoading(btn);
+
+    const result = await postJson(`${socialFriendRequestUrlBase}${encodeURIComponent(username)}/`, {
+      action,
+    });
+
+    if (!result.ok) {
+      alert(result.error || "친구 요청 처리에 실패했습니다.");
+      restoreButton(btn);
+      return;
+    }
+
+    const state = getFriendshipFromResult(result);
+
+    applyFriendStateToButton(btn, state);
+    btn.disabled = false;
+
+    updateMatchingFriendButtons(username, state, btn);
+
+    if (options.refreshPanels !== false) {
+      await refreshAllLists(options.skipDirectory === true);
     }
   }
 
-  async function loadFriendSelectOptions(force = false) {
-    const friendSelect = document.getElementById("friendSelect");
-    if (!friendSelect || !socialFriendListUrl) return;
-    if (friendOptionsLoaded && !force) return;
+  function updateMatchingFriendButtons(username, state, exceptBtn = null) {
+    if (!username) return;
 
-    const result = await fetchJson(socialFriendListUrl);
-    if (!result.ok) return;
+    document
+      .querySelectorAll(
+        [
+          ".directory-add-friend-btn",
+          ".avatar-friend-btn",
+          ".room-friend-btn",
+          "[data-friendship-username]",
+          "[data-friend-username]",
+          "[data-target-username]",
+        ].join(",")
+      )
+      .forEach((btn) => {
+        if (btn === exceptBtn) return;
 
-    friendSelect.innerHTML = `<option value="">Choose friend</option>`;
-    (result.friends || []).forEach((friend) => {
-      const option = document.createElement("option");
-      option.value = getUsername(friend);
-      option.textContent = getDisplayName(friend);
-      friendSelect.appendChild(option);
-    });
+        const btnUsername =
+          btn.dataset.username ||
+          btn.dataset.friendUsername ||
+          btn.dataset.friendshipUsername ||
+          btn.dataset.targetUsername ||
+          "";
 
-    friendOptionsLoaded = true;
+        if (btnUsername === username) {
+          applyFriendStateToButton(btn, state);
+        }
+      });
+  }
+
+  function bindGenericFriendButtons(root = document) {
+    root
+      .querySelectorAll(
+        [
+          ".directory-add-friend-btn",
+          ".avatar-friend-btn",
+          ".room-friend-btn",
+          "[data-friendship-username]",
+          "[data-friend-username]",
+          "[data-target-username]",
+        ].join(",")
+      )
+      .forEach((btn) => {
+        if (btn.dataset.friendBound === "1") return;
+
+        btn.dataset.friendBound = "1";
+
+        btn.addEventListener("click", async () => {
+          await handleFriendButtonClick(btn);
+        });
+      });
   }
 
   function buildFriendActionHtml(item, username) {
@@ -286,18 +441,184 @@ document.addEventListener("DOMContentLoaded", function () {
     const direction = getFriendshipDirection(item);
 
     if (status === "accepted") {
-      return `<span class="mini-pill is-warm">Friend</span>`;
+      return `
+        <button
+          type="button"
+          class="social-btn social-btn-secondary directory-add-friend-btn is-friend"
+          data-username="${escapeHtml(username)}"
+          data-friendship-status="accepted"
+          data-friendship-direction="none"
+          data-friend-action="remove"
+        >
+          친구 취소
+        </button>
+      `;
     }
 
     if (status === "pending" && direction === "outgoing") {
-      return `<button type="button" class="social-btn social-btn-secondary directory-add-friend-btn is-pending" data-username="${escapeHtml(username)}">Cancel</button>`;
+      return `
+        <button
+          type="button"
+          class="social-btn social-btn-secondary directory-add-friend-btn is-pending"
+          data-username="${escapeHtml(username)}"
+          data-friendship-status="pending"
+          data-friendship-direction="outgoing"
+          data-friend-action="cancel"
+        >
+          요청 취소
+        </button>
+      `;
     }
 
     if (status === "pending" && direction === "incoming") {
-      return `<button type="button" class="social-btn social-btn-primary directory-add-friend-btn is-incoming" data-username="${escapeHtml(username)}">Accept</button>`;
+      return `
+        <button
+          type="button"
+          class="social-btn social-btn-primary directory-add-friend-btn is-incoming"
+          data-username="${escapeHtml(username)}"
+          data-friendship-status="pending"
+          data-friendship-direction="incoming"
+          data-friend-action="accept"
+        >
+          수락
+        </button>
+      `;
     }
 
-    return `<button type="button" class="social-btn social-btn-secondary directory-add-friend-btn" data-username="${escapeHtml(username)}">Add Friend</button>`;
+    return `
+      <button
+        type="button"
+        class="social-btn social-btn-yellow directory-add-friend-btn"
+        data-username="${escapeHtml(username)}"
+        data-friendship-status="none"
+        data-friendship-direction="none"
+        data-friend-action="add"
+      >
+        친구 신청
+      </button>
+    `;
+  }
+
+  function renderFriendRequests(items) {
+    const wrap = document.getElementById("friendRequestList");
+
+    if (!wrap) return;
+
+    if (!items.length) {
+      wrap.innerHTML = `<div class="empty-text">대기 중인 요청이 없습니다.</div>`;
+      return;
+    }
+
+    wrap.innerHTML = "";
+
+    items.forEach((item, index) => {
+      const displayName = getDisplayName(item);
+      const roomUrl = getRoomUrl(item);
+      const number = index + 1;
+      const dateOnly = getDateOnly(item);
+
+      const card = document.createElement("div");
+      card.className = "friend-request-card";
+
+      card.innerHTML = `
+        <div class="friend-request-line">
+          <div class="friend-request-number">${number}</div>
+
+          <a
+            href="${escapeHtml(roomUrl)}"
+            class="friend-request-name ${fontClassFromKey(getNicknameFontKey(item))} ${effectClassFromKey(getNicknameEffectKey(item))}"
+            style="${buildNicknameStyle(item, 14)}"
+            title="${escapeHtml(displayName)}"
+          >
+            ${escapeHtml(displayName)}
+          </a>
+
+          <span class="friend-request-date">${escapeHtml(dateOnly)}</span>
+
+          <a href="${escapeHtml(roomUrl)}" class="social-btn request-mini-btn request-visit-btn">방문</a>
+
+          <button
+            type="button"
+            class="social-btn request-mini-btn request-accept-btn friend-accept-btn"
+            data-id="${escapeHtml(item.id)}"
+          >
+            수락
+          </button>
+
+          <button
+            type="button"
+            class="social-btn request-mini-btn request-reject-btn friend-reject-btn"
+            data-id="${escapeHtml(item.id)}"
+          >
+            거절
+          </button>
+        </div>
+      `;
+
+      wrap.appendChild(card);
+    });
+
+    wrap.querySelectorAll(".friend-accept-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.id;
+
+        setButtonLoading(btn);
+
+        const result = await postJson(`${socialFriendRespondUrlBase}${id}/`, {
+          action: "accept",
+        });
+
+        if (!result.ok) {
+          alert(result.error || "수락에 실패했습니다.");
+          restoreButton(btn);
+          return;
+        }
+
+        btn.disabled = false;
+        await refreshAllLists(false);
+      });
+    });
+
+    wrap.querySelectorAll(".friend-reject-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.id;
+
+        setButtonLoading(btn);
+
+        const result = await postJson(`${socialFriendRespondUrlBase}${id}/`, {
+          action: "reject",
+        });
+
+        if (!result.ok) {
+          alert(result.error || "거절에 실패했습니다.");
+          restoreButton(btn);
+          return;
+        }
+
+        btn.disabled = false;
+        await refreshAllLists(false);
+      });
+    });
+  }
+
+  async function loadFriendRequests(force = false) {
+    const wrap = document.getElementById("friendRequestList");
+
+    if (!socialFriendRequestsUrl) return;
+    if (friendRequestsLoaded && !force) return;
+
+    if (wrap) {
+      wrap.innerHTML = `<div class="empty-text">요청을 불러오는 중입니다...</div>`;
+    }
+
+    const result = await fetchJson(`${socialFriendRequestsUrl}?t=${Date.now()}`);
+
+    if (result.ok) {
+      renderFriendRequests(result.requests || []);
+      friendRequestsLoaded = true;
+    } else if (wrap) {
+      wrap.innerHTML = `<div class="empty-text">${escapeHtml(result.error || "실패했습니다.")}</div>`;
+    }
   }
 
   function buildRoomCard(item, index) {
@@ -307,59 +628,44 @@ document.addEventListener("DOMContentLoaded", function () {
     const roomUrl = getRoomUrl(item);
 
     return `
-      <div class="room-row-card">
+      <div class="room-row-card" data-username="${escapeHtml(username)}">
         <div class="room-row-line">
           <div class="room-row-number">${number}</div>
+
           <div
             class="room-row-name room-row-name-fixed ${fontClassFromKey(getNicknameFontKey(item))} ${effectClassFromKey(getNicknameEffectKey(item))}"
             style="${buildNicknameStyle(item, 14)}"
+            title="${escapeHtml(displayName)}"
           >
             ${escapeHtml(displayName)}
           </div>
-          <a href="${roomUrl}" class="social-btn social-btn-primary people-action-btn">Visit</a>
+
+          <a href="${escapeHtml(roomUrl)}" class="social-btn people-action-btn visit-btn">구경하기</a>
+
           ${buildFriendActionHtml(item, username)}
         </div>
       </div>
     `;
   }
 
-  async function toggleFriendRequest(username) {
-    const result = await postJson(`${socialFriendRequestUrlBase}${username}/`, {});
-    if (!result.ok) {
-      alert(result.error || "Failed to update friend request.");
-      return false;
-    }
-    return true;
-  }
-
   function renderRoomDirectory(items) {
     const wrap = document.getElementById("roomDirectoryList");
+
     if (!wrap) return;
 
     if (!items.length) {
-      wrap.innerHTML = `<div class="empty-text">No users found.</div>`;
+      wrap.innerHTML = `<div class="empty-text">사용자를 찾을 수 없습니다.</div>`;
       return;
     }
 
     wrap.innerHTML = items.map((item, index) => buildRoomCard(item, index)).join("");
 
-    wrap.querySelectorAll(".directory-add-friend-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const username = btn.dataset.username;
-        btn.disabled = true;
-
-        const ok = await toggleFriendRequest(username);
-
-        btn.disabled = false;
-
-        if (!ok) return;
-        await refreshAllLists();
-      });
-    });
+    bindGenericFriendButtons(wrap);
   }
 
   async function loadRoomDirectory(query = "", force = false) {
     const wrap = document.getElementById("roomDirectoryList");
+
     if (!socialRoomListUrl) return;
 
     currentSearchQuery = (query || "").trim();
@@ -367,18 +673,20 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!force && roomDirectoryLoaded && currentSearchQuery === "") return;
 
     if (wrap) {
-      wrap.innerHTML = `<div class="empty-text">Loading list...</div>`;
+      wrap.innerHTML = `<div class="empty-text">목록을 불러오는 중입니다...</div>`;
     }
 
     const url = currentSearchQuery
-      ? `${socialRoomListUrl}?q=${encodeURIComponent(currentSearchQuery)}`
-      : socialRoomListUrl;
+      ? `${socialRoomListUrl}?q=${encodeURIComponent(currentSearchQuery)}&t=${Date.now()}`
+      : `${socialRoomListUrl}?t=${Date.now()}`;
 
     const result = await fetchJson(url);
+
     if (!result.ok) {
       if (wrap) {
-        wrap.innerHTML = `<div class="empty-text">${escapeHtml(result.error || "Failed to load users.")}</div>`;
+        wrap.innerHTML = `<div class="empty-text">${escapeHtml(result.error || "목록을 불러오는데 실패했습니다.")}</div>`;
       }
+
       return;
     }
 
@@ -391,53 +699,38 @@ document.addEventListener("DOMContentLoaded", function () {
 
   async function runUserSearch() {
     const input = document.getElementById("userSearchInput");
+
     if (!input) return;
+
     await loadRoomDirectory(input.value.trim(), true);
   }
 
-  const userSearchBtn = document.getElementById("userSearchBtn");
-  const userSearchInput = document.getElementById("userSearchInput");
-  const visitFriendBtn = document.getElementById("visitFriendBtn");
-  const friendSelect = document.getElementById("friendSelect");
-  const goMyRoomBtn = document.getElementById("goMyRoomBtn");
+  function initSocialPage() {
+    const userSearchBtn = document.getElementById("userSearchBtn");
+    const userSearchInput = document.getElementById("userSearchInput");
 
-  if (userSearchBtn) {
-    userSearchBtn.addEventListener("click", runUserSearch);
+    if (userSearchBtn) {
+      userSearchBtn.addEventListener("click", runUserSearch);
+    }
+
+    if (userSearchInput) {
+      userSearchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          runUserSearch();
+        }
+      });
+    }
   }
 
-  if (userSearchInput) {
-    userSearchInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        runUserSearch();
-      }
-    });
-  }
-
-  if (visitFriendBtn && friendSelect) {
-    visitFriendBtn.addEventListener("click", () => {
-      const username = friendSelect.value;
-      if (!username) {
-        alert("Choose a friend first.");
-        return;
-      }
-      window.location.href = `${friendAvatarBase}${username}/`;
-    });
-  }
-
-  if (goMyRoomBtn) {
-    goMyRoomBtn.addEventListener("click", () => {
-      window.location.href = myRoomUrl;
-    });
-  }
-
-  async function bootstrap() {
+  async function bootstrapSocialPage() {
     await Promise.all([
       loadFriendRequests(true),
-      loadFriendSelectOptions(true),
       loadRoomDirectory("", true),
     ]);
   }
 
-  bootstrap();
+  initSocialPage();
+  bindGenericFriendButtons(document);
+  bootstrapSocialPage();
 });

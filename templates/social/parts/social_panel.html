@@ -1,70 +1,44 @@
 ﻿<div class="social-grid">
 
-  <section class="social-card">
+  <section class="social-card main-panel">
     <div class="social-card-head">
-      <h2>Find People</h2>
+      <h2>친구 찾기</h2>
     </div>
+
     <div class="social-card-body">
       <div class="people-search-row">
         <input
           type="text"
           id="userSearchInput"
           class="social-input"
-          placeholder="Search nickname / username"
+          placeholder="닉네임 또는 아이디를 검색하세요"
         >
+
         <button
           type="button"
           class="social-btn social-btn-primary"
           id="userSearchBtn"
         >
-          Search
+          검색
         </button>
       </div>
 
       <div class="people-list-wrap">
         <div class="people-list" id="roomDirectoryList">
-          <div class="empty-text">Loading list...</div>
+          <div class="empty-text">목록을 불러오는 중입니다...</div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="social-card">
+  <section class="social-card request-panel">
     <div class="social-card-head">
-      <h2>Friend Requests</h2>
+      <h2>받은 친구 요청</h2>
     </div>
+
     <div class="social-card-body">
-      <div class="message-list" id="friendRequestList">
-        <div class="empty-text">No pending requests.</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="social-card">
-    <div class="social-card-head">
-      <h2>Visit Friend</h2>
-    </div>
-    <div class="social-card-body">
-      <div class="visit-friend-box">
-        <select id="friendSelect" class="social-select">
-          <option value="">Choose friend</option>
-        </select>
-
-        <button
-          type="button"
-          class="social-btn social-btn-primary visit-btn-full"
-          id="visitFriendBtn"
-        >
-          Visit
-        </button>
-
-        <button
-          type="button"
-          class="social-btn social-btn-secondary visit-btn-full"
-          id="goMyRoomBtn"
-        >
-          My Avatar Room
-        </button>
+      <div class="message-list request-list" id="friendRequestList">
+        <div class="empty-text">대기 중인 요청이 없습니다.</div>
       </div>
     </div>
   </section>

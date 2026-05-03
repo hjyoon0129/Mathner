@@ -11,19 +11,20 @@
   <div class="auth-shell">
     <div class="auth-card">
       <div class="auth-head">
-        <p class="auth-eyebrow">Create account</p>
-        <h1>Sign up</h1>
+        <p class="auth-eyebrow">새로운 친구 환영해요! ✨</p>
+        <h1>회원가입하기</h1>
         <p class="auth-sub">
-          Start your Mathner account and continue with stars, avatar, and room growth.
+          나만의 마법사 계정을 만들고 별도 모으고 아바타도 꾸며봐요!
         </p>
       </div>
 
       <a href="{% provider_login_url 'google' process='login' next=request.GET.next|default:'/' %}" class="auth-google-btn">
-        Continue with Google
+        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo">
+        구글 계정으로 가입할래요
       </a>
 
       <div class="auth-divider">
-        <span>or</span>
+        <span>또는 이메일로 가입</span>
       </div>
 
       <form method="post" action="{% url 'account_signup' %}" class="auth-form">
@@ -34,12 +35,12 @@
 
         {% if form.non_field_errors %}
           <div class="auth-alert">
-            {{ form.non_field_errors }}
+            앗! {{ form.non_field_errors }}
           </div>
         {% endif %}
 
         <div class="auth-field">
-          <label for="{{ form.email.id_for_label }}">Email</label>
+          <label for="{{ form.email.id_for_label }}">이메일 💌</label>
           {{ form.email }}
           {% if form.email.errors %}
             <div class="auth-error">{{ form.email.errors }}</div>
@@ -47,7 +48,7 @@
         </div>
 
         <div class="auth-field">
-          <label for="{{ form.password1.id_for_label }}">Password</label>
+          <label for="{{ form.password1.id_for_label }}">비밀번호 🔑</label>
           {{ form.password1 }}
           {% if form.password1.errors %}
             <div class="auth-error">{{ form.password1.errors }}</div>
@@ -55,19 +56,19 @@
         </div>
 
         <div class="auth-field">
-          <label for="{{ form.password2.id_for_label }}">Confirm password</label>
+          <label for="{{ form.password2.id_for_label }}">비밀번호 확인 🔑</label>
           {{ form.password2 }}
           {% if form.password2.errors %}
             <div class="auth-error">{{ form.password2.errors }}</div>
           {% endif %}
         </div>
 
-        <button type="submit" class="auth-submit-btn">Create account</button>
+        <button type="submit" class="auth-submit-btn">짜잔! 계정 만들기 🪄</button>
       </form>
 
       <div class="auth-foot">
-        Already have an account?
-        <a href="{% url 'account_login' %}?next={{ request.GET.next|default:'/' }}">Sign in</a>
+        이미 매스너 친구인가요?
+        <a href="{% url 'account_login' %}?next={{ request.GET.next|default:'/' }}">로그인하기</a>
       </div>
     </div>
   </div>

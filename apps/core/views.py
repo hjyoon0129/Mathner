@@ -30,6 +30,12 @@ def _ensure_session_key(request):
     return request.session.session_key or ""
 
 
+def _clean_text(value):
+    if value is None:
+        return ""
+    return str(value).strip()
+
+
 def _safe_game_name(value):
     value = (value or "").strip().lower()
     allowed = {"aura", "math_rain", "rain", "unknown"}
@@ -223,7 +229,7 @@ def _extract_set_code(item):
     if not item:
         return ""
 
-    text = f"{item.name or ''} {item.description or ''}"
+    text = f"{getattr(item, 'name', '') or ''} {getattr(item, 'description', '') or ''}"
 
     match = re.search(r"\[set\s*:\s*([a-zA-Z0-9_-]+)\]", text, re.I)
     if match:
@@ -233,8 +239,9 @@ def _extract_set_code(item):
     if match:
         return match.group(1).lower()
 
-    if ":" in (item.name or ""):
-        maybe_prefix = item.name.split(":", 1)[0].strip().lower()
+    item_name = getattr(item, "name", "") or ""
+    if ":" in item_name:
+        maybe_prefix = item_name.split(":", 1)[0].strip().lower()
         if maybe_prefix and len(maybe_prefix) <= 24:
             return maybe_prefix.replace(" ", "_")
 
@@ -255,10 +262,19 @@ def _effect_from_set_code(set_code):
 
 
 def _build_equipped_avatar_state(profile):
+    if not profile:
+        return {
+            "hat_item_id": None,
+            "cloth_item_id": None,
+            "shoes_item_id": None,
+            "active_set_code": "",
+            "active_effect": "",
+        }
+
     equipped = {
-        "hat_item_id": profile.hat_item_id,
-        "cloth_item_id": profile.cloth_item_id,
-        "shoes_item_id": profile.shoes_item_id,
+        "hat_item_id": getattr(profile, "hat_item_id", None),
+        "cloth_item_id": getattr(profile, "cloth_item_id", None),
+        "shoes_item_id": getattr(profile, "shoes_item_id", None),
     }
 
     set_codes = []
@@ -283,9 +299,242 @@ def _build_equipped_avatar_state(profile):
 
 
 def _item_image_url(item):
-    if not item or not getattr(item, "image_path", ""):
+    if not item:
         return ""
-    return f"/static/{item.image_path}"
+
+    image_path = _clean_text(getattr(item, "image_path", ""))
+    if image_path:
+        if image_path.startswith("/"):
+            return image_path
+        return f"/static/{image_path}"
+
+    image_url = _clean_text(getattr(item, "image_url", ""))
+    if image_url:
+        return image_url
+
+    image = getattr(item, "image", None)
+    if image:
+        try:
+            return image.url
+        except Exception:
+            return ""
+
+    return ""
+
+
+SUPPORTED_FONT_KEYS = {
+    "gaegu",
+    "dongle",
+    "gowun_batang",
+    "nanum_pen",
+    "dokdo",
+    "bubblegum_sans",
+    "delius_swash_caps",
+    "boogaloo",
+    "love_ya_like_a_sister",
+    "luckiest_guy",
+    "coming_soon",
+    "life_savers",
+    "chewy",
+    "cabin_sketch",
+    "mouse_memoirs",
+    "londrina_shadow",
+    "modak",
+    "amatic_sc",
+    "capriola",
+    "mclaren",
+}
+
+SUPPORTED_EFFECT_KEYS = {
+    "none",
+    "neon_blue",
+    "rainbow_flow",
+    "gold_glow",
+    "sparkle",
+    "glitch",
+    "float_wave",
+    "fire_glow",
+    "ice_glow",
+}
+
+DEFAULT_NICKNAME_SCALE = 1.0
+DEFAULT_NICKNAME_LETTER_SPACING = 0.0
+
+
+def _slugify_font_key(value):
+    raw = str(value or "").strip().lower()
+    raw = raw.replace("-", "_").replace(" ", "_")
+    raw = re.sub(r"[^a-z0-9_]+", "", raw)
+    raw = re.sub(r"_+", "_", raw).strip("_")
+    return raw
+
+
+def _font_key_from_item(item):
+    if not item:
+        return ""
+
+    direct_key = _slugify_font_key(getattr(item, "font_family_key", ""))
+    if direct_key in SUPPORTED_FONT_KEYS:
+        return direct_key
+
+    candidates = [
+        getattr(item, "font_key", ""),
+        getattr(item, "code", ""),
+        getattr(item, "slug", ""),
+        getattr(item, "name", ""),
+    ]
+
+    for candidate in candidates:
+        key = _slugify_font_key(candidate)
+        if key in SUPPORTED_FONT_KEYS:
+            return key
+
+    return ""
+
+
+def _normalize_effect_key(value):
+    raw = str(value or "none").strip().lower()
+    raw = raw.replace("-", "_").replace(" ", "_")
+    raw = re.sub(r"[^a-z0-9_]+", "", raw)
+    raw = re.sub(r"_+", "_", raw).strip("_")
+    return raw if raw in SUPPORTED_EFFECT_KEYS else "none"
+
+
+def _normalize_play_nickname_color(value):
+    color = _clean_text(value)
+
+    if not color:
+        return ""
+
+    lowered = color.lower().replace(" ", "")
+
+    if lowered in {
+        "#fff",
+        "#ffffff",
+        "white",
+        "rgb(255,255,255)",
+        "rgba(255,255,255,1)",
+    }:
+        return ""
+
+    return color
+
+
+def _font_class_from_key(font_key):
+    clean_key = _slugify_font_key(font_key)
+    return f"font-{clean_key}" if clean_key else "font-default"
+
+
+def _effect_class_from_key(effect_key):
+    clean_key = _normalize_effect_key(effect_key)
+    return f"effect-{clean_key.replace('_', '-')}"
+
+
+def _get_empty_font_pref():
+    return {
+        "nickname_font_key": "",
+        "nickname_effect_key": "none",
+        "nickname_scale": DEFAULT_NICKNAME_SCALE,
+        "nickname_letter_spacing": DEFAULT_NICKNAME_LETTER_SPACING,
+        "nickname_color": "",
+    }
+
+
+def _get_play_font_pref(user):
+    if not user or not getattr(user, "is_authenticated", False):
+        return _get_empty_font_pref()
+
+    try:
+        from apps.shop.models import UserFontPreference
+
+        pref, _ = UserFontPreference.objects.select_related(
+            "nickname_font_item",
+            "title_font_item",
+            "content_font_item",
+        ).get_or_create(user=user)
+
+        nickname_item = getattr(pref, "nickname_font_item", None)
+        nickname_font_key = _font_key_from_item(nickname_item)
+        nickname_effect_key = _normalize_effect_key(getattr(pref, "nickname_effect_key", "none"))
+        nickname_color = _normalize_play_nickname_color(getattr(pref, "nickname_color", ""))
+
+        return {
+            "nickname_font_key": nickname_font_key,
+            "nickname_effect_key": nickname_effect_key,
+            "nickname_scale": float(getattr(pref, "nickname_scale", DEFAULT_NICKNAME_SCALE) or DEFAULT_NICKNAME_SCALE),
+            "nickname_letter_spacing": float(
+                getattr(pref, "nickname_letter_spacing", DEFAULT_NICKNAME_LETTER_SPACING)
+                or DEFAULT_NICKNAME_LETTER_SPACING
+            ),
+            "nickname_color": nickname_color,
+        }
+    except Exception:
+        return _get_empty_font_pref()
+
+
+def _font_pref_to_play_json(font_pref):
+    font_key = _slugify_font_key(font_pref.get("nickname_font_key", ""))
+    effect_key = _normalize_effect_key(font_pref.get("nickname_effect_key", "none"))
+    font_class = _font_class_from_key(font_key)
+    effect_class = _effect_class_from_key(effect_key)
+    nickname_color = _normalize_play_nickname_color(font_pref.get("nickname_color", ""))
+
+    return {
+        "nickname_font_key": font_key,
+        "font_key": font_key,
+        "selected_font_key": font_key,
+        "equipped_font_key": font_key,
+
+        "nickname_effect_key": effect_key,
+        "effect_key": effect_key,
+        "font_effect_key": effect_key,
+        "selected_effect_key": effect_key,
+        "equipped_effect_key": effect_key,
+
+        "nickname_font_class": font_class,
+        "font_class": font_class,
+        "selected_font_class": font_class,
+        "equipped_font_class": font_class,
+
+        "nickname_effect_class": effect_class,
+        "font_effect_class": effect_class,
+        "effect_class": effect_class,
+        "selected_effect_class": effect_class,
+        "equipped_effect_class": effect_class,
+
+        "nickname_scale": float(font_pref.get("nickname_scale", DEFAULT_NICKNAME_SCALE) or DEFAULT_NICKNAME_SCALE),
+        "nickname_letter_spacing": float(
+            font_pref.get("nickname_letter_spacing", DEFAULT_NICKNAME_LETTER_SPACING)
+            or DEFAULT_NICKNAME_LETTER_SPACING
+        ),
+        "nickname_color": nickname_color,
+        "font_color": nickname_color,
+    }
+
+
+def _empty_play_avatar_data():
+    return {
+        "enabled": False,
+        "gender": "male",
+
+        "body_image_url": "",
+        "head_image_url": "",
+        "eyes_image_url": "",
+        "mouth_image_url": "",
+        "eyebrow_image_url": "",
+        "front_hair_image_url": "",
+        "rear_hair_image_url": "",
+        "top_image_url": "",
+        "cloth_image_url": "",
+        "pants_image_url": "",
+        "hat_image_url": "",
+        "shoes_image_url": "",
+
+        "active_effect": "",
+        "active_set_code": "",
+
+        **_font_pref_to_play_json(_get_empty_font_pref()),
+    }
 
 
 def _get_avatar_profile(request):
@@ -296,8 +545,17 @@ def _get_avatar_profile(request):
         return request._cached_avatar_profile
 
     avatar_profile, _ = UserAvatarProfile.objects.select_related(
-        "hat_item",
+        "body_item",
+        "head_item",
+        "eyes_item",
+        "mouth_item",
+        "eyebrow_item",
+        "front_hair_item",
+        "rear_hair_item",
+        "top_item",
         "cloth_item",
+        "pants_item",
+        "hat_item",
         "shoes_item",
     ).get_or_create(user=request.user)
 
@@ -307,27 +565,33 @@ def _get_avatar_profile(request):
 
 def _build_play_avatar_data(request):
     if not request.user.is_authenticated:
-        return {
-            "enabled": False,
-            "gender": "male",
-            "hat_image_url": "",
-            "cloth_image_url": "",
-            "shoes_image_url": "",
-            "active_effect": "",
-            "active_set_code": "",
-        }
+        return _empty_play_avatar_data()
 
     avatar_profile = _get_avatar_profile(request)
     equipped_state = _build_equipped_avatar_state(avatar_profile)
+    font_pref = _get_play_font_pref(request.user)
 
     return {
         "enabled": True,
-        "gender": avatar_profile.gender or "male",
-        "hat_image_url": _item_image_url(avatar_profile.hat_item),
-        "cloth_image_url": _item_image_url(avatar_profile.cloth_item),
-        "shoes_image_url": _item_image_url(avatar_profile.shoes_item),
+        "gender": getattr(avatar_profile, "gender", "") or "male",
+
+        "body_image_url": _item_image_url(getattr(avatar_profile, "body_item", None)),
+        "head_image_url": _item_image_url(getattr(avatar_profile, "head_item", None)),
+        "eyes_image_url": _item_image_url(getattr(avatar_profile, "eyes_item", None)),
+        "mouth_image_url": _item_image_url(getattr(avatar_profile, "mouth_item", None)),
+        "eyebrow_image_url": _item_image_url(getattr(avatar_profile, "eyebrow_item", None)),
+        "front_hair_image_url": _item_image_url(getattr(avatar_profile, "front_hair_item", None)),
+        "rear_hair_image_url": _item_image_url(getattr(avatar_profile, "rear_hair_item", None)),
+        "top_image_url": _item_image_url(getattr(avatar_profile, "top_item", None)),
+        "cloth_image_url": _item_image_url(getattr(avatar_profile, "cloth_item", None)),
+        "pants_image_url": _item_image_url(getattr(avatar_profile, "pants_item", None)),
+        "hat_image_url": _item_image_url(getattr(avatar_profile, "hat_item", None)),
+        "shoes_image_url": _item_image_url(getattr(avatar_profile, "shoes_item", None)),
+
         "active_effect": equipped_state.get("active_effect", ""),
         "active_set_code": equipped_state.get("active_set_code", ""),
+
+        **_font_pref_to_play_json(font_pref),
     }
 
 
@@ -343,15 +607,7 @@ def _build_game_page_context(request, play_avatar_enabled=False):
         username = _get_username(request.user)
         my_nickname = profile.get_display_name()
 
-        play_avatar_data = _build_play_avatar_data(request) if play_avatar_enabled else {
-            "enabled": False,
-            "gender": "male",
-            "hat_image_url": "",
-            "cloth_image_url": "",
-            "shoes_image_url": "",
-            "active_effect": "",
-            "active_set_code": "",
-        }
+        play_avatar_data = _build_play_avatar_data(request) if play_avatar_enabled else _empty_play_avatar_data()
     else:
         nav_context = _build_nav_context(request)
 
@@ -361,15 +617,7 @@ def _build_game_page_context(request, play_avatar_enabled=False):
         total_correct = _get_guest_total_correct(request)
         username = "Guest"
         my_nickname = "Guest"
-        play_avatar_data = {
-            "enabled": False,
-            "gender": "male",
-            "hat_image_url": "",
-            "cloth_image_url": "",
-            "shoes_image_url": "",
-            "active_effect": "",
-            "active_set_code": "",
-        }
+        play_avatar_data = _empty_play_avatar_data()
 
     return {
         "user_stars": total_stars,
