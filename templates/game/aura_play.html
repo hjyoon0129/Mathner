@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Boogaloo&family=Bubblegum+Sans&family=Cabin+Sketch:wght@400;700&family=Capriola&family=Chewy&family=Coming+Soon&family=Delius+Swash+Caps&family=Dokdo&family=Dongle:wght@400;700&family=Gaegu:wght@400;700&family=Gowun+Batang:wght@400;700&family=Life+Savers:wght@400;700;800&family=Londrina+Shadow&family=Love+Ya+Like+A+Sister&family=Luckiest+Guy&family=McLaren&family=Modak&family=Mouse+Memoirs&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
-<link rel="stylesheet" href="{% static 'game/css/aura_play.css' %}?v=20260507_v31_no_footer_mobile">
+<link rel="stylesheet" href="{% static 'game/css/aura_play.css' %}?v=20260503_control_row_fix_01">
 
 <link rel="preload" as="image" href="{% static 'avatar/img/base/male/body.webp' %}">
 <link rel="preload" as="image" href="{% static 'avatar/img/base/male/head.webp' %}">
@@ -163,8 +163,10 @@
                     </div>
 
                     <div class="screen" id="screenPlay">
-                        <div class="top-nav-action">
-                            <button class="btn secondary" id="btnBackToSetup" type="button">⬅️ 설정으로 돌아가기</button>
+                        <div class="play-control-row" aria-label="게임 조작 버튼">
+                            <button class="btn secondary" id="btnBackToSetup" type="button">↩️ 설정</button>
+                            <button class="btn btn-primary" id="btnStart" type="button">▶️ 준비, 시작!</button>
+                            <button class="btn secondary" id="btnReset" type="button">🔄 다시 하기</button>
                         </div>
 
                         <div class="question" id="questionBox">
@@ -219,13 +221,9 @@
                             <div class="msg-wrap">
                                 <div class="msg" id="msg"></div>
                             </div>
-
-                            <div class="actionRow bottom-action-row">
-                                <button class="btn btn-primary" id="btnStart" type="button">▶️ 준비, 시작!</button>
-                                <button class="btn secondary" id="btnReset" type="button">🔄 다시 하기</button>
-                            </div>
                         </div>
                     </div>
+
                 </div>
             </section>
 
@@ -389,5 +387,5 @@
     nickname: "{{ my_nickname|default:''|escapejs }}"
   };
 </script>
-<script src="{% static 'game/js/aura_play.js' %}?v=20260506_v33_avatar_room_font_sync"></script>
+<script src="{% static 'game/js/aura_play.js' %}?v=20260503_backfix_control_01"></script>
 {% endblock %}

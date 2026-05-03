@@ -83,6 +83,9 @@ let browserBackGuardActive = false;
 let browserBackFinalizing = false;
 let browserBackHandlerBound = false;
 
+let runStarsAppliedToNav = false;
+let navStarFloor = null;
+
 function isMobileUI() {
   return window.matchMedia("(max-width: 640px)").matches;
 }
@@ -166,11 +169,76 @@ function updateTextForSelectors(selectors, value) {
   });
 }
 
+function numberOrFallback(value, fallback) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function getServerStarValue(data, fallback) {
+  if (!data || typeof data !== "object") return fallback;
+
+  return numberOrFallback(
+    data.total_stars ??
+      data.nav_star_count ??
+      data.stars_total ??
+      data.user_total_stars ??
+      data.stars,
+    fallback
+  );
+}
+
+function getServerKeyValue(data, fallback) {
+  if (!data || typeof data !== "object") return fallback;
+
+  return numberOrFallback(
+    data.remaining_keys ?? data.nav_key_count ?? data.keys,
+    fallback
+  );
+}
+
+function updateResourceCountsFromServer(data, options = {}) {
+  const { preventStarDecrease = false } = options;
+  const serverStars = getServerStarValue(data, totalStars);
+  const serverKeys = getServerKeyValue(data, remainingKeys);
+
+  remainingKeys = Number.isFinite(serverKeys) ? serverKeys : remainingKeys;
+
+  if (Number.isFinite(serverStars)) {
+    if (preventStarDecrease && navStarFloor !== null) {
+      totalStars = Math.max(serverStars, navStarFloor);
+    } else {
+      totalStars = serverStars;
+    }
+  }
+
+  if (Number.isNaN(totalStars)) totalStars = 0;
+  if (Number.isNaN(remainingKeys)) remainingKeys = 0;
+}
+
+function applyRunStarsToNavOnce() {
+  if (runStarsAppliedToNav) {
+    syncNavResources();
+    return;
+  }
+
+  const gain = numberOrFallback(runEarnedStars, 0);
+
+  totalStars += Math.max(0, gain);
+  navStarFloor = totalStars;
+  runStarsAppliedToNav = true;
+
+  syncNavResources();
+}
+
 function syncNavResources() {
   if (Number.isNaN(totalStars)) totalStars = 0;
   if (Number.isNaN(remainingKeys)) remainingKeys = 0;
 
-  if (navStarCountEl) navStarCountEl.textContent = String(totalStars);
+  const displayStars = navStarFloor !== null
+    ? Math.max(totalStars, navStarFloor)
+    : totalStars;
+
+  if (navStarCountEl) navStarCountEl.textContent = String(displayStars);
   if (navKeyCountEl) navKeyCountEl.textContent = String(remainingKeys);
 
   updateTextForSelectors(
@@ -194,7 +262,7 @@ function syncNavResources() {
       "[data-nav-star-count]",
       "[data-star-count]",
     ],
-    totalStars
+    displayStars
   );
 
   updateTextForSelectors(
@@ -243,6 +311,8 @@ function resetLocalRunState() {
   isLevelIntroShowing = false;
   levelTransitionPending = false;
   finalizing = false;
+  runStarsAppliedToNav = false;
+  navStarFloor = null;
 }
 
 function setOperation(op) {
@@ -753,9 +823,7 @@ async function startRunOnServer() {
   }
 
   runStartedOnServer = true;
-  remainingKeys = Number(data.remaining_keys ?? data.nav_key_count ?? remainingKeys);
-  totalStars = Number(data.total_stars ?? data.nav_star_count ?? totalStars);
-
+  updateResourceCountsFromServer(data);
   syncNavResources();
 }
 
@@ -1017,8 +1085,7 @@ async function finalizeRun(reason, options = {}) {
 
   stopRunMotion();
 
-  totalStars += runEarnedStars;
-  syncNavResources();
+  applyRunStarsToNavOnce();
 
   if (PAGE_CFG.finalizeRunUrl) {
     try {
@@ -1039,8 +1106,7 @@ async function finalizeRun(reason, options = {}) {
       if (response.ok && data.ok) {
         runSaved = true;
         runStartedOnServer = false;
-        remainingKeys = Number(data.remaining_keys ?? data.nav_key_count ?? remainingKeys);
-        totalStars = Number(data.total_stars ?? data.nav_star_count ?? totalStars);
+        updateResourceCountsFromServer(data, { preventStarDecrease: true });
       }
     } catch (error) {}
   }
@@ -1110,8 +1176,7 @@ function finalizeRunForPageLeaving(reason = "leave") {
 
   stopRunMotion();
 
-  totalStars += runEarnedStars;
-  syncNavResources();
+  applyRunStarsToNavOnce();
 
   runSaved = true;
   runStartedOnServer = false;
@@ -1139,8 +1204,6 @@ function bindBrowserBackFinalize() {
   if (browserBackHandlerBound) return;
 
   browserBackHandlerBound = true;
-
-
 
   window.addEventListener("popstate", () => {
     if (
