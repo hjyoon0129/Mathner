@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db.models import Q
 import ipaddress
 
@@ -57,7 +58,7 @@ SUSPICIOUS_PATH_KEYWORDS = [
     ".env",
     ".git",
     ".svn",
-    ".DS_Store",
+    ".ds_store",
     "wp-admin",
     "wp-login",
     "wordpress",
@@ -84,13 +85,26 @@ SUSPICIOUS_PATH_KEYWORDS = [
     "/adminer",
 ]
 
+# PageViewLog / VisitorLog에 아예 저장하지 않을 경로
+# 봇이 많이 치는 로그인/회원가입/소셜로그인 경로는 DB 저장 제외
 IGNORE_LOG_PATH_PREFIXES = [
     "/static/",
     "/media/",
-    "/favicon.ico",
+    "/favicon",
     "/robots.txt",
     "/sitemap.xml",
+    "/admin/",
     "/admin/jsi18n/",
+    "/accounts/",
+    "/oauth/",
+    "/auth/",
+    "/login/",
+    "/signup/",
+    "/logout/",
+    "/api/",
+    "/ajax/",
+    "/health/",
+    "/.well-known/",
 ]
 
 IGNORE_LOG_EXACT_PATHS = [
@@ -98,6 +112,37 @@ IGNORE_LOG_EXACT_PATHS = [
     "/robots.txt",
     "/sitemap.xml",
 ]
+
+
+def _normalize_prefix(value):
+    if not value:
+        return ""
+
+    value = str(value).strip()
+
+    if not value:
+        return ""
+
+    if not value.startswith("/"):
+        value = "/" + value
+
+    if not value.endswith("/"):
+        value = value + "/"
+
+    return value.lower()
+
+
+def get_ignore_log_path_prefixes():
+    prefixes = list(IGNORE_LOG_PATH_PREFIXES)
+
+    # settings.ADMIN_URL = "hjyoon0129/" 같은 커스텀 관리자 주소도 자동 제외
+    admin_url = getattr(settings, "ADMIN_URL", "")
+    normalized_admin_url = _normalize_prefix(admin_url)
+
+    if normalized_admin_url and normalized_admin_url not in prefixes:
+        prefixes.append(normalized_admin_url)
+
+    return prefixes
 
 
 def rate(part, total):
@@ -153,12 +198,16 @@ def is_suspicious_path(path):
 
 
 def should_ignore_tracking_path(path):
-    path_lower = (path or "").lower()
+    path_lower = (path or "/").lower()
 
     if path_lower in IGNORE_LOG_EXACT_PATHS:
         return True
 
-    return any(path_lower.startswith(prefix.lower()) for prefix in IGNORE_LOG_PATH_PREFIXES)
+    for prefix in get_ignore_log_path_prefixes():
+        if path_lower.startswith(prefix.lower()):
+            return True
+
+    return False
 
 
 def traffic_type(path="", user_agent=""):
@@ -192,6 +241,18 @@ def build_bot_suspicious_q(path_field="path", user_agent_field="user_agent"):
 
     for keyword in SUSPICIOUS_PATH_KEYWORDS:
         query |= Q(**{f"{path_field}__icontains": keyword})
+
+    return query
+
+
+def build_ignored_path_q(path_field="path"):
+    query = Q()
+
+    for exact_path in IGNORE_LOG_EXACT_PATHS:
+        query |= Q(**{f"{path_field}__iexact": exact_path})
+
+    for prefix in get_ignore_log_path_prefixes():
+        query |= Q(**{f"{path_field}__istartswith": prefix})
 
     return query
 

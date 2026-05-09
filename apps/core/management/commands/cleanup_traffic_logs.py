@@ -6,11 +6,14 @@ from django.db import connection
 from django.utils import timezone
 
 from apps.core.models import VisitorLog, PageViewLog, GameEventLog
-from apps.core.traffic_utils import build_bot_suspicious_q
+from apps.core.traffic_utils import (
+    build_bot_suspicious_q,
+    build_ignored_path_q,
+)
 
 
 class Command(BaseCommand):
-    help = "Mathner traffic logs cleanup: bot/suspicious next-day delete, old logs cleanup, sessions cleanup."
+    help = "Mathner traffic logs cleanup: ignored path delete, bot/suspicious next-day delete, old logs cleanup, sessions cleanup."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -53,36 +56,51 @@ class Command(BaseCommand):
         game_event_cutoff_date = today - timedelta(days=options["keep_game_events_days"])
 
         bot_q = build_bot_suspicious_q()
+        ignored_path_q = build_ignored_path_q()
 
+        # /accounts/, /admin/, /static/, /media/ 등 저장 제외 대상은 날짜 상관없이 삭제
+        ignored_pageviews = PageViewLog.objects.filter(ignored_path_q)
+        ignored_visitors = VisitorLog.objects.filter(ignored_path_q)
+
+        # Bot/Suspicious는 다음날 삭제
         old_bot_pageviews = (
             PageViewLog.objects
             .filter(visit_date__lt=bot_cutoff_date)
             .filter(bot_q)
+            .exclude(ignored_path_q)
         )
 
         old_bot_visitors = (
             VisitorLog.objects
             .filter(visit_date__lt=bot_cutoff_date)
             .filter(bot_q)
+            .exclude(ignored_path_q)
         )
 
+        # 일반 PageViewLog는 30일 보관
         old_human_pageviews = (
             PageViewLog.objects
             .filter(visit_date__lt=human_pageview_cutoff_date)
             .exclude(bot_q)
+            .exclude(ignored_path_q)
         )
 
+        # VisitorLog는 90일 보관
         old_visitors = (
             VisitorLog.objects
             .filter(visit_date__lt=visitor_cutoff_date)
             .exclude(bot_q)
+            .exclude(ignored_path_q)
         )
 
+        # GameEventLog는 180일 보관
         old_game_events = GameEventLog.objects.filter(
             event_date__lt=game_event_cutoff_date
         )
 
         counts = {
+            "ignored_pageviews": ignored_pageviews.count(),
+            "ignored_visitors": ignored_visitors.count(),
             "old_bot_pageviews": old_bot_pageviews.count(),
             "old_bot_visitors": old_bot_visitors.count(),
             "old_human_pageviews": old_human_pageviews.count(),
@@ -93,6 +111,7 @@ class Command(BaseCommand):
         self.stdout.write("")
         self.stdout.write("====== Mathner traffic cleanup plan ======")
         self.stdout.write(f"today: {today}")
+        self.stdout.write("ignored paths: /accounts/, /admin/, /static/, /media/, /api/, /favicon, robots, sitemap ...")
         self.stdout.write(f"bot/suspicious delete target: visit_date < {bot_cutoff_date}")
         self.stdout.write(f"human pageview delete target: visit_date < {human_pageview_cutoff_date}")
         self.stdout.write(f"visitor delete target: visit_date < {visitor_cutoff_date}")
@@ -108,6 +127,8 @@ class Command(BaseCommand):
 
         deleted = {}
 
+        deleted["ignored_pageviews"] = ignored_pageviews.delete()[0]
+        deleted["ignored_visitors"] = ignored_visitors.delete()[0]
         deleted["old_bot_pageviews"] = old_bot_pageviews.delete()[0]
         deleted["old_bot_visitors"] = old_bot_visitors.delete()[0]
         deleted["old_human_pageviews"] = old_human_pageviews.delete()[0]
