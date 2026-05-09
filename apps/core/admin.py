@@ -1,14 +1,8 @@
 from datetime import timedelta
-import ipaddress
 
 from django.contrib import admin, messages
 from django.db.models import F, Count, Q
 from django.utils import timezone
-
-try:
-    from django.contrib.gis.geoip2 import GeoIP2
-except Exception:
-    GeoIP2 = None
 
 from .models import (
     UserGameProfile,
@@ -18,202 +12,68 @@ from .models import (
     GameEventLog,
 )
 
-
-BOT_KEYWORDS = [
-    "bot",
-    "crawl",
-    "spider",
-    "slurp",
-    "bingpreview",
-    "facebookexternalhit",
-    "googlebot",
-    "google-inspectiontool",
-    "adsbot-google",
-    "mediapartners-google",
-    "yandex",
-    "baidu",
-    "duckduck",
-    "semrush",
-    "ahrefs",
-    "mj12bot",
-    "dotbot",
-    "petalbot",
-    "bytespider",
-    "python-requests",
-    "curl",
-    "wget",
-    "httpclient",
-    "go-http-client",
-]
-
-BOT_PATH_KEYWORDS = [
-    "robots.txt",
-    "sitemap.xml",
-    "apple-app-site-association",
-    ".well-known/security.txt",
-]
-
-SUSPICIOUS_PATH_KEYWORDS = [
-    ".env",
-    ".git",
-    "wp-admin",
-    "wp-login",
-    "wordpress",
-    "xmlrpc.php",
-    "phpmyadmin",
-    "owa/auth",
-    "developmentserver",
-    "metadata",
-    "server-status",
-    "actuator",
-    "config",
-    "backup",
-    ".php",
-    "php",
-]
+from .traffic_utils import (
+    rate,
+    get_country_name,
+    traffic_type,
+    traffic_label,
+    build_type_rows,
+    build_country_rows,
+    build_page_type_rows,
+    build_bot_suspicious_q,
+)
 
 
-def _rate(part, total):
-    if not total:
-        return 0
-    return round((part / total) * 100, 1)
+@admin.action(description="어제 이전 Bot/Suspicious PageView 전체 삭제")
+def delete_old_bot_suspicious_pageviews(modeladmin, request, queryset):
+    today = timezone.localdate()
+
+    target_qs = (
+        PageViewLog.objects
+        .filter(visit_date__lt=today)
+        .filter(build_bot_suspicious_q())
+    )
+
+    count = target_qs.count()
+    target_qs.delete()
+
+    messages.success(
+        request,
+        f"어제 이전 Bot/Suspicious PageViewLog {count}개를 삭제했습니다."
+    )
 
 
-def is_private_or_local_ip(ip):
-    try:
-        parsed_ip = ipaddress.ip_address(ip)
-        return (
-            parsed_ip.is_private
-            or parsed_ip.is_loopback
-            or parsed_ip.is_reserved
-            or parsed_ip.is_multicast
-        )
-    except Exception:
-        return False
+@admin.action(description="선택한 PageViewLog 삭제")
+def delete_selected_pageviews(modeladmin, request, queryset):
+    count = queryset.count()
+    queryset.delete()
+    messages.success(request, f"선택한 PageViewLog {count}개를 삭제했습니다.")
 
 
-def get_country_name(ip):
-    if not ip:
-        return "Unknown"
+@admin.action(description="어제 이전 Bot/Suspicious VisitorLog 전체 삭제")
+def delete_old_bot_suspicious_visitors(modeladmin, request, queryset):
+    today = timezone.localdate()
 
-    if is_private_or_local_ip(ip):
-        return "Local/Private"
+    target_qs = (
+        VisitorLog.objects
+        .filter(visit_date__lt=today)
+        .filter(build_bot_suspicious_q())
+    )
 
-    if GeoIP2 is None:
-        return "Unknown"
+    count = target_qs.count()
+    target_qs.delete()
 
-    try:
-        geo = GeoIP2()
-        data = geo.country(ip)
-        return data.get("country_name") or "Unknown"
-    except Exception:
-        return "Unknown"
-
-
-def is_bot_user_agent(user_agent):
-    ua = (user_agent or "").lower()
-    return any(keyword in ua for keyword in BOT_KEYWORDS)
+    messages.success(
+        request,
+        f"어제 이전 Bot/Suspicious VisitorLog {count}개를 삭제했습니다."
+    )
 
 
-def is_bot_path(path):
-    path_lower = (path or "").lower()
-    return any(keyword in path_lower for keyword in BOT_PATH_KEYWORDS)
-
-
-def is_suspicious_path(path):
-    path_lower = (path or "").lower()
-    return any(keyword in path_lower for keyword in SUSPICIOUS_PATH_KEYWORDS)
-
-
-def traffic_type(path="", user_agent=""):
-    if is_suspicious_path(path):
-        return "Suspicious"
-    if is_bot_path(path):
-        return "Bot"
-    if is_bot_user_agent(user_agent):
-        return "Bot"
-    return "Maybe Human"
-
-
-def traffic_label(value):
-    if value == "Maybe Human":
-        return "🟢 Maybe Human"
-    if value == "Bot":
-        return "🟡 Bot"
-    if value == "Suspicious":
-        return "🔴 Suspicious"
-    return value
-
-
-def build_type_rows(logs, path_field=True):
-    type_dict = {
-        "Maybe Human": 0,
-        "Bot": 0,
-        "Suspicious": 0,
-    }
-
-    for log in logs:
-        path = getattr(log, "path", "") if path_field else ""
-        t_type = traffic_type(path, getattr(log, "user_agent", ""))
-        type_dict[t_type] = type_dict.get(t_type, 0) + 1
-
-    total = sum(type_dict.values())
-
-    rows = []
-    for key in ["Maybe Human", "Bot", "Suspicious"]:
-        value = type_dict.get(key, 0)
-        rows.append({
-            "type": key,
-            "label": traffic_label(key),
-            "count": value,
-            "percent": _rate(value, total),
-        })
-
-    return rows
-
-
-def build_country_rows(logs):
-    country_dict = {}
-
-    for log in logs:
-        country = get_country_name(getattr(log, "ip_address", ""))
-        country_dict[country] = country_dict.get(country, 0) + 1
-
-    return sorted(
-        [{"country": key, "count": value} for key, value in country_dict.items()],
-        key=lambda x: x["count"],
-        reverse=True,
-    )[:30]
-
-
-def build_page_type_rows(logs):
-    result = {}
-
-    for log in logs:
-        path = log.path or "/"
-        t_type = traffic_type(log.path, log.user_agent)
-
-        if path not in result:
-            result[path] = {
-                "path": path,
-                "maybe_human": 0,
-                "bot": 0,
-                "suspicious": 0,
-                "total": 0,
-            }
-
-        result[path]["total"] += 1
-
-        if t_type == "Maybe Human":
-            result[path]["maybe_human"] += 1
-        elif t_type == "Bot":
-            result[path]["bot"] += 1
-        elif t_type == "Suspicious":
-            result[path]["suspicious"] += 1
-
-    rows = list(result.values())
-    rows.sort(key=lambda x: x["total"], reverse=True)
-    return rows[:100]
+@admin.action(description="선택한 VisitorLog 삭제")
+def delete_selected_visitors(modeladmin, request, queryset):
+    count = queryset.count()
+    queryset.delete()
+    messages.success(request, f"선택한 VisitorLog {count}개를 삭제했습니다.")
 
 
 @admin.register(VisitorLog)
@@ -229,6 +89,10 @@ class VisitorLogAdmin(admin.ModelAdmin):
     search_fields = ("ip_address", "user_agent")
     ordering = ("-visit_date", "-created_at")
     change_list_template = "admin/core/visitorlog/change_list.html"
+    actions = (
+        delete_old_bot_suspicious_visitors,
+        delete_selected_visitors,
+    )
 
     def country_display(self, obj):
         return get_country_name(obj.ip_address)
@@ -264,13 +128,27 @@ class VisitorLogAdmin(admin.ModelAdmin):
             .order_by("-visit_date")[:90]
         )
 
-        today_logs = list(queryset.filter(visit_date=today).order_by("-created_at")[:500])
+        today_logs = list(
+            queryset
+            .filter(visit_date=today)
+            .order_by("-created_at")[:500]
+        )
+
         type_rows = build_type_rows(today_logs, path_field=True)
         country_rows = build_country_rows(today_logs)
 
-        maybe_human_count = next((row["count"] for row in type_rows if row["type"] == "Maybe Human"), 0)
-        bot_count = next((row["count"] for row in type_rows if row["type"] == "Bot"), 0)
-        suspicious_count = next((row["count"] for row in type_rows if row["type"] == "Suspicious"), 0)
+        maybe_human_count = next(
+            (row["count"] for row in type_rows if row["type"] == "Maybe Human"),
+            0,
+        )
+        bot_count = next(
+            (row["count"] for row in type_rows if row["type"] == "Bot"),
+            0,
+        )
+        suspicious_count = next(
+            (row["count"] for row in type_rows if row["type"] == "Suspicious"),
+            0,
+        )
 
         extra_context = extra_context or {}
         extra_context.update({
@@ -303,6 +181,10 @@ class PageViewLogAdmin(admin.ModelAdmin):
     search_fields = ("path", "ip_address", "user_agent")
     ordering = ("-created_at",)
     change_list_template = "admin/core/pageviewlog/change_list.html"
+    actions = (
+        delete_old_bot_suspicious_pageviews,
+        delete_selected_pageviews,
+    )
 
     def country_display(self, obj):
         return get_country_name(obj.ip_address)
@@ -319,6 +201,7 @@ class PageViewLogAdmin(admin.ModelAdmin):
         week_start = today - timedelta(days=6)
 
         queryset = PageViewLog.objects.all()
+        human_queryset = queryset.exclude(build_bot_suspicious_q())
 
         page_rows = (
             queryset
@@ -355,15 +238,34 @@ class PageViewLogAdmin(admin.ModelAdmin):
         ).count()
         total_count = queryset.count()
 
-        today_logs = list(queryset.filter(visit_date=today).order_by("-created_at")[:500])
+        human_daily_total = human_queryset.filter(visit_date=today).count()
+        human_weekly_total = human_queryset.filter(
+            visit_date__gte=week_start,
+            visit_date__lte=today,
+        ).count()
+
+        today_logs = list(
+            queryset
+            .filter(visit_date=today)
+            .order_by("-created_at")[:500]
+        )
 
         type_rows = build_type_rows(today_logs, path_field=True)
         country_rows = build_country_rows(today_logs)
         page_type_rows = build_page_type_rows(today_logs)
 
-        maybe_human_today = next((row["count"] for row in type_rows if row["type"] == "Maybe Human"), 0)
-        bot_today = next((row["count"] for row in type_rows if row["type"] == "Bot"), 0)
-        suspicious_today = next((row["count"] for row in type_rows if row["type"] == "Suspicious"), 0)
+        maybe_human_today = next(
+            (row["count"] for row in type_rows if row["type"] == "Maybe Human"),
+            0,
+        )
+        bot_today = next(
+            (row["count"] for row in type_rows if row["type"] == "Bot"),
+            0,
+        )
+        suspicious_today = next(
+            (row["count"] for row in type_rows if row["type"] == "Suspicious"),
+            0,
+        )
 
         extra_context = extra_context or {}
         extra_context.update({
@@ -371,6 +273,8 @@ class PageViewLogAdmin(admin.ModelAdmin):
             "weekly_total": weekly_total,
             "monthly_total": monthly_total,
             "total_count": total_count,
+            "human_daily_total": human_daily_total,
+            "human_weekly_total": human_weekly_total,
             "page_rows": page_rows,
             "country_rows": country_rows,
             "type_rows": type_rows,
@@ -439,27 +343,53 @@ class GameEventLogAdmin(admin.ModelAdmin):
             event_date__lte=today,
         )
 
-        today_page_views = PageViewLog.objects.filter(visit_date=today).count()
+        today_page_views = (
+            PageViewLog.objects
+            .filter(visit_date=today)
+            .exclude(build_bot_suspicious_q())
+            .count()
+        )
 
-        today_game_start = today_events.filter(event_type=GameEventLog.EVENT_GAME_START).count()
-        today_game_finish = today_events.filter(event_type=GameEventLog.EVENT_GAME_FINISH).count()
-        today_login_click = today_events.filter(event_type=GameEventLog.EVENT_LOGIN_CLICK).count()
+        today_game_start = today_events.filter(
+            event_type=GameEventLog.EVENT_GAME_START
+        ).count()
+        today_game_finish = today_events.filter(
+            event_type=GameEventLog.EVENT_GAME_FINISH
+        ).count()
+        today_login_click = today_events.filter(
+            event_type=GameEventLog.EVENT_LOGIN_CLICK
+        ).count()
 
-        weekly_game_start = weekly_events.filter(event_type=GameEventLog.EVENT_GAME_START).count()
-        weekly_game_finish = weekly_events.filter(event_type=GameEventLog.EVENT_GAME_FINISH).count()
-        weekly_login_click = weekly_events.filter(event_type=GameEventLog.EVENT_LOGIN_CLICK).count()
+        weekly_game_start = weekly_events.filter(
+            event_type=GameEventLog.EVENT_GAME_START
+        ).count()
+        weekly_game_finish = weekly_events.filter(
+            event_type=GameEventLog.EVENT_GAME_FINISH
+        ).count()
+        weekly_login_click = weekly_events.filter(
+            event_type=GameEventLog.EVENT_LOGIN_CLICK
+        ).count()
 
-        start_rate = _rate(today_game_start, today_page_views)
-        finish_rate = _rate(today_game_finish, today_game_start)
-        login_rate = _rate(today_login_click, today_game_finish)
+        start_rate = rate(today_game_start, today_page_views)
+        finish_rate = rate(today_game_finish, today_game_start)
+        login_rate = rate(today_login_click, today_game_finish)
 
         raw_game_rows = (
             today_events
             .values("game_name")
             .annotate(
-                start_count=Count("id", filter=Q(event_type=GameEventLog.EVENT_GAME_START)),
-                finish_count=Count("id", filter=Q(event_type=GameEventLog.EVENT_GAME_FINISH)),
-                login_count=Count("id", filter=Q(event_type=GameEventLog.EVENT_LOGIN_CLICK)),
+                start_count=Count(
+                    "id",
+                    filter=Q(event_type=GameEventLog.EVENT_GAME_START),
+                ),
+                finish_count=Count(
+                    "id",
+                    filter=Q(event_type=GameEventLog.EVENT_GAME_FINISH),
+                ),
+                login_count=Count(
+                    "id",
+                    filter=Q(event_type=GameEventLog.EVENT_LOGIN_CLICK),
+                ),
             )
             .order_by("game_name")
         )
@@ -475,7 +405,7 @@ class GameEventLogAdmin(admin.ModelAdmin):
                 "start_count": start_count,
                 "finish_count": finish_count,
                 "login_count": login_count,
-                "finish_rate": _rate(finish_count, start_count),
+                "finish_rate": rate(finish_count, start_count),
             })
 
         event_rows = (

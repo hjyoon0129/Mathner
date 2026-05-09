@@ -28,7 +28,7 @@
 
 <h2 style="margin-top:10px;">Real Traffic Check</h2>
 
-<div style="display:flex; gap:16px; margin:14px 0 28px; flex-wrap:wrap;">
+<div style="display:flex; gap:16px; margin:14px 0 20px; flex-wrap:wrap;">
   <div style="min-width:170px; padding:18px; background:#123524; border-radius:10px;">
     <strong>Maybe Human Today</strong><br>
     <span style="font-size:28px;">{{ maybe_human_today }}</span>
@@ -43,6 +43,30 @@
     <strong>Suspicious Today</strong><br>
     <span style="font-size:28px;">{{ suspicious_today }}</span>
   </div>
+
+  <div style="min-width:170px; padding:18px; background:#0f3443; border-radius:10px;">
+    <strong>Human Today</strong><br>
+    <span style="font-size:28px;">{{ human_daily_total }}</span>
+  </div>
+
+  <div style="min-width:170px; padding:18px; background:#0f3443; border-radius:10px;">
+    <strong>Human 7 Days</strong><br>
+    <span style="font-size:28px;">{{ human_weekly_total }}</span>
+  </div>
+</div>
+
+<div style="margin:0 0 28px; padding:16px 18px; background:#18212b; border:1px solid #344250; border-radius:10px; color:#ddd;">
+  <strong style="color:#8ee3ff;">Auto Cleanup Policy</strong><br>
+  <span>
+    Bot/Suspicious PageViewLog와 VisitorLog는 다음날 자동 삭제됩니다.
+    Maybe Human PageViewLog는 30일 보관 후 자동 삭제됩니다.
+    VisitorLog는 90일, GameEventLog는 180일 보관합니다.
+    Django session도 매일 자동 정리됩니다.
+  </span>
+  <br>
+  <span style="color:#aaa;">
+    서버 크론에서 <code>python manage.py cleanup_traffic_logs</code>가 매일 실행되어야 자동 정리가 됩니다.
+  </span>
 </div>
 
 <p style="margin:0 0 28px; color:#bbb;">
