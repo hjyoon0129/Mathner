@@ -216,6 +216,23 @@ def _get_or_create_room(user):
     return room
 
 
+def _get_room_owner_by_username(username):
+    return get_object_or_404(
+        User.objects.only("id", "username", "first_name", "email", "is_active"),
+        username=username,
+        is_active=True,
+    )
+
+
+def _get_or_create_room_by_username(username):
+    """
+    최근 가입자처럼 social_room 데이터가 아직 없는 경우에도
+    방명록/다이어리/방문/좋아요 기능이 터지지 않도록 방을 자동 생성한다.
+    """
+    owner = _get_room_owner_by_username(username)
+    return _get_or_create_room(owner)
+
+
 def _room_directory_cache_key(user_id, query=""):
     q = str(query or "").strip().lower()
     return f"social:room_directory:{user_id}:{q}"
@@ -531,6 +548,8 @@ def _apply_guestbook_permissions(public_entry, request_user, room_owner_id):
 
 @login_required
 def social_hub(request):
+    _get_or_create_room(request.user)
+
     font_pref = _get_font_pref(request.user)
 
     return render(request, "social/social.html", {
@@ -662,10 +681,12 @@ def room_directory(request):
 @require_POST
 @login_required
 def friend_request_toggle(request, username):
-    target = get_object_or_404(User, username=username)
+    target = get_object_or_404(User, username=username, is_active=True)
 
     if target.id == request.user.id:
         return JsonResponse({"ok": False, "error": "You cannot add yourself."}, status=400)
+
+    _get_or_create_room(target)
 
     payload = _get_request_data(request)
     action = str(payload.get("action", "toggle") or "toggle").strip().lower()
@@ -796,6 +817,9 @@ def friend_request_respond(request, friendship_id):
     )
 
     if action == "accept":
+        _get_or_create_room(friendship.from_user)
+        _get_or_create_room(friendship.to_user)
+
         friendship.status = Friendship.STATUS_ACCEPTED
         friendship.save(update_fields=["status", "updated_at"])
         _invalidate_friend_caches(friendship.from_user_id, friendship.to_user_id)
@@ -826,20 +850,9 @@ def friend_request_respond(request, friendship_id):
 
 @require_GET
 def room_stats_api(request, username):
-    room = get_object_or_404(
-        Room.objects.select_related("owner").only(
-            "id",
-            "owner__id",
-            "owner__username",
-            "today_visits",
-            "total_visits",
-            "like_count",
-            "last_visit_date",
-        ),
-        owner__username=username,
-    )
-
+    room = _get_or_create_room_by_username(username)
     room = _sync_room_today_visits(room)
+
     base_stats = _base_room_stats_payload(room)
     cache.set(room_stats_key(username), base_stats, timeout=20)
 
@@ -847,8 +860,8 @@ def room_stats_api(request, username):
 
     if request.user.is_authenticated:
         liked_by_me = RoomLike.objects.filter(
-            room__owner__username=username,
-            user=request.user,
+            room_id=room.id,
+            user_id=request.user.id,
         ).exists()
 
     stats = {
@@ -862,18 +875,7 @@ def room_stats_api(request, username):
 @require_POST
 @login_required
 def room_like_toggle_api(request, username):
-    room = get_object_or_404(
-        Room.objects.select_related("owner").only(
-            "id",
-            "owner__username",
-            "today_visits",
-            "total_visits",
-            "like_count",
-            "last_visit_date",
-        ),
-        owner__username=username,
-    )
-
+    room = _get_or_create_room_by_username(username)
     room = _sync_room_today_visits(room)
 
     with transaction.atomic():
@@ -903,19 +905,9 @@ def room_like_toggle_api(request, username):
 
 @require_POST
 def room_visit_api(request, username):
-    room = get_object_or_404(
-        Room.objects.select_related("owner").only(
-            "id",
-            "owner__username",
-            "today_visits",
-            "total_visits",
-            "like_count",
-            "last_visit_date",
-        ),
-        owner__username=username,
-    )
-
+    room = _get_or_create_room_by_username(username)
     room = _sync_room_today_visits(room)
+
     today = timezone.localdate()
 
     identity = _daily_visit_identity(request)
@@ -980,10 +972,7 @@ def guestbook_list_api(request, username):
     cached = cache.get(cache_key)
 
     if cached is None:
-        room = get_object_or_404(
-            Room.objects.select_related("owner").only("id", "owner__id", "owner__username"),
-            owner__username=username,
-        )
+        room = _get_or_create_room_by_username(username)
 
         reply_qs = (
             GuestbookReply.objects
@@ -1067,7 +1056,7 @@ def guestbook_list_api(request, username):
 @require_POST
 @login_required
 def guestbook_create_api(request, username):
-    room = get_object_or_404(Room.objects.select_related("owner"), owner__username=username)
+    room = _get_or_create_room_by_username(username)
     payload = _get_request_data(request)
     content = str(payload.get("content", "")).strip()
 
@@ -1166,7 +1155,7 @@ def diary_create_api(request):
     except Exception:
         return JsonResponse({"ok": False, "error": "Invalid JSON payload."}, status=400)
 
-    room = get_object_or_404(Room, owner=request.user)
+    room = _get_or_create_room(request.user)
 
     title = (payload.get("title") or "").strip()
     content = (payload.get("content") or "").strip()
@@ -1220,7 +1209,7 @@ def diary_update_api(request, entry_id):
     except Exception:
         return JsonResponse({"ok": False, "error": "Invalid JSON payload."}, status=400)
 
-    room = get_object_or_404(Room, owner=request.user)
+    room = _get_or_create_room(request.user)
     entry = get_object_or_404(DiaryEntry, id=entry_id, room=room)
 
     title = (payload.get("title") or "").strip()
@@ -1278,7 +1267,7 @@ def diary_update_api(request, entry_id):
 @login_required
 @require_POST
 def diary_delete_api(request, entry_id):
-    room = get_object_or_404(Room, owner=request.user)
+    room = _get_or_create_room(request.user)
     entry = get_object_or_404(DiaryEntry, id=entry_id, room=room)
 
     entry_date = entry.entry_date
@@ -1300,7 +1289,7 @@ def diary_calendar_api(request, username):
     if cached is not None:
         return JsonResponse({"ok": True, "days": cached})
 
-    room = get_object_or_404(Room.objects.select_related("owner"), owner__username=username)
+    room = _get_or_create_room_by_username(username)
 
     rows = (
         DiaryEntry.objects
@@ -1318,7 +1307,7 @@ def diary_calendar_api(request, username):
 
 @require_GET
 def diary_entry_by_date_api(request, username, date_str):
-    room = get_object_or_404(Room.objects.select_related("owner"), owner__username=username)
+    room = _get_or_create_room_by_username(username)
 
     try:
         target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
