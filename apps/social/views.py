@@ -3,9 +3,11 @@ import hashlib
 import json
 import re
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.cache import cache
+from django.core.mail import send_mail
 from django.db import transaction
 from django.db.models import F, Prefetch, Q
 from django.http import JsonResponse
@@ -546,6 +548,99 @@ def _apply_guestbook_permissions(public_entry, request_user, room_owner_id):
     return entry
 
 
+def _send_guestbook_entry_email_notification(request, room, entry):
+    """
+    방명록에 새 글이 작성되면 방 주인에게 이메일 알림을 보낸다.
+    자기 방에 자기가 쓴 글은 알림을 보내지 않는다.
+    """
+    owner = getattr(room, "owner", None)
+    author = getattr(entry, "author", None)
+
+    if not owner or not getattr(owner, "email", ""):
+        return
+
+    if author and owner.id == author.id:
+        return
+
+    author_name = _display_name(author)
+    owner_name = _display_name(owner)
+    room_url = request.build_absolute_uri(f"/avatar/room/{owner.username}/")
+
+    subject = "[매스너] 방명록에 새 글이 남겨졌어요"
+
+    message = (
+        f"{author_name}님이 {owner_name}님의 방명록에 글을 남겼어요.\n\n"
+        f"내용:\n{entry.content}\n\n"
+        f"확인하기:\n{room_url}\n\n"
+        "매스너 Mathner"
+    )
+
+    try:
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+            recipient_list=[owner.email],
+            fail_silently=True,
+        )
+    except Exception:
+        pass
+
+
+def _send_guestbook_reply_email_notification(request, entry, reply):
+    """
+    방명록 답글이 작성되면 원글 작성자와 방 주인에게 이메일 알림을 보낸다.
+    중복 수신자와 자기 자신에게는 보내지 않는다.
+    """
+    room = getattr(entry, "room", None)
+    room_owner = getattr(room, "owner", None)
+    entry_author = getattr(entry, "author", None)
+    reply_author = getattr(reply, "author", None)
+
+    recipients = []
+
+    for target in [entry_author, room_owner]:
+        if not target:
+            continue
+
+        if reply_author and target.id == reply_author.id:
+            continue
+
+        email = getattr(target, "email", "") or ""
+        if not email:
+            continue
+
+        if email not in recipients:
+            recipients.append(email)
+
+    if not recipients:
+        return
+
+    reply_author_name = _display_name(reply_author)
+    room_owner_name = _display_name(room_owner)
+    room_url = request.build_absolute_uri(f"/avatar/room/{room_owner.username}/") if room_owner else request.build_absolute_uri("/")
+
+    subject = "[매스너] 방명록에 새 답글이 달렸어요"
+
+    message = (
+        f"{reply_author_name}님이 {room_owner_name}님의 방명록에 답글을 남겼어요.\n\n"
+        f"답글 내용:\n{reply.content}\n\n"
+        f"확인하기:\n{room_url}\n\n"
+        "매스너 Mathner"
+    )
+
+    try:
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+            recipient_list=recipients,
+            fail_silently=True,
+        )
+    except Exception:
+        pass
+
+
 @login_required
 def social_hub(request):
     _get_or_create_room(request.user)
@@ -1063,7 +1158,7 @@ def guestbook_create_api(request, username):
     if not content:
         return JsonResponse({"ok": False, "error": "Message is required."}, status=400)
 
-    GuestbookEntry.objects.create(
+    entry = GuestbookEntry.objects.create(
         room=room,
         author=request.user,
         content=content,
@@ -1076,6 +1171,10 @@ def guestbook_create_api(request, username):
     )
 
     cache.delete(guestbook_list_key(username))
+
+    transaction.on_commit(
+        lambda: _send_guestbook_entry_email_notification(request, room, entry)
+    )
 
     return JsonResponse({"ok": True})
 
@@ -1102,7 +1201,7 @@ def guestbook_delete_api(request, entry_id):
 @login_required
 def guestbook_reply_create_api(request, entry_id):
     entry = get_object_or_404(
-        GuestbookEntry.objects.select_related("room", "room__owner"),
+        GuestbookEntry.objects.select_related("room", "room__owner", "author"),
         id=entry_id,
     )
 
@@ -1112,7 +1211,7 @@ def guestbook_reply_create_api(request, entry_id):
     if not content:
         return JsonResponse({"ok": False, "error": "Reply is required."}, status=400)
 
-    GuestbookReply.objects.create(
+    reply = GuestbookReply.objects.create(
         entry=entry,
         author=request.user,
         content=content,
@@ -1125,6 +1224,10 @@ def guestbook_reply_create_api(request, entry_id):
     )
 
     cache.delete(guestbook_list_key(entry.room.owner.username))
+
+    transaction.on_commit(
+        lambda: _send_guestbook_reply_email_notification(request, entry, reply)
+    )
 
     return JsonResponse({"ok": True})
 
