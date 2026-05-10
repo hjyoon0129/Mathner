@@ -574,7 +574,7 @@
   };
 </script>
 
-<script src="{% static 'game/js/aura_play.js' %}?v=20260510_guest_save_modal_01"></script>
+<script src="{% static 'game/js/aura_play.js' %}?v=20260510_guest_save_modal_02"></script>
 
 <script>
   (function () {
@@ -587,12 +587,10 @@
     var guestStars = document.getElementById("guestSaveStars");
     var closeBtn = document.getElementById("guestSaveCloseBtn");
     var loginBtn = document.getElementById("guestSaveLoginBtn");
-    var resultModal = document.getElementById("modal");
-    var rewardOverlay = document.getElementById("rewardOverlay");
 
     if (!guestModal) return;
 
-    var alreadyOpenedForValue = "";
+    var hasOpenedThisResult = false;
     var openTimer = null;
 
     function readStars() {
@@ -617,30 +615,13 @@
       return 0;
     }
 
-    function isElementVisible(el) {
-      if (!el) return false;
-
-      var style = window.getComputedStyle(el);
-      var rect = el.getBoundingClientRect();
-
-      return (
-        style.display !== "none" &&
-        style.visibility !== "hidden" &&
-        style.opacity !== "0" &&
-        rect.width > 0 &&
-        rect.height > 0
-      );
-    }
-
     function openGuestSaveModal() {
       var stars = readStars();
 
       if (stars <= 0) return;
+      if (hasOpenedThisResult) return;
 
-      var key = String(stars) + ":" + String(Date.now()).slice(0, -4);
-
-      if (alreadyOpenedForValue === key) return;
-      alreadyOpenedForValue = key;
+      hasOpenedThisResult = true;
 
       if (guestStars) {
         guestStars.textContent = String(stars);
@@ -661,23 +642,12 @@
       document.body.classList.remove("modal-open");
     }
 
-    function scheduleOpenAfterReward() {
+    function openGuestSaveModalSoon() {
       window.clearTimeout(openTimer);
 
       openTimer = window.setTimeout(function () {
         openGuestSaveModal();
-      }, 650);
-    }
-
-    function maybeOpenWhenResultShown() {
-      if (!isElementVisible(resultModal)) return;
-
-      if (isElementVisible(rewardOverlay)) {
-        scheduleOpenAfterReward();
-        return;
-      }
-
-      scheduleOpenAfterReward();
+      }, 220);
     }
 
     if (closeBtn) {
@@ -696,38 +666,31 @@
       }
     });
 
-    if ("MutationObserver" in window && resultModal) {
-      new MutationObserver(maybeOpenWhenResultShown).observe(resultModal, {
-        attributes: true,
-        attributeFilter: ["class", "style", "aria-hidden"]
-      });
-    }
+    document.addEventListener("click", function (event) {
+      var target = event.target;
+      if (!target) return;
 
-    if ("MutationObserver" in window && rewardOverlay) {
-      new MutationObserver(function () {
-        if (!isElementVisible(rewardOverlay) && isElementVisible(resultModal)) {
-          scheduleOpenAfterReward();
-        }
-      }).observe(rewardOverlay, {
-        attributes: true,
-        attributeFilter: ["class", "style", "aria-hidden"]
-      });
-    }
+      var shouldShowGuestModal =
+        target.closest("#btnClose") ||
+        target.closest("#btnAgain") ||
+        target.closest("#btnReset") ||
+        target.closest("#btnBackToSetup") ||
+        target.closest("#btnBackToModes");
+
+      if (shouldShowGuestModal) {
+        openGuestSaveModalSoon();
+      }
+    }, true);
 
     document.addEventListener("click", function (event) {
       var target = event.target;
+      if (!target) return;
 
-      if (
-        target &&
-        (
-          target.closest("#btnReset") ||
-          target.closest("#btnBackToSetup") ||
-          target.closest("#btnBackToModes")
-        )
-      ) {
-        window.setTimeout(maybeOpenWhenResultShown, 900);
+      if (target.closest("#btnStart")) {
+        hasOpenedThisResult = false;
       }
     }, true);
   })();
 </script>
+
 {% endblock %}
