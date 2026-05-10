@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Boogaloo&family=Bubblegum+Sans&family=Cabin+Sketch:wght@400;700&family=Capriola&family=Chewy&family=Coming+Soon&family=Delius+Swash+Caps&family=Dokdo&family=Dongle:wght@400;700&family=Gaegu:wght@400;700&family=Gowun+Batang:wght@400;700&family=Life+Savers:wght@400;700;800&family=Londrina+Shadow&family=Love+Ya+Like+A+Sister&family=Luckiest+Guy&family=McLaren&family=Modak&family=Mouse+Memoirs&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
-<link rel="stylesheet" href="{% static 'game/css/aura_play.css' %}?v=20260503_control_row_fix_01">
+<link rel="stylesheet" href="{% static 'game/css/aura_play.css' %}?v=20260510_guest_save_modal_01">
 
 <link rel="preload" as="image" href="{% static 'avatar/img/base/male/body.webp' %}">
 <link rel="preload" as="image" href="{% static 'avatar/img/base/male/head.webp' %}">
@@ -16,6 +16,160 @@
 <link rel="preload" as="image" href="{% static 'avatar/img/base/male/eyebrow.webp' %}">
 <link rel="preload" as="image" href="{% static 'avatar/img/base/male/mouth.webp' %}">
 <link rel="preload" as="image" href="{% static 'img/effects/wind_aura_base.png' %}">
+
+<style>
+  .guest-save-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(8, 14, 28, .62);
+    backdrop-filter: blur(8px);
+  }
+
+  .guest-save-modal.is-open {
+    display: flex;
+  }
+
+  .guest-save-box {
+    width: min(440px, 100%);
+    border-radius: 28px;
+    padding: 22px 20px 18px;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(255, 244, 160, .55), transparent 32%),
+      linear-gradient(180deg, #ffffff 0%, #f7fbff 52%, #ecf6ff 100%);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, .28);
+    border: 2px solid rgba(255, 255, 255, .9);
+    text-align: center;
+    font-family: var(--kids-font, "Pretendard", sans-serif);
+    transform: translateY(8px) scale(.98);
+    animation: guestSavePop .28s ease forwards;
+  }
+
+  @keyframes guestSavePop {
+    to {
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .guest-save-star {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 10px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #fff8bd, #ffd65a);
+    box-shadow: 0 12px 30px rgba(255, 193, 7, .42);
+    font-size: 42px;
+    animation: guestStarBounce 1.2s ease-in-out infinite;
+  }
+
+  @keyframes guestStarBounce {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-7px) rotate(5deg); }
+  }
+
+  .guest-save-title {
+    margin: 0;
+    color: #17223b;
+    font-size: 24px;
+    font-weight: 950;
+    letter-spacing: -0.04em;
+    line-height: 1.18;
+  }
+
+  .guest-save-sub {
+    margin: 8px 0 14px;
+    color: #526179;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.45;
+  }
+
+  .guest-save-earned {
+    margin: 12px auto 14px;
+    padding: 12px 14px;
+    border-radius: 20px;
+    background: rgba(255, 226, 94, .24);
+    border: 1px solid rgba(255, 190, 40, .38);
+    color: #292211;
+    font-size: 18px;
+    font-weight: 950;
+  }
+
+  .guest-save-list {
+    display: grid;
+    gap: 8px;
+    margin: 12px 0 16px;
+    text-align: left;
+  }
+
+  .guest-save-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .78);
+    color: #26364f;
+    font-size: 13px;
+    font-weight: 850;
+    box-shadow: inset 0 0 0 1px rgba(28, 90, 170, .08);
+  }
+
+  .guest-save-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  .guest-save-login {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    border-radius: 16px;
+    border: 0;
+    text-decoration: none;
+    background: linear-gradient(180deg, #4f8cff, #2865e6);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 950;
+    box-shadow: 0 12px 24px rgba(40, 101, 230, .28);
+  }
+
+  .guest-save-close {
+    min-height: 44px;
+    border-radius: 16px;
+    border: 1px solid rgba(48, 70, 110, .14);
+    background: #fff;
+    color: #526179;
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  @media (max-width: 520px) {
+    .guest-save-box {
+      padding: 20px 16px 16px;
+      border-radius: 24px;
+    }
+
+    .guest-save-title {
+      font-size: 21px;
+    }
+
+    .guest-save-star {
+      width: 64px;
+      height: 64px;
+      font-size: 36px;
+    }
+  }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -98,6 +252,7 @@
     }
   })();
 </script>
+
 <div class="play-page" id="playPageRoot"
      data-aura-state="idle"
      data-play-avatar-json='{{ play_avatar_data_json|default:"{}"|safe }}'
@@ -367,6 +522,37 @@
             </div>
         </div>
     </div>
+
+    <div class="guest-save-modal" id="guestSaveModal" aria-hidden="true">
+      <div class="guest-save-box" role="dialog" aria-modal="true" aria-labelledby="guestSaveTitle">
+        <div class="guest-save-star">⭐</div>
+        <h3 class="guest-save-title" id="guestSaveTitle">방금 얻은 별, 저장할까요?</h3>
+        <div class="guest-save-sub">
+          로그인하면 별을 계속 모으고<br>
+          아바타를 꾸며 친구들과 소통할 수 있어요!
+        </div>
+
+        <div class="guest-save-earned">
+          이번 플레이 별 <span id="guestSaveStars">0</span>개 ✨
+        </div>
+
+        <div class="guest-save-list">
+          <div class="guest-save-item">🎨 별로 아바타 옷과 글씨체 꾸미기</div>
+          <div class="guest-save-item">💌 친구 방명록에 글 남기기</div>
+          <div class="guest-save-item">🏆 친구 랭킹에서 기록 비교하기</div>
+          <div class="guest-save-item">🔑 매일 무료 열쇠 받고 계속 플레이하기</div>
+        </div>
+
+        <div class="guest-save-actions">
+          <a class="guest-save-login" id="guestSaveLoginBtn" href="{% url 'account_login' %}?next={% url 'avatar:my_room' %}">
+            로그인하고 별 저장하기
+          </a>
+          <button class="guest-save-close" id="guestSaveCloseBtn" type="button">
+            조금 더 해볼래요
+          </button>
+        </div>
+      </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -387,5 +573,161 @@
     nickname: "{{ my_nickname|default:''|escapejs }}"
   };
 </script>
-<script src="{% static 'game/js/aura_play.js' %}?v=20260503_backfix_control_01"></script>
+
+<script src="{% static 'game/js/aura_play.js' %}?v=20260510_guest_save_modal_01"></script>
+
+<script>
+  (function () {
+    var config = window.PLAY_PAGE_CONFIG || {};
+    var isGuest = !Boolean(config.isAuthenticated);
+
+    if (!isGuest) return;
+
+    var guestModal = document.getElementById("guestSaveModal");
+    var guestStars = document.getElementById("guestSaveStars");
+    var closeBtn = document.getElementById("guestSaveCloseBtn");
+    var loginBtn = document.getElementById("guestSaveLoginBtn");
+    var resultModal = document.getElementById("modal");
+    var rewardOverlay = document.getElementById("rewardOverlay");
+
+    if (!guestModal) return;
+
+    var alreadyOpenedForValue = "";
+    var openTimer = null;
+
+    function readStars() {
+      var candidates = [
+        document.getElementById("rStars"),
+        document.getElementById("earnedStars"),
+        document.getElementById("rewardAmount")
+      ];
+
+      for (var i = 0; i < candidates.length; i += 1) {
+        var el = candidates[i];
+        if (!el) continue;
+
+        var text = String(el.textContent || "").replace(/[^\d-]/g, "");
+        var n = Number(text);
+
+        if (Number.isFinite(n) && n > 0) {
+          return n;
+        }
+      }
+
+      return 0;
+    }
+
+    function isElementVisible(el) {
+      if (!el) return false;
+
+      var style = window.getComputedStyle(el);
+      var rect = el.getBoundingClientRect();
+
+      return (
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        style.opacity !== "0" &&
+        rect.width > 0 &&
+        rect.height > 0
+      );
+    }
+
+    function openGuestSaveModal() {
+      var stars = readStars();
+
+      if (stars <= 0) return;
+
+      var key = String(stars) + ":" + String(Date.now()).slice(0, -4);
+
+      if (alreadyOpenedForValue === key) return;
+      alreadyOpenedForValue = key;
+
+      if (guestStars) {
+        guestStars.textContent = String(stars);
+      }
+
+      if (loginBtn && config.avatarLoginUrl) {
+        loginBtn.href = config.avatarLoginUrl;
+      }
+
+      guestModal.classList.add("is-open");
+      guestModal.setAttribute("aria-hidden", "false");
+      document.body.classList.add("modal-open");
+    }
+
+    function closeGuestSaveModal() {
+      guestModal.classList.remove("is-open");
+      guestModal.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("modal-open");
+    }
+
+    function scheduleOpenAfterReward() {
+      window.clearTimeout(openTimer);
+
+      openTimer = window.setTimeout(function () {
+        openGuestSaveModal();
+      }, 650);
+    }
+
+    function maybeOpenWhenResultShown() {
+      if (!isElementVisible(resultModal)) return;
+
+      if (isElementVisible(rewardOverlay)) {
+        scheduleOpenAfterReward();
+        return;
+      }
+
+      scheduleOpenAfterReward();
+    }
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", closeGuestSaveModal);
+    }
+
+    guestModal.addEventListener("click", function (event) {
+      if (event.target === guestModal) {
+        closeGuestSaveModal();
+      }
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && guestModal.classList.contains("is-open")) {
+        closeGuestSaveModal();
+      }
+    });
+
+    if ("MutationObserver" in window && resultModal) {
+      new MutationObserver(maybeOpenWhenResultShown).observe(resultModal, {
+        attributes: true,
+        attributeFilter: ["class", "style", "aria-hidden"]
+      });
+    }
+
+    if ("MutationObserver" in window && rewardOverlay) {
+      new MutationObserver(function () {
+        if (!isElementVisible(rewardOverlay) && isElementVisible(resultModal)) {
+          scheduleOpenAfterReward();
+        }
+      }).observe(rewardOverlay, {
+        attributes: true,
+        attributeFilter: ["class", "style", "aria-hidden"]
+      });
+    }
+
+    document.addEventListener("click", function (event) {
+      var target = event.target;
+
+      if (
+        target &&
+        (
+          target.closest("#btnReset") ||
+          target.closest("#btnBackToSetup") ||
+          target.closest("#btnBackToModes")
+        )
+      ) {
+        window.setTimeout(maybeOpenWhenResultShown, 900);
+      }
+    }, true);
+  })();
+</script>
 {% endblock %}
