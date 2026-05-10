@@ -574,7 +574,7 @@
   };
 </script>
 
-<script src="{% static 'game/js/aura_play.js' %}?v=20260510_guest_save_modal_02"></script>
+<script src="{% static 'game/js/aura_play.js' %}?v=20260510_guest_save_modal_03"></script>
 
 <script>
   (function () {
@@ -583,45 +583,56 @@
 
     if (!isGuest) return;
 
+    var resultModal = document.getElementById("modal");
     var guestModal = document.getElementById("guestSaveModal");
     var guestStars = document.getElementById("guestSaveStars");
     var closeBtn = document.getElementById("guestSaveCloseBtn");
     var loginBtn = document.getElementById("guestSaveLoginBtn");
 
-    if (!guestModal) return;
+    if (!resultModal || !guestModal) return;
 
     var hasOpenedThisResult = false;
-    var openTimer = null;
+    var bypassNextClick = false;
+    var pendingAction = null;
 
     function readStars() {
-      var candidates = [
-        document.getElementById("rStars"),
-        document.getElementById("earnedStars"),
-        document.getElementById("rewardAmount")
-      ];
+      var rStars = document.getElementById("rStars");
+      if (!rStars) return 0;
 
-      for (var i = 0; i < candidates.length; i += 1) {
-        var el = candidates[i];
-        if (!el) continue;
+      var text = String(rStars.textContent || "").replace(/[^\d-]/g, "");
+      var n = Number(text);
 
-        var text = String(el.textContent || "").replace(/[^\d-]/g, "");
-        var n = Number(text);
-
-        if (Number.isFinite(n) && n > 0) {
-          return n;
-        }
-      }
-
-      return 0;
+      return Number.isFinite(n) && n > 0 ? n : 0;
     }
 
-    function openGuestSaveModal() {
+    function isResultModalVisible() {
+      var style = window.getComputedStyle(resultModal);
+      var rect = resultModal.getBoundingClientRect();
+
+      return (
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        style.opacity !== "0" &&
+        rect.width > 0 &&
+        rect.height > 0
+      );
+    }
+
+    function openGuestSaveModal(action) {
       var stars = readStars();
 
-      if (stars <= 0) return;
-      if (hasOpenedThisResult) return;
+      if (stars <= 0) {
+        runOriginalAction(action);
+        return;
+      }
+
+      if (hasOpenedThisResult) {
+        runOriginalAction(action);
+        return;
+      }
 
       hasOpenedThisResult = true;
+      pendingAction = action || null;
 
       if (guestStars) {
         guestStars.textContent = String(stars);
@@ -642,44 +653,77 @@
       document.body.classList.remove("modal-open");
     }
 
-    function openGuestSaveModalSoon() {
-      window.clearTimeout(openTimer);
+    function runOriginalAction(action) {
+      if (!action) return;
 
-      openTimer = window.setTimeout(function () {
-        openGuestSaveModal();
-      }, 220);
+      bypassNextClick = true;
+
+      if (action.type === "link" && action.href) {
+        window.location.href = action.href;
+        return;
+      }
+
+      if (action.el) {
+        action.el.click();
+      }
+
+      window.setTimeout(function () {
+        bypassNextClick = false;
+      }, 300);
+    }
+
+    function continueAfterGuestModal() {
+      var action = pendingAction;
+      pendingAction = null;
+
+      closeGuestSaveModal();
+      runOriginalAction(action);
     }
 
     if (closeBtn) {
-      closeBtn.addEventListener("click", closeGuestSaveModal);
+      closeBtn.addEventListener("click", continueAfterGuestModal);
     }
 
     guestModal.addEventListener("click", function (event) {
       if (event.target === guestModal) {
-        closeGuestSaveModal();
+        continueAfterGuestModal();
       }
     });
 
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape" && guestModal.classList.contains("is-open")) {
-        closeGuestSaveModal();
+        continueAfterGuestModal();
       }
     });
 
-    document.addEventListener("click", function (event) {
+    resultModal.addEventListener("click", function (event) {
       var target = event.target;
       if (!target) return;
+      if (bypassNextClick) return;
+      if (!isResultModalVisible()) return;
 
-      var shouldShowGuestModal =
-        target.closest("#btnClose") ||
-        target.closest("#btnAgain") ||
-        target.closest("#btnReset") ||
-        target.closest("#btnBackToSetup") ||
-        target.closest("#btnBackToModes");
+      var btnClose = target.closest("#btnClose");
+      var btnAgain = target.closest("#btnAgain");
+      var btnRanking = target.closest("#btnOpenRanking");
 
-      if (shouldShowGuestModal) {
-        openGuestSaveModalSoon();
+      if (!btnClose && !btnAgain && !btnRanking) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      if (btnRanking) {
+        openGuestSaveModal({
+          type: "link",
+          href: btnRanking.href
+        });
+        return;
       }
+
+      openGuestSaveModal({
+        type: "button",
+        el: btnClose || btnAgain
+      });
     }, true);
 
     document.addEventListener("click", function (event) {
@@ -688,9 +732,12 @@
 
       if (target.closest("#btnStart")) {
         hasOpenedThisResult = false;
+        pendingAction = null;
+        bypassNextClick = false;
       }
     }, true);
   })();
 </script>
+{% endblock %}
 
 {% endblock %}
